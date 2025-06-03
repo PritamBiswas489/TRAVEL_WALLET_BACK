@@ -1,3 +1,5 @@
+import './config/environment.js';
+
 import express, { Router, json, urlencoded } from 'express';
 import compression from 'compression';
 import cors from 'cors';
@@ -19,7 +21,7 @@ app.use(express.static(publicDir));
 
 
 app.get('/test', (req, res, next) => {
-	res.status(200).send({ msg: 'server working' });
+	res.status(200).send({ msg: `server working - ${NODE_ENV} mode` });
 });
 
 
