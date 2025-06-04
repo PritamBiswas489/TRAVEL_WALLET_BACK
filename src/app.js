@@ -9,7 +9,7 @@ import bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
 import { Sequelize } from 'sequelize';
 
-const { NODE_ENV, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD } = process.env;
+const { NODE_ENV, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_PORT } = process.env;
 const publicDir = NODE_ENV === 'development' ? pathResolve(pathJoin(dirname('./'), 'public')) : pathResolve(pathJoin(dirname('./'), 'public'));
 
 const app = express();
@@ -20,7 +20,7 @@ app.use(helmet());
 const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
   host: DB_HOST,
   dialect: 'postgres',
-  port: 25060, 
+  port: DB_PORT, 
   dialectOptions: {
     ssl: {
       require: true,
