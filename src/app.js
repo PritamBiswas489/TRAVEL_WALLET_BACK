@@ -21,6 +21,7 @@ const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
   host: DB_HOST,
   dialect: 'postgres',
   port: 25060, 
+  
 });
 
 app.use(bodyParser.json({ limit: '500mb' }));
@@ -33,7 +34,7 @@ app.get('/test', (req, res, next) => {
 });
 
 app.get('/test-database', async (req, res, next) => {
-	res.status(500).send({DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_HOST });
+ 
 	try {
 		await sequelize.authenticate();
 		console.log('Connection has been established successfully.');
