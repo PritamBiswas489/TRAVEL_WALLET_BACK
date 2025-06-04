@@ -7,6 +7,7 @@ import { resolve as pathResolve, dirname, join as pathJoin } from 'path';
 import helmet from 'helmet';
 import bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
+import { Sequelize } from 'sequelize';
 
 const { NODE_ENV } = process.env;
 const publicDir = NODE_ENV === 'development' ? pathResolve(pathJoin(dirname('./'), 'public')) : pathResolve(pathJoin(dirname('./'), 'public'));
@@ -15,6 +16,12 @@ const app = express();
 app.use(compression());
 app.use(helmet());
 
+
+const sequelize = new Sequelize('defaultdb', 'doadmin', 'AVNS_Wzis6fC31SaAiouOsAI', {
+  host: 'db-postgresql-sgp1-33955-do-user-22879131-0.i.db.ondigitalocean.com',
+  dialect: 'postgres'
+});
+
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: true, parameterLimit: 50000 }));
 app.use(express.static(publicDir));
@@ -22,6 +29,17 @@ app.use(express.static(publicDir));
 
 app.get('/test', (req, res, next) => {
 	res.status(200).send({ msg: `server working - ${NODE_ENV} mode` });
+});
+
+app.get('/test-database', async (req, res, next) => {
+	try {
+		await sequelize.authenticate();
+		console.log('Connection has been established successfully.');
+		res.status(200).send({ msg: 'Database connection successful' });
+	} catch (error) {
+		console.error('Unable to connect to the database:', error);
+		res.status(500).send({ msg: 'Database connection failed', error });
+	}
 });
 
 
