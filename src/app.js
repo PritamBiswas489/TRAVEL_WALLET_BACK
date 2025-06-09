@@ -59,11 +59,9 @@ app.use(express.static(publicDir));
  *         description: Server is working
  */
 app.get("/test-server", (req, res, next) => {
-  res
-    .status(200)
-    .send({
-      msg: `server working - ${NODE_ENV} mode ON PORT: ${process.env.PORT} BASE URL: ${process.env.BASE_URL}`,
-    });
+  res.status(200).send({
+    msg: `server working - ${NODE_ENV} mode ON PORT: ${process.env.PORT} BASE URL: ${process.env.BASE_URL}`,
+  });
 });
 /**
  * @swagger
@@ -127,10 +125,16 @@ app.get("/test-otp/:number/:otp_code", async (req, res) => {
 
   const { number, otp_code } = req.params;
   if (!phoneRegex.test(number)) {
-    return res.status(400).json({ error: "Invalid phone number format" });
+    return res
+      .status(400)
+      .json({
+        error: "Invalid phone number format. Format: +<country_code><number>",
+      });
   }
   if (!otpRegex.test(otp_code)) {
-    return res.status(400).json({ error: "Invalid OTP code format" });
+    return res
+      .status(400)
+      .json({ error: "Invalid OTP code format. Format: 1234" });
   }
 
   const AUTH_TOKEN =
@@ -141,90 +145,90 @@ app.get("/test-otp/:number/:otp_code", async (req, res) => {
   };
   try {
     // Step 1: Check if number exists
-          const getUrl = `https://api.respond.io/v2/contact/phone:+${number}`;
-          let response = await axios.get(getUrl, { headers });
-          console.log(`Number exists: ${number}`);
-        } catch (err) {
-          console.log(`Creating number: ${number}`);
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-          // Step 2: Create number if not found
-          const createUrl = `https://api.respond.io/v2/contact/create_or_update/phone:+${number}`;
-          const createPayload = {
-            firstName: "Customer",
-            phone: number,
-          };
-          await axios.post(createUrl, createPayload, {
-            headers: {
-              ...headers,
-              "Content-Type": "application/json",
-            },
-          });
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-        }
-        // Step 3: Send OTP message
-        const messagePayload = {
-          channelId: 93780,
-          message: {
-            type: "whatsapp_template",
-            template: {
-              name: "whatsapp_authenticator",
-              languageCode: "he",
-              components: [
-                {
-                  type: "body",
-                  text: `${otp_code} is your verification code.`,
-                  parameters: [{ type: "text", text: otp_code }],
-                },
-                {
-                  type: "buttons",
-                  buttons: [
-                    {
-                      type: "url",
-                      text: "Copy Code",
-                      url: `https://www.whatsapp.com/otp/code/?otp_type=COPY_CODE&code=otp${otp_code}`,
-                      parameters: [{ type: "text", text: otp_code }],
-                    },
-                  ],
-                },
-              ],
-            },
+    const getUrl = `https://api.respond.io/v2/contact/phone:+${number}`;
+    let response = await axios.get(getUrl, { headers });
+    console.log(`Number exists: ${number}`);
+  } catch (err) {
+    console.log(`Creating number: ${number}`);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    // Step 2: Create number if not found
+    const createUrl = `https://api.respond.io/v2/contact/create_or_update/phone:+${number}`;
+    const createPayload = {
+      firstName: "Customer",
+      phone: number,
+    };
+    await axios.post(createUrl, createPayload, {
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+  // Step 3: Send OTP message
+  const messagePayload = {
+    channelId: 93780,
+    message: {
+      type: "whatsapp_template",
+      template: {
+        name: "whatsapp_authenticator",
+        languageCode: "he",
+        components: [
+          {
+            type: "body",
+            text: `${otp_code} is your verification code.`,
+            parameters: [{ type: "text", text: otp_code }],
           },
-        };
-
-        const messageUrl = `https://api.respond.io/v2/contact/phone:+${number}/message`;
-
-        try {
-          const messageResponse = await axios.post(messageUrl, messagePayload, {
-            headers: {
-              ...headers,
-              "Content-Type": "application/json",
-            },
-          });
-
-          console.log(messageResponse.data);
-          res.json(messageResponse.data);
-        } catch (error) {
-          const errorData = error.response?.data || {};
-          const contactId = errorData.message?.contactId;
-
-          if (contactId) {
-            const fallbackUrl = `https://api.respond.io/v2/contact/id:${contactId}/message`;
-            const retryResponse = await axios.post(fallbackUrl, messagePayload, {
-              headers: {
-                ...headers,
-                "Content-Type": "application/json",
+          {
+            type: "buttons",
+            buttons: [
+              {
+                type: "url",
+                text: "Copy Code",
+                url: `https://www.whatsapp.com/otp/code/?otp_type=COPY_CODE&code=otp${otp_code}`,
+                parameters: [{ type: "text", text: otp_code }],
               },
-            });
+            ],
+          },
+        ],
+      },
+    },
+  };
 
-            console.log(retryResponse.data);
-            res.json(retryResponse.data);
-          } else {
-            console.error(errorData);
-            res
-              .status(500)
-              .json({ error: "Failed to send message", details: errorData });
-          }
-        }
+  const messageUrl = `https://api.respond.io/v2/contact/phone:+${number}/message`;
+
+  try {
+    const messageResponse = await axios.post(messageUrl, messagePayload, {
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(messageResponse.data);
+    res.json(messageResponse.data);
+  } catch (error) {
+    const errorData = error.response?.data || {};
+    const contactId = errorData.message?.contactId;
+
+    if (contactId) {
+      const fallbackUrl = `https://api.respond.io/v2/contact/id:${contactId}/message`;
+      const retryResponse = await axios.post(fallbackUrl, messagePayload, {
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log(retryResponse.data);
+      res.json(retryResponse.data);
+    } else {
+      console.error(errorData);
+      res
+        .status(500)
+        .json({ error: "Failed to send message", details: errorData });
+    }
+  }
 });
 
 export default app;
