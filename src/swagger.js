@@ -1,6 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import './config/environment.js'
-const { NODE_ENV } = process.env;
+
 
 const options = {
   definition: {
@@ -12,7 +12,7 @@ const options = {
     },
     servers: [
       {
-        url: NODE_ENV.BASE_URL || 'http://localhost:4000',
+        url:  process.env.BASE_URL || 'http://localhost:4000',
 
       },
     ],
