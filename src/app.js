@@ -11,6 +11,8 @@ import { Sequelize } from "sequelize";
 import { swaggerSpec } from "./swagger.js";
 import swaggerUi from "swagger-ui-express";
 import { default as apiRouter } from "./routes/index.router.js";
+import basicAuth from "express-basic-auth";
+
 import {
   otpWhatsappService,
   otpSmsService,
@@ -31,6 +33,12 @@ app.use(
 );
 app.use(compression());
 app.use(helmet());
+
+app.use(['/api-docs', '/swagger'], basicAuth({
+    users: { 'admin': 'admin' }, // username:password
+    challenge: true, // shows browser auth popup
+    unauthorizedResponse: (req) => 'Unauthorized',
+}));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
