@@ -10,6 +10,7 @@ import * as Sentry from "@sentry/node";
 import { Sequelize } from "sequelize";
 import { swaggerSpec } from "./swagger.js";
 import swaggerUi from "swagger-ui-express";
+import { default as apiRouter } from "./routes/index.router.js";
 import {
   otpWhatsappService,
   otpSmsService,
@@ -23,21 +24,29 @@ const publicDir =
     : pathResolve(pathJoin(dirname("./"), "public"));
 
 const app = express();
+app.use(
+  cors({
+    exposedHeaders: ["accesstoken", "refreshtoken"],
+  })
+);
 app.use(compression());
 app.use(helmet());
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+const isProduction = process.env.NODE_ENV === "production";
 const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
   host: DB_HOST,
   dialect: "postgres",
   port: DB_PORT,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  },
+  dialectOptions: isProduction
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
   logging: false,
 });
 
@@ -91,7 +100,7 @@ app.get("/test-database", async (req, res, next) => {
  * /test-otp/{number}/{otp_code}:
  *   get:
  *     summary: Test OTP verification
- *     tags: [OTP]
+ *     tags: [Testing endpoints]
  *     parameters:
  *       - in: path
  *         name: number
@@ -122,34 +131,35 @@ app.get("/test-database", async (req, res, next) => {
  *                   example: Send successful
  */
 app.get("/test-otp/:number/:otp_code", async (req, res) => {
-        //add  validation for number and otp_code phone number format +<country_code><number>
-        const phoneRegex = /^\+\d{1,3}\d{4,14}$/; // Example regex for international phone numbers
-        const otpRegex = /^\d{4}$/; // Example regex for 4-digit OTP codes
+  //add  validation for number and otp_code phone number format +<country_code><number>
+  const phoneRegex = /^\+\d{1,3}\d{4,14}$/; // Example regex for international phone numbers
+  const otpRegex = /^\d{4}$/; // Example regex for 4-digit OTP codes
 
-        const { number, otp_code } = req.params;
-        if (!phoneRegex.test(number)) {
-          return res.status(400).json({
-            error: "Invalid phone number format. Format: +<country_code><number>",
-          });
-        }
-        if (!otpRegex.test(otp_code)) {
-          return res
-            .status(400)
-            .json({ error: "Invalid OTP code format. Format: 1234" });
-        }
-        try{
-            const [whatsappResult, smsResult] = await Promise.all([
-              otpWhatsappService(number, otp_code),
-              otpSmsService(number, otp_code),
-            ]);
-            res.status(200).json({
-              whatsapp: whatsappResult,
-              sms: smsResult,
-            });
-        }catch (error) {
-            console.error("Error in OTP verification:", error);
-            return res.status(500).json({ error: "Internal server error" });
-        }  
+  const { number, otp_code } = req.params;
+  if (!phoneRegex.test(number)) {
+    return res.status(400).json({
+      error: "Invalid phone number format. Format: +<country_code><number>",
+    });
+  }
+  if (!otpRegex.test(otp_code)) {
+    return res
+      .status(400)
+      .json({ error: "Invalid OTP code format. Format: 1234" });
+  }
+  try {
+    const [whatsappResult, smsResult] = await Promise.all([
+      otpWhatsappService(number, otp_code),
+      otpSmsService(number, otp_code),
+    ]);
+    res.status(200).json({
+      whatsapp: whatsappResult,
+      sms: smsResult,
+    });
+  } catch (error) {
+    console.error("Error in OTP verification:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
+app.use('/api', apiRouter);
 
 export default app;
