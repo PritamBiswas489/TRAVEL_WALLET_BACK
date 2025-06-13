@@ -1,3 +1,4 @@
+import "../config/environment.js";
 import axios from "axios";
 import twilio from "twilio";
 
@@ -10,7 +11,7 @@ import twilio from "twilio";
  */
 export const otpWhatsappService = async (number, otp_code) => {
         const AUTH_TOKEN =
-            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mjc0OSwic3BhY2VJZCI6Njk5NTEsIm9yZ0lkIjo3NzQwOCwidHlwZSI6ImFwaSIsImlhdCI6MTY4OTAwMjIxMH0.mfnCbPYERIb-r2gZ_oNY_rLLeQNIusdtLki46i8sj8Y";
+            "Bearer "+process.env.RESPOND_IO_API_KEY ;
         const headers = {
             Accept: "application/json",
             Authorization: AUTH_TOKEN,
@@ -109,8 +110,8 @@ export const otpWhatsappService = async (number, otp_code) => {
  */
 export const otpSmsService = async (number, otp_code) => {
      try {
-         const accountSid = 'AC5c11e50be9a41261cdcf38984128998e';
-        const authToken = 'c94cd70d29db77b27efabeab7c87da8c';
+         const accountSid = process.env.TWILLO_ACCOUNT_SID;
+        const authToken = process.env.TWILLO_AUTH_TOKEN;
         const client = twilio(accountSid, authToken);
 
        const response = await client.messages
