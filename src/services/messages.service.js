@@ -129,7 +129,7 @@ export const otpSmsService = async (number, otp_code) => {
 
      } catch (error) {
          console.error("Error in SMS service:", error);
-         return {error: "Internal server error", details: error};
+         return {error: "Sms Sending failed", details: error};
      }
 
 };

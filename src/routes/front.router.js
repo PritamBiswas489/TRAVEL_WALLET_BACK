@@ -1,7 +1,9 @@
 import '../config/environment.js';
 import express from 'express';
+import { default as loginRouter } from './login.router.js';
 const router = express.Router();
 import { contactUsSaveContent , listAllContactUs} from '../controllers/contactus.controller.js';
+
 
 
 
@@ -54,5 +56,7 @@ router.post('/contact-us', async (req, res, next) => {
 router.get('/contact-us', async (req, res, next) => {
    res.send(await listAllContactUs({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers }));
 });
+
+router.use('/login',loginRouter)
 
 export default router;
