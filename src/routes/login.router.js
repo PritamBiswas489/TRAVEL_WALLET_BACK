@@ -1,7 +1,7 @@
 import "../config/environment.js";
 import express from "express";
 import { sendOtpToMobileNumber } from "../controllers/login.controller.js";
-import { createOrVerifyPinByPhoneNumber } from "../controllers/login.controller.js";
+import { createOrVerifyPinByPhoneNumber, updatePinByPhoneNumber } from "../controllers/login.controller.js";
 const router = express.Router();
 
 
@@ -59,5 +59,34 @@ router.post("/send-otp", async (req, res) => {
  */
 router.post("/create-verify-pin-by-phone-number", async (req, res) => {
    res.send(await createOrVerifyPinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers }));
+});
+/**
+ * @swagger
+ * /api/front/login/update-pin-by-phone-number:
+ *   post:
+ *     summary: Update pin by phone number
+ *     tags: 
+ *       - Login routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phoneNumber:
+ *                 type: string
+ *                 required: true
+ *                 default: "+919830990065"
+ *               pinCode:
+ *                 type: string
+ *                 required: true
+ *                 default: "1234"
+ *     responses:
+ *       200:
+ *         description: Pin updated successfully
+ */
+router.post("/update-pin-by-phone-number", async (req, res) => {
+  res.send(await updatePinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers }));
 });
 export default router;

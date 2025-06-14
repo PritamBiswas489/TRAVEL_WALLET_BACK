@@ -180,3 +180,55 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
     };
   }
 };
+/**
+ * Update pin by phone number
+ * @param {*} request
+ * @returns
+ */
+
+export const updatePinByPhoneNumber = async (request) => {
+  try{
+    const { payload } = request;
+    const updatedData = {
+      phoneNumber: payload.phoneNumber,
+      pinCode: payload.pinCode,
+    };
+
+    const [validationError, validatedData] =
+      await registerValidator(updatedData);
+    if (validationError) {
+      return validationError;
+    }
+
+    const user = await User.findOne({
+      where: { phoneNumber: validatedData?.phoneNumber },
+    });
+    if (!user) {
+      return {
+        status: 404,
+        data: [],
+        error: {
+          message: `User not found for phone number ${validatedData?.phoneNumber}`,
+        },
+      };
+    }
+
+    user.password = await hashStr(validatedData?.pinCode);
+    await user.save();
+
+    return {
+      status: 200,
+      data: {
+        phoneNumber: user.phoneNumber,
+      },
+      message: "Successfully updated pin",
+      error: {},
+    };
+  } catch (e) {
+    return {
+      status: 500,
+      data: [],
+      error: { message: "Something went wrong !", reason: e.message },
+    };
+  }
+};
