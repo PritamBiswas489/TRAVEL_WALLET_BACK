@@ -12,6 +12,7 @@ import { swaggerSpec } from "./swagger.js";
 import swaggerUi from "swagger-ui-express";
 import { default as apiRouter } from "./routes/index.router.js";
 import basicAuth from "express-basic-auth";
+import multer from "multer";
 
 import {
   otpWhatsappService,
@@ -168,6 +169,21 @@ app.get("/test-otp/:number/:otp_code", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
 app.use('/api', apiRouter);
+
+app.use('/uploads', express.static('uploads'));
+
+// Multer error handling middleware
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File size should not exceed 2MB.' });
+    }
+  } else if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+});
 
 export default app;

@@ -40,7 +40,8 @@ import { contactUsSaveContent , listAllContactUs} from '../controllers/contactus
  *         description: Content saved successfully
  */
 router.post('/contact-us', async (req, res, next) => {
-	res.send(await contactUsSaveContent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers }));
+	const response = await contactUsSaveContent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   return res.status(response.status).json(response);
 });
 //create swagger  for below router
  /**
@@ -54,7 +55,8 @@ router.post('/contact-us', async (req, res, next) => {
     *         description: Contact us endpoint is working
     */
 router.get('/contact-us', async (req, res, next) => {
-   res.send(await listAllContactUs({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers }));
+   const response = await listAllContactUs({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   return res.status(response.status).json(response);
 });
 
 router.use('/login',loginRouter)
