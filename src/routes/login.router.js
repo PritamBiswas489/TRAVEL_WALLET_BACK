@@ -29,7 +29,7 @@ const router = express.Router();
  */
 router.post("/send-otp", async (req, res) => {
   const response = await sendOtpToMobileNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-  return res.status(response.status).json(response);
+   res.return(response);
 });
 
 /**
@@ -60,7 +60,7 @@ router.post("/send-otp", async (req, res) => {
  */
 router.post("/create-verify-pin-by-phone-number", async (req, res) => {
    const response = await createOrVerifyPinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   return res.status(response.status).json(response);
+   res.return(response)
 });
 /**
  * @swagger
@@ -90,6 +90,6 @@ router.post("/create-verify-pin-by-phone-number", async (req, res) => {
  */
 router.post("/update-pin-by-phone-number", async (req, res) => {
   const response = await updatePinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-  return res.status(response.status).json(response);
+  res.return(response)
 });
 export default router;

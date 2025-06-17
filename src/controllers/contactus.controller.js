@@ -8,8 +8,9 @@ import { addContactValidator } from "../validators/contact.validator.js";
  * @returns 
  */
 export const contactUsSaveContent = async (request) => {
+  const { payload, headers: { i18n }, user } = request;
   try {
-    const { payload, user } = request;
+    
 
     const insertedData = {
       address: payload.address,
@@ -19,7 +20,7 @@ export const contactUsSaveContent = async (request) => {
       website: payload.website,
     };
 
-    const [err, validatedData] = await addContactValidator(insertedData);
+    const [err, validatedData] = await addContactValidator(insertedData, i18n);
     if (err) {
       return err;
     }
@@ -27,14 +28,14 @@ export const contactUsSaveContent = async (request) => {
     return {
       status: 200,
       data: payload,
-      message: "Content saved successfully",
+      message: i18n.__("CONTENT_SAVED_SUCCESSFULLY"),
       error: {},
     };
   } catch (e) {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };
@@ -44,19 +45,20 @@ export const contactUsSaveContent = async (request) => {
  * @returns
  */
 export const listAllContactUs = async (request) => {
+  const { payload, headers: { i18n }, user } = request;
   try {
     const result = await ContactUs.findAll();
     return {
       status: 200,
       data: result,
-      message: "Records fetched successfully",
+      message: i18n.__("RECORDS_FETCHED_SUCCESSFULLY"),
       error: {},
     };
   } catch (e) {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };

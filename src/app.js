@@ -13,6 +13,8 @@ import swaggerUi from "swagger-ui-express";
 import { default as apiRouter } from "./routes/index.router.js";
 import basicAuth from "express-basic-auth";
 import multer from "multer";
+import customReturn from "./middlewares/responseBuilder.js";
+import locales from "./middlewares/locales.js";
 
 import {
   otpWhatsappService,
@@ -34,6 +36,9 @@ app.use(
 );
 app.use(compression());
 app.use(helmet());
+app.use(locales);
+app.use(customReturn);
+
 
 app.use(['/api-docs', '/swagger'], basicAuth({
     users: { 'admin': 'admin' }, // username:password

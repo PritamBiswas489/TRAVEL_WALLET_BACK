@@ -1,19 +1,19 @@
 import joi from "joi";
 
-export const updatepinValidator = async (data) => {
+export const updatepinValidator = async (data, i18n) => {
   try {
    
     const otpRegex = /^\d{4}$/; // Example regex for 4-digit OTP codes
 
     const schema = joi.object({
      existingPinCode: joi.string().pattern(otpRegex).required().messages({
-        "string.pattern.base": "Existing pin must be a 4-digit code",
-        "any.required": "Existing pin is required",
-      }),   
-     
+        "string.pattern.base": i18n.__("EXISTING_INVALID_OTP_FORMAT"),
+        "any.required": i18n.__("EXISTING_OTP_REQUIRED"),
+      }),
+
       pinCode: joi.string().pattern(otpRegex).required().messages({
-        "string.pattern.base": "Pin must be a 4-digit code",
-        "any.required": "Pin is required",
+        "string.pattern.base": i18n.__("INVALID_OTP_FORMAT"),
+        "any.required": i18n.__("OTP_REQUIRED"),
       }),
     });
     return [null, await schema.validateAsync(data)];

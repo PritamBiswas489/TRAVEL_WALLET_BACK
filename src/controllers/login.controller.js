@@ -15,8 +15,11 @@ const { User, Op } = db;
  * @returns
  */
 export const sendOtpToMobileNumber = async (request) => {
+  const {
+    payload,
+    headers: { i18n },
+  } = request;
   try {
-    const { payload } = request;
     const otp = generateOtp(); // Generate a 4-digit OTP
     const phoneNumber = payload.phoneNumber;
     const phoneRegex = /^\+\d{1,3}\d{4,14}$/; // Example regex for international phone numbers
@@ -25,8 +28,7 @@ export const sendOtpToMobileNumber = async (request) => {
         status: 400,
         data: [],
         error: {
-          message:
-            "Invalid phone number format. Format: +<country_code><number>",
+          message: i18n.__("INVALID_PHONE_NUMBER_FORMAT"),
         },
       };
     }
@@ -41,7 +43,7 @@ export const sendOtpToMobileNumber = async (request) => {
         whatsapp: whatsappResult,
         sms: smsResult,
       },
-      message: "Otp sent successfully",
+      message: i18n.__("OTP_SENT_SUCCESSFULLY"),
       error: {},
     };
   } catch (e) {
@@ -49,7 +51,7 @@ export const sendOtpToMobileNumber = async (request) => {
       status: 500,
       data: [],
       error: {
-        message: "Otp send failed.Something went wrong !",
+        message: i18n.__("OTP_SEND_FAILED"),
         reason: e.message,
       },
     };
@@ -61,16 +63,16 @@ export const sendOtpToMobileNumber = async (request) => {
  * @returns
  */
 export const createOrVerifyPinByPhoneNumber = async (request) => {
+   const { payload, headers: { i18n } } = request;
   try {
-    const { payload } = request;
+   
     const insertedData = {
       phoneNumber: payload.phoneNumber,
       pinCode: payload.pinCode,
     };
-    
 
     const [validationError, validatedData] =
-      await registerValidator(insertedData);
+      await registerValidator(insertedData, i18n);
     if (validationError) {
       return validationError;
     }
@@ -91,7 +93,7 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
           status: 400,
           data: [],
           error: {
-            message: `Invalid pin code for this phone number ${validatedData?.phoneNumber}`,
+            message: i18n.__("EXISTING_PIN_CODE_INVALID"),
           },
         };
       }
@@ -119,7 +121,7 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
           accessToken,
           refreshToken,
         },
-        message: "Successfully verified pin",
+        message: i18n.__("SUCCESSFULLY_VERIFIED_PIN"),
         error: {},
       };
     }
@@ -134,7 +136,7 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
         return {
           status: 500,
           data: [],
-          error: { message: "Failed to create new user" },
+          error: { message: i18n.__("FAILED_TO_CREATE_NEW_USER") },
         };
       }
       const jwtpayload = {
@@ -161,7 +163,7 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
           accessToken,
           refreshToken,
         },
-        message: "Successfully created new user",
+        message: i18n.__("SUCCESSFULLY_CREATED_NEW_USER"),
         error: {},
       };
     }
@@ -169,14 +171,14 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
     return {
       status: 200,
       data: validatedData,
-      message: "Successfully created or verified pin",
+      message: i18n.__("SUCCESSFULLY_CREATED_OR_VERIFIED_PIN"),
       error: {},
     };
   } catch (e) {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };
@@ -187,15 +189,16 @@ export const createOrVerifyPinByPhoneNumber = async (request) => {
  */
 
 export const updatePinByPhoneNumber = async (request) => {
-  try{
-    const { payload } = request;
+   const { payload, headers: { i18n } } = request;
+  try {
+   
     const updatedData = {
       phoneNumber: payload.phoneNumber,
       pinCode: payload.pinCode,
     };
 
     const [validationError, validatedData] =
-      await registerValidator(updatedData);
+      await registerValidator(updatedData, i18n);
     if (validationError) {
       return validationError;
     }
@@ -208,7 +211,7 @@ export const updatePinByPhoneNumber = async (request) => {
         status: 404,
         data: [],
         error: {
-          message: `User not found for phone number ${validatedData?.phoneNumber}`,
+          message: i18n.__("USER_NOT_FOUND_WITH_PHONE", { phone: validatedData?.phoneNumber }),
         },
       };
     }
@@ -221,15 +224,14 @@ export const updatePinByPhoneNumber = async (request) => {
       data: {
         phoneNumber: user.phoneNumber,
       },
-      message: "Successfully updated pin",
+      message: i18n.__("SUCCESSFULLY_UPDATED_PIN"),
       error: {},
     };
   } catch (e) {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };
-

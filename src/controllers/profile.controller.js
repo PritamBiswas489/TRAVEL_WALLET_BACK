@@ -13,8 +13,13 @@ const { User, Op } = db;
  */
 
 export const getProfileDetails = async (request) => {
+  const {
+    payload,
+    headers: { i18n },
+    user,
+  } = request;
+
   try {
-    const { payload, user } = request;
     const userDetails = await User.findOne({
       where: { id: user.id },
       attributes: ["id", "name", "email", "phoneNumber", "role", "avatar"],
@@ -37,7 +42,7 @@ export const getProfileDetails = async (request) => {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };
@@ -48,15 +53,19 @@ export const getProfileDetails = async (request) => {
  */
 
 export const updateProfile = async (request) => {
+  const {
+    payload,
+    headers: { i18n },
+    user,
+  } = request;
   try {
-    const { payload, user } = request;
     const updatedData = {
       name: payload.name,
       email: payload.email,
     };
 
     const [validationError, validatedData] =
-      await profileEditValidator(updatedData);
+      await profileEditValidator(updatedData, i18n);
     if (validationError) {
       return validationError;
     }
@@ -66,7 +75,7 @@ export const updateProfile = async (request) => {
       return {
         status: 404,
         data: [],
-        error: { message: `User not found for id ${user.id}` },
+        error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
       };
     }
 
@@ -75,14 +84,14 @@ export const updateProfile = async (request) => {
     return {
       status: 200,
       data: validatedData,
-      message: "Profile updated successfully",
+      message: i18n.__("PROFILE_UPDATED_SUCCESSFULLY"),
       error: {},
     };
   } catch (e) {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };
@@ -93,24 +102,29 @@ export const updateProfile = async (request) => {
  */
 
 export const updateProfileAvatar = async (request) => {
+  const {
+    payload,
+    headers: { i18n },
+    user,
+  } = request;
   try {
     //upload avatar in folder from input file and get the path
-    const { payload, user } = request;
+
     if (!request.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return res.status(400).json({ error: i18n.__("NO_FILE_UPLOADED") });
     }
     const userDetails = await User.findOne({ where: { id: user.id } });
     if (!userDetails) {
       return {
         status: 404,
         data: [],
-        error: { message: `User not found for id ${user.id}` },
+        error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
       };
     }
     await userDetails.update({ avatar: `uploads/${request.file.filename}` });
     return {
       status: 200,
-      message: "Image uploaded successfully!",
+      message: i18n.__("IMAGE_UPLOADED_SUCCESSFULLY"),
       filename: request.file.filename,
       path: process.env.BASE_URL + `/uploads/${request.file.filename}`,
     };
@@ -118,7 +132,7 @@ export const updateProfileAvatar = async (request) => {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };
@@ -128,15 +142,19 @@ export const updateProfileAvatar = async (request) => {
  */
 
 export const updatePin = async (request) => {
+  const {
+    payload,
+    headers: { i18n },
+    user,
+  } = request;
   try {
-    const { payload, user } = request;
     const updatedData = {
       pinCode: payload.pinCode,
       existingPinCode: payload.existingPinCode,
     };
 
     const [validationError, validatedData] =
-      await updatepinValidator(updatedData);
+      await updatepinValidator(updatedData, i18n);
 
     if (validationError) {
       return validationError;
@@ -153,7 +171,7 @@ export const updatePin = async (request) => {
         status: 400,
         data: [],
         error: {
-          message: `Existing pin code is not valid`,
+          message: i18n.__("EXISTING_PIN_CODE_INVALID"),
         },
       };
     }
@@ -162,7 +180,7 @@ export const updatePin = async (request) => {
       return {
         status: 404,
         data: [],
-        error: { message: `User not found for id ${user.id}` },
+        error: { message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }) },
       };
     }
 
@@ -173,14 +191,51 @@ export const updatePin = async (request) => {
     return {
       status: 200,
       data: validatedData,
-      message: "Pin updated successfully",
+      message: i18n.__("PIN_UPDATED_SUCCESSFULLY"),
       error: {},
     };
   } catch (e) {
     return {
       status: 500,
       data: [],
-      error: { message: "Something went wrong !", reason: e.message },
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+    };
+  }
+};
+
+/**
+ * Remove user account
+ * @param {*} request
+ * @returns
+ */
+
+export const removeAccount = async (request) => {
+  const {
+    payload,
+    headers: { i18n },
+    user,
+  } = request;
+  try {
+    const userDetails = await User.findOne({ where: { id: user.id } });
+    if (!userDetails) {
+      return {
+        status: 404,
+        data: [],
+        error: { message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }) },
+      };
+    }
+    await userDetails.destroy();
+    return {
+      status: 200,
+      data: [],
+      message: i18n.__("ACCOUNT_REMOVED_SUCCESSFULLY"),
+      error: {},
+    };
+  } catch (e) {
+    return {
+      status: 500,
+      data: [],
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     };
   }
 };

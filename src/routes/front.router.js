@@ -41,7 +41,7 @@ import { contactUsSaveContent , listAllContactUs} from '../controllers/contactus
  */
 router.post('/contact-us', async (req, res, next) => {
 	const response = await contactUsSaveContent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   return res.status(response.status).json(response);
+   res.return(response);
 });
 //create swagger  for below router
  /**
@@ -56,7 +56,7 @@ router.post('/contact-us', async (req, res, next) => {
     */
 router.get('/contact-us', async (req, res, next) => {
    const response = await listAllContactUs({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   return res.status(response.status).json(response);
+   res.return(response)
 });
 
 router.use('/login',loginRouter)

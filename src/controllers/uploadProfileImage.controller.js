@@ -26,13 +26,14 @@ const storage = multer.diskStorage({
 
 // File type validation
 const fileFilter = (req, file, cb) => {
+  const i18n = req.headers.i18n;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
 
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Only images are allowed (jpeg, jpg, png, gif)'));
+    cb(new Error(i18n.__('ONLY_IMAGES_ALLOWED')));
   }
 };
 
@@ -45,12 +46,15 @@ const upload = multer({
 
 // Upload handler
 const uploadImage = (req, res) => {
+   const i18n = req.headers.i18n;
   if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+    return res.status(400).json({ error: i18n.__("NO_FILE_UPLOADED") });
   }
 
+ 
+
   res.status(200).json({
-    message: 'Image uploaded successfully!',
+    message: i18n.__("IMAGE_UPLOADED_SUCCESSFULLY"),
     filename: req.file.filename,
     path: `/uploads/${req.file.filename}`
   });

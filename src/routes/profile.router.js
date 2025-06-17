@@ -1,6 +1,6 @@
 import "../config/environment.js";
 import express from "express";
-import { getProfileDetails, updatePin } from "../controllers/profile.controller.js";
+import { getProfileDetails, removeAccount, updatePin } from "../controllers/profile.controller.js";
 import { updateProfile, updateProfileAvatar } from "../controllers/profile.controller.js";
 import { upload } from "../controllers/uploadProfileImage.controller.js";
  
@@ -23,7 +23,7 @@ const router = express.Router();
  */
 router.get("/detail", async (req, res, next) => {
      const profileDetails = await getProfileDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-     return res.status(profileDetails.status).json(profileDetails);
+     res.return(profileDetails);
 });
 /**
  * @swagger
@@ -56,7 +56,7 @@ router.get("/detail", async (req, res, next) => {
 
 router.put("/edit", async (req, res, next) => {
   const profileDetails = await updateProfile({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-  return res.status(profileDetails.status).json(profileDetails);
+  res.return(profileDetails);
 });
 /**
  * @swagger
@@ -84,7 +84,7 @@ router.put("/edit", async (req, res, next) => {
  */
 router.post("/upload-profile-image", upload.single("image"), async (req, res) => {
    const profileDetails = await updateProfileAvatar({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user, file: req.file });
-   return res.status(profileDetails.status).json(profileDetails);
+   res.return(profileDetails);
 })
 /**
  * @swagger
@@ -116,7 +116,27 @@ router.post("/upload-profile-image", upload.single("image"), async (req, res) =>
 
 router.put("/update-pin", async (req, res) => {
   const response = await updatePin({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-  return res.status(response.status).json(response);
+   res.return(response);
+});
+/**
+ * @swagger
+ * /api/auth/profile/delete:
+ *   delete:
+ *     summary: Remove user account
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *     responses:
+ *       200:
+ *         description: Success - User account deleted
+ */
+router.delete("/delete", async (req, res) => {
+  const response = await removeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
 });
 
 export default router;

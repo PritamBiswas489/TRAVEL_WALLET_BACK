@@ -5,6 +5,7 @@ import { generateToken } from '../libraries/auth.js';
 const { ACCESS_TOKEN_SECRET_KEY, REFRESH_TOKEN_SECRET_KEY, JWT_ALGO, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = process.env;
 
 export default (req, res, next) => {
+	const i18n = req.headers.i18n;
 	try {
 		const { authorization, refreshtoken } = req.headers;
 
@@ -12,7 +13,7 @@ export default (req, res, next) => {
 			return res.send({
 				status: 401,
 				data: [],
-				error: { message: 'Unathorize action', reason: 'Token not found !' },
+				error: { message: i18n.__("UNAUTHORIZED_ACTION"), reason: i18n.__("TOKEN_NOT_FOUND") },
 			});
 		}
 		const token = authorization.split(' ')[1];
@@ -25,12 +26,12 @@ export default (req, res, next) => {
 				return res.send({
 					status: 401,
 					data: [],
-					error: { message: 'Unathorize action', reason: 'Refresh token not found !' },
+					error: { message: i18n.__("UNAUTHORIZED_ACTION"), reason: i18n.__("REFRESH_TOKEN_NOT_FOUND") },
 				});
 			}
 			jwt.verify(refreshtoken, REFRESH_TOKEN_SECRET_KEY, async (err, data) => {
 				if (err) {
-					return res.send({ status: 401, data: [], error: { message: 'Unathorize action' } });
+					return res.send({ status: 401, data: [], error: { message: i18n.__("UNAUTHORIZED_ACTION") } });
 				}
 
 				const payload = {
@@ -54,6 +55,6 @@ export default (req, res, next) => {
 			});
 		}
 	} catch (e) {
-		res.send({ status: 500, data: [], error: { message: 'Something went wrong !', reason: e.message } });
+		res.send({ status: 500, data: [], error: { message: i18n.__("CATCH_ERROR"), reason: e.message } });
 	}
 };

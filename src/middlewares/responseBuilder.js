@@ -17,7 +17,7 @@ function buildCustomResponse(data, options = {}) {
 export default function customReturn(req, res, next) {
 	res.return = function (data, options = {}) {
 		const customResponse = buildCustomResponse(data, options);
-		res.status(customResponse.statusCode);
+		res.status(data?.status || customResponse.statusCode);
 		res.set(customResponse.headers);
 		const body = {
 			meta: {
