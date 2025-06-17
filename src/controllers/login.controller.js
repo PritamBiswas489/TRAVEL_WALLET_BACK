@@ -22,6 +22,7 @@ export const sendOtpToMobileNumber = async (request) => {
   try {
     const otp = generateOtp(); // Generate a 4-digit OTP
     const phoneNumber = payload.phoneNumber;
+    const messageType = payload.messageType || "whatsapp"; // Default to whatsapp if not specified
     const phoneRegex = /^\+\d{1,3}\d{4,14}$/; // Example regex for international phone numbers
     if (!phoneRegex.test(phoneNumber)) {
       return {
@@ -34,14 +35,39 @@ export const sendOtpToMobileNumber = async (request) => {
     }
     // Here you would typically send the OTP to the phone number using an SMS service
     const [whatsappResult, smsResult] = await Promise.all([
-      otpWhatsappService(phoneNumber, otp),
-      otpSmsService(phoneNumber, otp),
+        messageType === "whatsapp" ? otpWhatsappService(phoneNumber, otp) : null,
+        messageType === "sms" ? otpSmsService(phoneNumber, otp) : null,
     ]);
+    if(messageType === 'sms'){
+        if(smsResult?.error){
+            return {
+                status: 500,
+                data: [],
+                error: {
+                    message: i18n.__("SMS_SEND_FAILED"),
+                    reason: smsResult.error,
+                },
+            };
+        }
+    }
+    if(messageType === 'whatsapp'){
+        if(whatsappResult?.error){
+            return {
+                status: 500,
+                data: [],
+                error: {
+                    message: i18n.__("WHATSAPP_SEND_FAILED"),
+                    reason: whatsappResult.error,
+                },
+            };
+        }
+    }
     return {
       status: 200,
       data: {
         whatsapp: whatsappResult,
         sms: smsResult,
+        otp
       },
       message: i18n.__("OTP_SENT_SUCCESSFULLY"),
       error: {},

@@ -23,6 +23,11 @@ const router = express.Router();
  *                 type: string
  *                 required: true
  *                 default: "+919830990065"
+ *               messageType:
+ *                type: string
+ *                required: true
+ *                enum: ["whatsapp", "sms"]
+ *                default: "whatsapp"
  *     responses:
  *       200:
  *         description: OTP sent successfully

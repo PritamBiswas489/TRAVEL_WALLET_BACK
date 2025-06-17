@@ -112,6 +112,8 @@ export const otpSmsService = async (number, otp_code) => {
      try {
          const accountSid = process.env.TWILLO_ACCOUNT_SID;
         const authToken = process.env.TWILLO_AUTH_TOKEN;
+        console.log("Twilio Account SID:", accountSid);
+        console.log("Twilio Auth Token:", authToken);
         const client = twilio(accountSid, authToken);
 
        const response = await client.messages
@@ -130,7 +132,7 @@ export const otpSmsService = async (number, otp_code) => {
 
      } catch (error) {
          console.error("Error in SMS service:", error);
-         return {error: "Sms Sending failed", details: error};
+         return {error: "Sms Sending failed "+error.message, details: error};
      }
 
 };

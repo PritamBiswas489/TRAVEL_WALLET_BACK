@@ -33,6 +33,8 @@
 	"INVALID_OTP_FORMAT": "פורמט OTP לא חוקי. זה צריך להיות קוד בן 4 ספרות",
 	"OTP_REQUIRED": "OTP נדרש",
 	"EXISTING_INVALID_OTP_FORMAT": "פורמט OTP הקיים אינו חוקי. זה צריך להיות קוד בן 4 ספרות",
-	"EXISTING_OTP_REQUIRED": "OTP הקיים נדרש"
+	"EXISTING_OTP_REQUIRED": "OTP הקיים נדרש",
+	"SMS_SEND_FAILED": "שליחת SMS נכשלה",
+	"WHATSAPP_SEND_FAILED": "שליחת הודעת WhatsApp נכשלה"
 
 }
