@@ -2,7 +2,7 @@ import '../config/environment.js';
 import express from 'express';
 import { default as loginRouter } from './login.router.js';
 const router = express.Router();
-import { contactUsSaveContent , listAllContactUs} from '../controllers/contactus.controller.js';
+import ContactUsController from '../controllers/contactus.controller.js';
 
 
 
@@ -40,7 +40,7 @@ import { contactUsSaveContent , listAllContactUs} from '../controllers/contactus
  *         description: Content saved successfully
  */
 router.post('/contact-us', async (req, res, next) => {
-	const response = await contactUsSaveContent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+	const response = await ContactUsController.saveContent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });
 //create swagger  for below router
@@ -55,7 +55,7 @@ router.post('/contact-us', async (req, res, next) => {
     *         description: Contact us endpoint is working
     */
 router.get('/contact-us', async (req, res, next) => {
-   const response = await listAllContactUs({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   const response = await ContactUsController.listAll({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response)
 });
 

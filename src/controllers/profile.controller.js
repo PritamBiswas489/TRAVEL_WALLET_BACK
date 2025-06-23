@@ -2,240 +2,224 @@ import db from "../databases/models/index.js";
 import "../config/environment.js";
 import { profileEditValidator } from "../validators/profileedit.validator.js";
 import { upload } from "./uploadProfileImage.controller.js";
-import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
+import { hashStr, compareHashedStr } from "../libraries/auth.js";
 import { updatepinValidator } from "../validators/updatepin.validator.js";
+import * as Sentry from "@sentry/node";
 
 const { User, Op } = db;
-/**
- * Get user profile details
- * @param {*} request
- * @returns
- */
 
-export const getProfileDetails = async (request) => {
-  const {
-    payload,
-    headers: { i18n },
-    user,
-  } = request;
+export default class ProfileController {
 
-  try {
-    const userDetails = await User.findOne({
-      where: { id: user.id },
-      attributes: ["id", "name", "email", "phoneNumber", "role", "avatar"],
-    });
-    if (
-      userDetails.avatar &&
-      userDetails.avatar !== null &&
-      userDetails.avatar !== undefined &&
-      userDetails.avatar !== ""
-    ) {
-      userDetails.avatar = process.env.BASE_URL + "/" + userDetails.avatar;
-    }
-    return {
-      status: 200,
-      data: userDetails,
-      message: "",
-      error: {},
-    };
-  } catch (e) {
-    return {
-      status: 500,
-      data: [],
-      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
-    };
-  }
-};
-/**
- *  Update user profile
- * @param {*} request
- * @returns
- */
+    /**
+     * Get user profile details
+     */
+    static async getProfileDetails(request) {
+        const { headers: { i18n }, user } = request;
 
-export const updateProfile = async (request) => {
-  const {
-    payload,
-    headers: { i18n },
-    user,
-  } = request;
-  try {
-    const updatedData = {
-      name: payload.name,
-      email: payload.email,
-    };
+        try {
+            const userDetails = await User.findOne({
+                where: { id: user.id },
+                attributes: ["id", "name", "email", "phoneNumber", "role", "avatar"],
+            });
 
-    const [validationError, validatedData] =
-      await profileEditValidator(updatedData, i18n);
-    if (validationError) {
-      return validationError;
+            if (userDetails?.avatar) {
+                userDetails.avatar = `${process.env.BASE_URL}/${userDetails.avatar}`;
+            }
+
+            return {
+                status: 200,
+                data: userDetails,
+                message: "",
+                error: {}
+            };
+
+        } catch (e) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+            return {
+                status: 500,
+                data: [],
+                error: { message: i18n.__("CATCH_ERROR"), reason: e.message }
+            };
+        }
     }
 
-    const userDetails = await User.findOne({ where: { id: user.id } });
-    if (!userDetails) {
-      return {
-        status: 404,
-        data: [],
-        error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
-      };
+    /**
+     * Update user profile
+     */
+    static async updateProfile(request) {
+        const { payload, headers: { i18n }, user } = request;
+
+        try {
+            const updatedData = { name: payload.name, email: payload.email };
+
+            const [validationError, validatedData] = await profileEditValidator(updatedData, i18n);
+            if (validationError) return validationError;
+
+            const userDetails = await User.findOne({ where: { id: user.id } });
+
+            if (!userDetails) {
+                return {
+                    status: 404,
+                    data: [],
+                    error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) }
+                };
+            }
+
+            await userDetails.update(validatedData);
+
+            return {
+                status: 200,
+                data: validatedData,
+                message: i18n.__("PROFILE_UPDATED_SUCCESSFULLY"),
+                error: {}
+            };
+
+        } catch (e) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+            return {
+                status: 500,
+                data: [],
+                error: { message: i18n.__("CATCH_ERROR"), reason: e.message }
+            };
+        }
     }
 
-    await userDetails.update(validatedData);
+    /**
+     * Update user profile avatar
+     */
+    static async updateProfileAvatar(request) {
+        const { headers: { i18n }, user } = request;
 
-    return {
-      status: 200,
-      data: validatedData,
-      message: i18n.__("PROFILE_UPDATED_SUCCESSFULLY"),
-      error: {},
-    };
-  } catch (e) {
-    return {
-      status: 500,
-      data: [],
-      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
-    };
-  }
-};
-/**
- * Update user profile avatar
- * @param {*} request
- * @returns
- */
+        try {
+            if (!request.file) {
+                return {
+                    status: 400,
+                    data: [],
+                    error: { message: i18n.__("NO_FILE_UPLOADED") }
+                };
+            }
 
-export const updateProfileAvatar = async (request) => {
-  const {
-    payload,
-    headers: { i18n },
-    user,
-  } = request;
-  try {
-    //upload avatar in folder from input file and get the path
+            const userDetails = await User.findOne({ where: { id: user.id } });
 
-    if (!request.file) {
-      return res.status(400).json({ error: i18n.__("NO_FILE_UPLOADED") });
-    }
-    const userDetails = await User.findOne({ where: { id: user.id } });
-    if (!userDetails) {
-      return {
-        status: 404,
-        data: [],
-        error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
-      };
-    }
-    await userDetails.update({ avatar: `uploads/${request.file.filename}` });
-    return {
-      status: 200,
-      message: i18n.__("IMAGE_UPLOADED_SUCCESSFULLY"),
-      filename: request.file.filename,
-      path: process.env.BASE_URL + `/uploads/${request.file.filename}`,
-    };
-  } catch (e) {
-    return {
-      status: 500,
-      data: [],
-      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
-    };
-  }
-};
-/**
- * Update pin
- * @param {*} request
- */
+            if (!userDetails) {
+                return {
+                    status: 404,
+                    data: [],
+                    error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) }
+                };
+            }
 
-export const updatePin = async (request) => {
-  const {
-    payload,
-    headers: { i18n },
-    user,
-  } = request;
-  try {
-    const updatedData = {
-      pinCode: payload.pinCode,
-      existingPinCode: payload.existingPinCode,
-    };
+            await userDetails.update({ avatar: `uploads/${request.file.filename}` });
 
-    const [validationError, validatedData] =
-      await updatepinValidator(updatedData, i18n);
+            return {
+                status: 200,
+                message: i18n.__("IMAGE_UPLOADED_SUCCESSFULLY"),
+                filename: request.file.filename,
+                path: `${process.env.BASE_URL}/uploads/${request.file.filename}`
+            };
 
-    if (validationError) {
-      return validationError;
+        } catch (e) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+            return {
+                status: 500,
+                data: [],
+                error: { message: i18n.__("CATCH_ERROR"), reason: e.message }
+            };
+        }
     }
 
-    const userDetails = await User.findOne({ where: { id: user.id } });
+    /**
+     * Update user PIN
+     */
+    static async updatePin(request) {
+        const { payload, headers: { i18n }, user } = request;
 
-    const isPinCodeValid = await compareHashedStr(
-      validatedData?.existingPinCode,
-      userDetails?.password
-    );
-    if (!isPinCodeValid) {
-      return {
-        status: 400,
-        data: [],
-        error: {
-          message: i18n.__("EXISTING_PIN_CODE_INVALID"),
-        },
-      };
+        try {
+            const updatedData = {
+                pinCode: payload.pinCode,
+                existingPinCode: payload.existingPinCode
+            };
+
+            const [validationError, validatedData] = await updatepinValidator(updatedData, i18n);
+            if (validationError) return validationError;
+
+            const userDetails = await User.findOne({ where: { id: user.id } });
+
+            if (!userDetails) {
+                return {
+                    status: 404,
+                    data: [],
+                    error: { message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }) }
+                };
+            }
+
+            const isPinCodeValid = await compareHashedStr(
+                validatedData?.existingPinCode,
+                userDetails?.password
+            );
+
+            if (!isPinCodeValid) {
+                return {
+                    status: 400,
+                    data: [],
+                    error: { message: i18n.__("EXISTING_PIN_CODE_INVALID") }
+                };
+            }
+
+            await userDetails.update({
+                password: await hashStr(validatedData?.pinCode)
+            });
+
+            return {
+                status: 200,
+                data: validatedData,
+                message: i18n.__("PIN_UPDATED_SUCCESSFULLY"),
+                error: {}
+            };
+
+        } catch (e) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+            return {
+                status: 500,
+                data: [],
+                error: { message: i18n.__("CATCH_ERROR"), reason: e.message }
+            };
+        }
     }
 
-    if (!userDetails) {
-      return {
-        status: 404,
-        data: [],
-        error: { message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }) },
-      };
+    /**
+     * Remove user account
+     */
+    static async removeAccount(request) {
+        const { headers: { i18n }, user } = request;
+
+        try {
+            const userDetails = await User.findOne({ where: { id: user.id } });
+
+            if (!userDetails) {
+                return {
+                    status: 404,
+                    data: [],
+                    error: { message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }) }
+                };
+            }
+
+            await userDetails.destroy();
+
+            return {
+                status: 200,
+                data: [],
+                message: i18n.__("ACCOUNT_REMOVED_SUCCESSFULLY"),
+                error: {}
+            };
+
+        } catch (e) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+            return {
+                status: 500,
+                data: [],
+                error: { message: i18n.__("CATCH_ERROR"), reason: e.message }
+            };
+        }
     }
-
-    await userDetails.update({
-      password: await hashStr(validatedData?.pinCode),
-    });
-
-    return {
-      status: 200,
-      data: validatedData,
-      message: i18n.__("PIN_UPDATED_SUCCESSFULLY"),
-      error: {},
-    };
-  } catch (e) {
-    return {
-      status: 500,
-      data: [],
-      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
-    };
-  }
-};
-
-/**
- * Remove user account
- * @param {*} request
- * @returns
- */
-
-export const removeAccount = async (request) => {
-  const {
-    payload,
-    headers: { i18n },
-    user,
-  } = request;
-  try {
-    const userDetails = await User.findOne({ where: { id: user.id } });
-    if (!userDetails) {
-      return {
-        status: 404,
-        data: [],
-        error: { message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }) },
-      };
-    }
-    await userDetails.destroy();
-    return {
-      status: 200,
-      data: [],
-      message: i18n.__("ACCOUNT_REMOVED_SUCCESSFULLY"),
-      error: {},
-    };
-  } catch (e) {
-    return {
-      status: 500,
-      data: [],
-      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
-    };
-  }
-};
+}

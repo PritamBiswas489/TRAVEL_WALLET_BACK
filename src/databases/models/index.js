@@ -4,7 +4,7 @@ import { readdirSync } from 'fs';
 import { dirname, join, basename as _basename } from 'path';
 import chalk from 'chalk';
 import { Sequelize, DataTypes, Op } from 'sequelize';
-// import relation from './relation.js';
+import relation from './relation.js';
 
 const { database, password, username, options } = dbConfig;
 
@@ -29,15 +29,21 @@ const db = {};
 await (async () => {
 	const modelDirectoryPath = dirname(fileURLToPath(import.meta.url));
 	const allModelFiles = readdirSync(modelDirectoryPath).filter((file) => file.indexOf('.') !== 0 && file !== baseFilename && file.slice(-3) === '.js' && file !== 'relation.js');
+	
 	// eslint-disable-next-line no-restricted-syntax
 	for (const file of allModelFiles) {
+		
 		const modelFile = join(modelDirectoryPath, file);
 		// eslint-disable-next-line no-await-in-loop
 		const { default: model } = await import(pathToFileURL(modelFile));
+
+		
+		
 		db[model.name] = model(sequelize, DataTypes);
+		// console.log(db);
 	}
 })();
-// relation(db);
+relation(db);
 //Sequelize sync means it will create the tables in the database if they do not exist, based on the models defined.
 sequelize.sync();
 //Op means operators in Sequelize, which are used for building complex queries.

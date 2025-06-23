@@ -7,8 +7,16 @@ const options = {
     info: {
       title: "Travel Wallet API",
       version: "1.0.0",
-      description: "API docs with Swagger",
+      description: "API docs with Swagger for travel wallet",
     },
+    tags: [
+      { name: 'Testing endpoints', description: 'Endpoints for testing purposes' },
+      { name: 'Non authenticated routes', description: 'Endpoints that do not require authentication' },
+      { name: 'Login routes', description: 'User login endpoints' },
+      { name: 'Auth-Profile routes', description: 'User profile management endpoints' },
+      { name: 'Currency routes', description: 'Currency management endpoints' },
+      { name: 'Auth-Deposit routes', description: 'Pelecard deposit endpoints' }
+    ],
     servers: [
       {
         url: process.env.BASE_URL || "http://localhost:4000",

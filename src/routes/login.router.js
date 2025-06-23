@@ -1,7 +1,6 @@
 import "../config/environment.js";
 import express from "express";
-import { sendOtpToMobileNumber } from "../controllers/login.controller.js";
-import { createOrVerifyPinByPhoneNumber, updatePinByPhoneNumber } from "../controllers/login.controller.js";
+import LoginController from "../controllers/login.controller.js";
 const router = express.Router();
 
 
@@ -33,7 +32,7 @@ const router = express.Router();
  *         description: OTP sent successfully
  */
 router.post("/send-otp", async (req, res) => {
-  const response = await sendOtpToMobileNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+  const response = await LoginController.sendOtpToMobileNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });
 
@@ -64,7 +63,7 @@ router.post("/send-otp", async (req, res) => {
  *         description: User retrieved successfully
  */
 router.post("/create-verify-pin-by-phone-number", async (req, res) => {
-   const response = await createOrVerifyPinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   const response = await LoginController.createOrVerifyPinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response)
 });
 /**
@@ -94,7 +93,7 @@ router.post("/create-verify-pin-by-phone-number", async (req, res) => {
  *         description: Pin updated successfully
  */
 router.post("/update-pin-by-phone-number", async (req, res) => {
-  const response = await updatePinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+  const response = await LoginController.updatePinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
   res.return(response)
 });
 export default router;

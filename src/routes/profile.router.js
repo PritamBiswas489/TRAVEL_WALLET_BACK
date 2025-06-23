@@ -1,7 +1,7 @@
 import "../config/environment.js";
 import express from "express";
-import { getProfileDetails, removeAccount, updatePin } from "../controllers/profile.controller.js";
-import { updateProfile, updateProfileAvatar } from "../controllers/profile.controller.js";
+ 
+import ProfileController from "../controllers/profile.controller.js";
 import { upload } from "../controllers/uploadProfileImage.controller.js";
  
 const router = express.Router();
@@ -22,7 +22,7 @@ const router = express.Router();
  *         description: Success - User profile retrieved
  */
 router.get("/detail", async (req, res, next) => {
-     const profileDetails = await getProfileDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+     const profileDetails = await ProfileController.getProfileDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
      res.return(profileDetails);
 });
 /**
@@ -55,7 +55,7 @@ router.get("/detail", async (req, res, next) => {
  */
 
 router.put("/edit", async (req, res, next) => {
-  const profileDetails = await updateProfile({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  const profileDetails = await ProfileController.updateProfile({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(profileDetails);
 });
 /**
@@ -83,7 +83,7 @@ router.put("/edit", async (req, res, next) => {
  *         description: Bad Request - Invalid file type or size
  */
 router.post("/upload-profile-image", upload.single("image"), async (req, res) => {
-   const profileDetails = await updateProfileAvatar({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user, file: req.file });
+   const profileDetails = await ProfileController.updateProfileAvatar({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user, file: req.file });
    res.return(profileDetails);
 })
 /**
@@ -115,7 +115,7 @@ router.post("/upload-profile-image", upload.single("image"), async (req, res) =>
  */
 
 router.put("/update-pin", async (req, res) => {
-  const response = await updatePin({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  const response = await ProfileController.updatePin({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
 /**
@@ -135,7 +135,7 @@ router.put("/update-pin", async (req, res) => {
  *         description: Success - User account deleted
  */
 router.delete("/delete", async (req, res) => {
-  const response = await removeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  const response = await ProfileController.removeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
 

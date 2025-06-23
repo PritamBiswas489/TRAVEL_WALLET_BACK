@@ -35,6 +35,14 @@
 	"EXISTING_INVALID_OTP_FORMAT": "פורמט OTP הקיים אינו חוקי. זה צריך להיות קוד בן 4 ספרות",
 	"EXISTING_OTP_REQUIRED": "OTP הקיים נדרש",
 	"SMS_SEND_FAILED": "שליחת SMS נכשלה",
-	"WHATSAPP_SEND_FAILED": "שליחת הודעת WhatsApp נכשלה"
-
+	"WHATSAPP_SEND_FAILED": "שליחת הודעת WhatsApp נכשלה",
+	"RATES_NOT_AVAILABLE": "Rates not available for ILS or THB",
+	"RATES_AVAILABLE": "Rates available for ILS and THB",
+	"CURRENCY_UPDATE_FAILED": "Failed to update currency rates",
+	"CURRENCY_UPDATED_SUCCESSFULLY": "Currency rates updated successfully",
+	"CURRENCY_RETRIEVED_SUCCESSFULLY": "Currency rates retrieved successfully",
+	"PELECARD_CONVERT_TO_TOKEN_FAILED": "Failed to convert Pelecard to token",
+	"PELECARD_USER_CARD_LIST_FETCHED": "Card list fetched successfully",
+	"USER_CARD_NOT_FOUND": "User card not found",
+	"USER_CARD_REMOVED_SUCCESSFULLY": "User card removed successfully"
 }

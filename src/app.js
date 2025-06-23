@@ -15,20 +15,37 @@ import basicAuth from "express-basic-auth";
 import multer from "multer";
 import customReturn from "./middlewares/responseBuilder.js";
 import locales from "./middlewares/locales.js";
+import { initializeSentry } from "./config/sentry.config.js";
+
+// import "./cron/index.js"
 
 import {
   otpWhatsappService,
   otpSmsService,
 } from "./services/messages.service.js";
 
-const { NODE_ENV, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_PORT } =
-  process.env;
+const {
+  NODE_ENV,
+  DB_HOST,
+  DB_DATABASE,
+  DB_USERNAME,
+  DB_PASSWORD,
+  DB_PORT,
+  SENTRY_DSN,
+  SENTRY_ENABLED,
+} = process.env;
 const publicDir =
   NODE_ENV === "development"
     ? pathResolve(pathJoin(dirname("./"), "public"))
     : pathResolve(pathJoin(dirname("./"), "public"));
 
 const app = express();
+
+if (SENTRY_ENABLED === "true") {
+  (async () => {
+    await initializeSentry(SENTRY_DSN);
+  })();
+}
 app.use(
   cors({
     exposedHeaders: ["accesstoken", "refreshtoken"],
@@ -39,12 +56,14 @@ app.use(helmet());
 app.use(locales);
 app.use(customReturn);
 
-
-app.use(['/api-docs', '/swagger'], basicAuth({
-    users: { 'admin': 'admin' }, // username:password
+app.use(
+  ["/api-docs", "/swagger"],
+  basicAuth({
+    users: { admin: "admin" }, // username:password
     challenge: true, // shows browser auth popup
-    unauthorizedResponse: (req) => 'Unauthorized',
-}));
+    unauthorizedResponse: (req) => "Unauthorized",
+  })
+);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -175,15 +194,30 @@ app.get("/test-otp/:number/:otp_code", async (req, res) => {
   }
 });
 
-app.use('/api', apiRouter);
+app.get("/test-error2", (req, res) => {
+  try {
+    NeverFoundFunction();
+  } catch (e) {
+    SENTRY_ENABLED === "true" && Sentry.captureException(e);
+    res.status(500).send({ error: "something went wrong" });
+  }
+});
 
-app.use('/uploads', express.static('uploads'));
+app.use("/api", apiRouter);
+if (SENTRY_ENABLED === "true") {
+  (async () => {
+    Sentry.setupExpressErrorHandler(app);
+  })();
+}
+app.use("/uploads", express.static("uploads"));
 
 // Multer error handling middleware
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File size should not exceed 2MB.' });
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(400)
+        .json({ error: "File size should not exceed 2MB." });
     }
   } else if (err) {
     return res.status(400).json({ error: err.message });

@@ -35,5 +35,17 @@
 	"EXISTING_INVALID_OTP_FORMAT": "Existing OTP format is invalid. It should be a 4-digit code",
 	"EXISTING_OTP_REQUIRED": "Existing OTP is required",
 	"SMS_SEND_FAILED": "SMS sending failed",
-	"WHATSAPP_SEND_FAILED": "WhatsApp message sending failed"
+	"WHATSAPP_SEND_FAILED": "WhatsApp message sending failed",
+	"RATES_NOT_AVAILABLE": "Rates not available for ILS or THB",
+	"RATES_AVAILABLE": "Rates available for ILS and THB",
+	"CURRENCY_UPDATE_FAILED": "Failed to update currency rates",
+	"CURRENCY_UPDATED_SUCCESSFULLY": "Currency rates updated successfully",
+	"CURRENCY_RETRIEVED_SUCCESSFULLY": "Currency rates retrieved successfully",
+	"PELECARD_CONVERT_TO_TOKEN_FAILED": "Failed to convert Pelecard to token",
+	"PELECARD_SAVE_CARD_FAILED": "PELECARD_SAVE_CARD_FAILED",
+	"CARD_DETAILS_SAVED_SUCCESSFULLY": "CARD_DETAILS_SAVED_SUCCESSFULLY",
+	"PELECARD_USER_CARD_LIST_FETCHED": "Card list fetched successfully",
+	"USER_CARD_NOT_FOUND": "User card not found",
+	"USER_CARD_REMOVED_SUCCESSFULLY": "User card removed successfully"
+	 
 }
