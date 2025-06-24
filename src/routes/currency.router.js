@@ -14,8 +14,12 @@ import CurrencyController from "../controllers/currency.controller.js";
  *         description: Success - Exchange rates retrieved
  */
 router.get("/fixerExchangeRates", async (req, res, next) => {
-    const exchangeRates = await CurrencyController.fixerExchangeRates({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-    res.return(exchangeRates);
+  const exchangeRates = await CurrencyController.fixerExchangeRates({
+    payload: { ...req.params, ...req.query, ...req.body },
+    headers: req.headers,
+    user: req.user,
+  });
+  res.return(exchangeRates);
 });
 
 /**
@@ -41,10 +45,14 @@ router.get("/fixerExchangeRates", async (req, res, next) => {
  *         description: Internal Server Error
  */
 
-router.get("/rateByCode",async (req, res, next) => {
-    const currency = await CurrencyController.getCurrencyByCode({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-    res.return(currency);
-})
+router.get("/rateByCode", async (req, res, next) => {
+  const currency = await CurrencyController.getCurrencyByCode({
+    payload: { ...req.params, ...req.query, ...req.body },
+    headers: req.headers,
+    user: req.user,
+  });
+  res.return(currency);
+});
 /**
  * @swagger
  * /api/currency/allCurrencies:
@@ -59,9 +67,54 @@ router.get("/rateByCode",async (req, res, next) => {
  *         description: Internal Server Error
  */
 router.get("/allCurrencies", async (req, res, next) => {
-    const currencies = await CurrencyController.getAllCurrencies({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-    res.return(currencies);
+  const currencies = await CurrencyController.getAllCurrencies({
+    payload: { ...req.params, ...req.query, ...req.body },
+    headers: req.headers,
+    user: req.user,
+  });
+  res.return(currencies);
 });
 
+/**
+ * @swagger
+ * /api/currency/amount-convert-to-thb:
+ *   post:
+ *     summary: Convert amount to THB
+ *     tags:
+ *       - Currency routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *               fromCurrency:
+ *                 type: string
+ *                 example: ILS
+ *     responses:
+ *       200:
+ *         description: Success - Amount converted to THB
+ */
+
+router.post("/amount-convert-to-thb", async (req, res, next) => {
+  try {
+    const result = await CurrencyController.convertToTHB({
+      payload: { ...req.params, ...req.query, ...req.body },
+      headers: req.headers,
+    });
+    res.return(result);
+  } catch (e) {
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+    res.return({
+      status: 500,
+      data: [],
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+    });
+  }
+});
 
 export default router;

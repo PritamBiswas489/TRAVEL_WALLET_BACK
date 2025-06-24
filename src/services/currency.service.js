@@ -62,4 +62,18 @@ export default class CurrencyService {
             return { ERROR: 1 };
         }
     }
+    static async convertToTHB(amount, fromCurrency) {
+        try {
+            const currency = await Currency.findOne({ where: { code: `${fromCurrency}_TO_THB` } });
+            
+            if (!currency) {
+                return { ERROR: 1 };
+            }
+            const convertedAmount = Math.round(amount * currency.value);
+            return { data: { amount, convertedAmount, [`${fromCurrency}_TO_THB`]: currency.value } };
+        } catch (e) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+            return { ERROR: 1 };
+        }
+    }
 }

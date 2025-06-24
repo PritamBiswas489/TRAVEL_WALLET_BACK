@@ -5,6 +5,8 @@ import CurrencyService from "../services/currency.service.js";
 import * as Sentry from "@sentry/node";
 import PeleCardService from "../services/peleCard.service.js";
 import DepositService from "../services/deposit.service.js";
+import { peleCardValidator } from "../validators/peleAddCard.validator.js";
+import { peleAddToWalletValidator } from "../validators/peleAddToWallet.validator.js";
 const { User, UserCard, Currency, Op } = db;
 
 export default class DepositController {
@@ -16,6 +18,19 @@ export default class DepositController {
     } = request;
     try {
       const { cardholderName, cardNumber, creditCardDateMmYy, cvv } = payload;
+
+      const [validationError, validatedData] = await peleCardValidator(
+        {
+          cardholderName,
+          cardNumber,
+          creditCardDateMmYy,
+          cvv,
+        },
+        i18n
+      );
+      if (validationError) {
+        return validationError;
+      }
       const currentLocale = i18n.getLocale();
       const response = await PeleCardService.ConvertToToken({
         cardholderName,
@@ -120,12 +135,12 @@ export default class DepositController {
           },
         ],
       });
-     if (!userWithCards) {
-                return {
-                    status: 404,
-                    data: [],
-                    error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
-                };
+      if (!userWithCards) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
+        };
       }
       return {
         status: 200,
@@ -180,4 +195,43 @@ export default class DepositController {
       };
     }
   }
+  static async makePaymentAddToWallet(request) {
+      const {
+        payload,
+        headers: { i18n },
+        user,
+      } = request;
+
+      try {
+        const [validationError, validatedData] = await peleAddToWalletValidator(
+          payload,
+          i18n
+        );
+        if (validationError) {
+            return validationError;
+        }
+
+        console.log("validatedData", validatedData);
+
+        //Check card token in user cards record
+
+        //Make Payment to PeleCard
+
+
+        //Add Payment details in payment table
+
+        //update user wallet balance
+
+        //update transaction history on failed or success payment
+
+      }catch (e) {
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+        return {
+          status: 500,
+          data: [],
+          error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        };
+      }
+    }
+
 }

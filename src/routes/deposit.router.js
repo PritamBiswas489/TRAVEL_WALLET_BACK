@@ -66,6 +66,39 @@ router.get('/pelecard-user-card-list', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/deposit/pelecard-make-payment-add-to-wallet:
+ *   post:
+ *     summary: Make payment and add to wallet using Pelecard
+ *     tags:
+ *       - Auth-Deposit routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *               fromCurrency:
+ *                 type: string
+ *                 example: ILS
+ *               cardToken:
+ *                type:  string 
+ *                example: 4206129454
+ *     responses:
+ *       200:
+ *         description: Success -  Payment made and added to wallet
+ */
+router.post('/pelecard-make-payment-add-to-wallet', async (req, res, next) => {
+  const response = await depositController.makePaymentAddToWallet({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+
+/**
+ * @swagger
  * /api/auth/deposit/pelecard-user-card-delete/{cardId}:
  *   delete:
  *     summary: Remove user card from Pelecard payment gateway
