@@ -1,9 +1,9 @@
 import "../config/environment.js";
 import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
-import axios from "axios";
-import { getPeleCardCurrencyNumber } from "../libraries/utility.js";
+import { getPeleCardCurrencyNumber, amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import CurrencyService from "./currency.service.js";
+import SettingsService from "./settings.service.js";
 const { WalletPelePayment, Op, User, UserWallet } = db;
 
 export default class WalletService {
@@ -14,6 +14,7 @@ export default class WalletService {
   ) {
     // console.log("user id ", paymentData.userId);
     try {
+        let currencyDetails = {};
       if (paymentData.StatusCode === "000") {
         const currencies = getPeleCardCurrencyNumber();
         const formCurrency =
@@ -26,16 +27,19 @@ export default class WalletService {
         if (!thbrate?.data?.value) {
           return { ERROR: "Currency rate not found" };
         }
+         const setting = await SettingsService.getSetting('delta_percentage');
         const thaiRate = thbrate?.data?.value;
-        const deltaCutPercentage = 4.9;
+        const deltaCutPercentage = parseFloat(setting.data.value) || 0;
         const cutValue = (thaiRate * deltaCutPercentage) / 100;
         const finalRateValue = thaiRate - cutValue;
         // console.log("THB Rate: ", thaiRate);
         // console.log("Cut Value: ", cutValue);
         // console.log("Final Value: ", finalRateValue);
 
-        const thaiAmount = parseFloat((paidAmount * finalRateValue).toFixed(2));
+        const thaiAmount = amountUptotwoDecimalPlaces(paidAmount * finalRateValue);
         // console.log("Thai Amount: ", thaiAmount);
+
+        currencyDetails = {thaiRate, deltaCutPercentage, cutValue, finalRateValue, thaiAmount};
 
         const existingWallet = await UserWallet.findOne({
           where: { userId: paymentData.userId },
@@ -62,7 +66,7 @@ export default class WalletService {
           userId: paymentData.userId,
         },
       });
-      return userWallet;
+      return { userWallet, currencyDetails };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: e.message };

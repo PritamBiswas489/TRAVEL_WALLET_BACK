@@ -71,3 +71,7 @@ export function generateRandomPassword() {
 	};
 	return currencyMap;
   }
+
+  export function amountUptotwoDecimalPlaces(amount) {
+	return parseFloat(amount.toFixed(2));
+  }

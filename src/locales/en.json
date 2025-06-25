@@ -74,6 +74,9 @@
 	"PELECARD_PAYMENT_FAILED": "Pelecard payment failed. Please check the details and try again.",
 	"ADD_TO_WALLET_FAILED": "Failed to add to wallet. Please contact support and mention this transaction ID: %s.",
 	"PELECARD_PAYMENT_SUCCESS": "Pelecard payment successful.",
-	"GET_USER_WALLET_FAILED":"Failed to get user wallet. Please try again later.",
-	"USER_WALLET_FETCHED_SUCCESSFULLY": "User wallet fetched successfully."
+	"GET_USER_WALLET_FAILED": "Failed to get user wallet. Please try again later.",
+	"USER_WALLET_FETCHED_SUCCESSFULLY": "User wallet fetched successfully.",
+	"SETTINGS_FETCHED_SUCCESSFULLY": "SETTINGS_FETCHED_SUCCESSFULLY",
+	"SETTINGS_UPDATED_SUCCESSFULLY": "SETTINGS_UPDATED_SUCCESSFULLY",
+	"SETTING_FETCHED_SUCCESSFULLY": "SETTING_FETCHED_SUCCESSFULLY"
 }

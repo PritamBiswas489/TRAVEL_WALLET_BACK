@@ -1,6 +1,8 @@
 import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
+import SettingsService from "./settings.service.js";
+import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 
 const { Currency, Op } = db;
 
@@ -79,8 +81,14 @@ export default class CurrencyService {
             if (!currency) {
                 return { ERROR: 1 };
             }
-            const convertedAmount = Math.round(amount * currency.value);
-            return { data: { amount, convertedAmount, [`${fromCurrency}_TO_THB`]: currency.value } };
+            const setting = await SettingsService.getSetting('delta_percentage');
+            const rate = currency.value;
+            const deltaCutPercentage = parseFloat(setting.data.value) || 0;
+            const cutValue = (rate * deltaCutPercentage) / 100;
+            const finalRateValue = rate - cutValue;
+
+            const convertedAmount = amountUptotwoDecimalPlaces(amount * finalRateValue);
+            return { data: { amount, convertedAmount, [`${fromCurrency}_TO_THB`]: rate, deltaCutPercentage, cutValue, finalRateValue } };
         } catch (e) {
             process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
             return { ERROR: 1 };
