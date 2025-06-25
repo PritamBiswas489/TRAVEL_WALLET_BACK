@@ -11,6 +11,9 @@ const router = express.Router();
  *     summary: Send OTP for login
  *     tags: 
  *       - Login routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -43,6 +46,9 @@ router.post("/send-otp", async (req, res) => {
  *     summary: Get user by phone number and pin code
  *     tags: 
  *       - Login routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -59,10 +65,10 @@ router.post("/send-otp", async (req, res) => {
  *                 required: true
  *                 default: "1234"
  *               type:
- *                type: string
- *                required: true
- *                enum: ["register", "login"]
- *                default: "login"
+ *                 type: string
+ *                 required: true
+ *                 enum: ["register", "login"]
+ *                 default: "login"
  *     responses:
  *       200:
  *         description: User retrieved successfully
@@ -78,6 +84,9 @@ router.post("/create-verify-pin-by-phone-number", async (req, res) => {
  *     summary: Update pin by phone number
  *     tags: 
  *       - Login routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:

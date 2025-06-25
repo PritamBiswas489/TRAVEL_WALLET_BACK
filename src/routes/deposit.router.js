@@ -12,6 +12,7 @@ const router = express.Router();
  *     tags: [Auth-Deposit routes]
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -54,6 +55,7 @@ router.post('/pelecard-payment-add-card-and-card-token', async (req, res, next) 
  *       - Auth-Deposit routes
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     responses:
  *       200:
  *         description: Success - User card list retrieved
@@ -71,6 +73,9 @@ router.get('/pelecard-user-card-list', async (req, res, next) => {
  *     summary: Make payment and add to wallet using Pelecard
  *     tags:
  *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -110,6 +115,7 @@ router.post('/pelecard-make-payment-add-to-wallet', async (req, res, next) => {
  *       - Auth-Deposit routes
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     parameters:
  *       - in: path
  *         name: cardId

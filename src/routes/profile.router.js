@@ -10,17 +10,16 @@ const router = express.Router();
  * /api/auth/profile/detail:
  *   get:
  *     summary: Get user profile
- *     tags: [Auth-Profile routes]
+ *     tags:
+ *       - Auth-Profile routes
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: false
- *       content:
- *         application/json:
+ *       - refreshToken: []
  *     responses:
  *       200:
  *         description: Success - User profile retrieved
  */
+
 router.get("/detail", async (req, res, next) => {
      const profileDetails = await ProfileController.getProfileDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
      res.return(profileDetails);
@@ -33,6 +32,7 @@ router.get("/detail", async (req, res, next) => {
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: [] 
  *     requestBody:
  *       required: true
  *       content:
@@ -66,6 +66,7 @@ router.put("/edit", async (req, res, next) => {
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -94,6 +95,7 @@ router.post("/upload-profile-image", upload.single("image"), async (req, res) =>
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -126,6 +128,7 @@ router.put("/update-pin", async (req, res) => {
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: false
  *       content:

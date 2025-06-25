@@ -11,6 +11,7 @@ const router = express.Router();
  *       - Admin routes
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -48,6 +49,7 @@ router.post('/update-settings', async (req, res, next) => {
  *       - Admin routes
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     responses:
  *       200:
  *         description: Success - Retrieved all admin settings
@@ -67,6 +69,9 @@ router.get('/all-settings', async (req, res, next) => {
  *     summary: Get admin setting by key
  *     tags:
  *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     parameters:
  *       - in: query
  *         name: key

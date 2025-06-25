@@ -13,6 +13,7 @@ const router = express.Router();
  *       - Auth-Wallet routes
  *     security:
  *       - bearerAuth: []
+ *       - refreshToken: []
  *     responses:
  *       200:
  *         description: Success - User wallet information retrieved

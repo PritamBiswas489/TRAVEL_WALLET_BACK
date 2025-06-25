@@ -13,6 +13,9 @@ import ContactUsController from '../controllers/contactus.controller.js';
  *   post:
  *     summary: Save contact us content
  *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -50,6 +53,9 @@ router.post('/contact-us', async (req, res, next) => {
     *   get:
     *     summary: Get contact us content
     *     tags: [Non authenticated routes]
+    *     security:
+    *       - bearerAuth: []
+    *       - refreshToken: []
     *     responses:
     *       200:
     *         description: Contact us endpoint is working
