@@ -68,5 +68,7 @@
 	"ONLY_USD_EUR_ILS_ACCEPTED": "רק מטבעות USD, EUR או ILS מתקבלים",
 	"CURRENCY_REQUIRED": "מטבע נדרש",
 	"CARD_TOKEN_STRING": "אסימון כרטיס חייב להיות מחרוזת",
-	"CARD_TOKEN_REQUIRED": "אסימון כרטיס נדרש"
+	"CARD_TOKEN_REQUIRED": "אסימון כרטיס נדרש",
+	"INVALID_TYPE_ENUM": "סוג לא תקין. חייב להיות אחד מהבאים: register, login",
+	"TYPE_REQUIRED": "סוג נדרש."
 }

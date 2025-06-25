@@ -5,6 +5,7 @@ export const registerValidator = async (data, i18n) => {
     const phoneRegex = /^\+\d{1,3}\d{4,14}$/; // Example regex for international phone numbers
     const otpRegex = /^\d{4}$/; // Example regex for 4-digit OTP codes
 
+
     //add i18n messages to joi schema
     const schema = joi.object({
       phoneNumber: joi.string().pattern(phoneRegex).required().messages({
@@ -15,6 +16,10 @@ export const registerValidator = async (data, i18n) => {
       pinCode: joi.string().pattern(otpRegex).required().messages({
         "string.pattern.base": i18n.__("INVALID_OTP_FORMAT"),
         "any.required": i18n.__("OTP_REQUIRED"),
+      }),
+      type: joi.string().valid("login", "register").required().messages({
+        "any.only": i18n.__("INVALID_TYPE_ENUM"),
+        "any.required": i18n.__("TYPE_REQUIRED"),
       }),
     });
     return [null, await schema.validateAsync(data)];

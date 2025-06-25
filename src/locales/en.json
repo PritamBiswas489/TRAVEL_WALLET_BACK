@@ -68,5 +68,7 @@
 	"ONLY_USD_EUR_ILS_ACCEPTED": "Only USD, EUR, or ILS currencies are accepted.",
 	"CURRENCY_REQUIRED": "Currency is required.",
 	"CARD_TOKEN_STRING": "Card token must be a string.",
-	"CARD_TOKEN_REQUIRED": "Card token is required."
+	"CARD_TOKEN_REQUIRED": "Card token is required.",
+	"INVALID_TYPE_ENUM":"Invalid type. Must be one of: register, login",
+	"TYPE_REQUIRED": "Type is required."
 }

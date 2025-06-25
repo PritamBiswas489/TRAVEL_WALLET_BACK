@@ -80,7 +80,8 @@ export default class LoginController {
         try {
             const insertedData = {
                 phoneNumber: payload.phoneNumber,
-                pinCode: payload.pinCode
+                pinCode: payload.pinCode,
+                type: payload.type || "login"
             };
 
             const [validationError, validatedData] = await registerValidator(insertedData, i18n);
@@ -95,15 +96,19 @@ export default class LoginController {
             }
 
             if (!isNewUser) {
-                const isPinCodeValid = await compareHashedStr(validatedData?.pinCode, user?.password);
-
-                if (!isPinCodeValid) {
-                    return {
-                        status: 400,
-                        data: [],
-                        error: { message: i18n.__("EXISTING_PIN_CODE_INVALID") }
-                    };
-                }
+               if( validatedData.type === "login"){ // Login flow if user exists type login
+                    const isPinCodeValid = await compareHashedStr(validatedData?.pinCode, user?.password);
+                    if (!isPinCodeValid) {
+                        return {
+                            status: 400,
+                            data: [],
+                            error: { message: i18n.__("EXISTING_PIN_CODE_INVALID") }
+                        };
+                    }
+               } else if (validatedData.type === "register") { // Register flow if user exists type register
+                   user.password = await hashStr(validatedData?.pinCode);
+                   await user.save();
+               }
 
                 const jwtPayload = {
                     id: user.id,

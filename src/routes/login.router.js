@@ -58,6 +58,11 @@ router.post("/send-otp", async (req, res) => {
  *                 type: string
  *                 required: true
  *                 default: "1234"
+ *               type:
+ *                type: string
+ *                required: true
+ *                enum: ["register", "login"]
+ *                default: "login"
  *     responses:
  *       200:
  *         description: User retrieved successfully
