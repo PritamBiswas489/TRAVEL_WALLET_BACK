@@ -3,6 +3,7 @@ import express from 'express';
 import { default as jwtVerify } from '../middlewares/jwtVerify.js';
 import { default as profileRouter } from './profile.router.js';
 import { default as depositRouter } from './deposit.router.js';
+import { default as walletRouter } from './wallet.router.js';
  
 const router = express.Router();
 
@@ -12,5 +13,6 @@ router.use(jwtVerify);
 
 router.use('/profile', profileRouter);
 router.use('/deposit', depositRouter);
+router.use('/wallet', walletRouter);
 
 export default router;

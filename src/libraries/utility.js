@@ -62,3 +62,12 @@ export function generateRandomPassword() {
   
 	return password;
   }
+
+  export function getPeleCardCurrencyNumber(){
+	const currencyMap = {
+		USD: 2,
+		EUR: 978,
+		ILS: 1
+	};
+	return currencyMap;
+  }

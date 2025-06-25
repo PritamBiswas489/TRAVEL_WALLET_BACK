@@ -8,7 +8,17 @@ export default class CurrencyService {
 
     static async insertOrUpdateCurrency(data) {
         try {
-            const codes = ["ILS_TO_THB", "THB_TO_ILS", "EUR_TO_ILS", "EUR_TO_THB"];
+            const codes = [
+                "ILS_TO_THB",
+                "THB_TO_ILS",
+                "EUR_TO_ILS",
+                "EUR_TO_THB",
+                "USD_TO_ILS",
+                "USD_TO_THB",
+                "THB_TO_USD",
+                "ILS_TO_USD",
+                "EUR_TO_USD"
+     ];
 
             const existingCurrencies = await Currency.findAll({
                 where: { code: { [Op.in]: codes } }

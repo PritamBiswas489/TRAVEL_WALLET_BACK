@@ -70,5 +70,9 @@
 	"CARD_TOKEN_STRING": "אסימון כרטיס חייב להיות מחרוזת",
 	"CARD_TOKEN_REQUIRED": "אסימון כרטיס נדרש",
 	"INVALID_TYPE_ENUM": "סוג לא תקין. חייב להיות אחד מהבאים: register, login",
-	"TYPE_REQUIRED": "סוג נדרש."
-}
+	"TYPE_REQUIRED": "סוג נדרש.",
+	"PELECARD_PAYMENT_FAILED": "תשלום Pelecard נכשל. אנא בדוק את הפרטים ונסה שוב.",
+	"ADD_TO_WALLET_FAILED": "הוספה לארנק נכשלה. אנא פנה לתמיכה וציין את מזהה העסקה: %s.",
+	"PELECARD_PAYMENT_SUCCESS": "התשלום ב-Pelecard הצליח.",
+	"GET_USER_WALLET_FAILED": "נכשל באחזור ארנק המשתמש. אנא נסה שוב מאוחר יותר.",
+	"USER_WALLET_FETCHED_SUCCESSFULLY": "ארנק המשתמש נשלף בהצלחה."

@@ -87,6 +87,9 @@ router.get('/pelecard-user-card-list', async (req, res, next) => {
  *               cardToken:
  *                type:  string 
  *                example: 4206129454
+ *               cvv2:
+ *                type: string
+ *                example: "773" 
  *     responses:
  *       200:
  *         description: Success -  Payment made and added to wallet
@@ -96,6 +99,7 @@ router.post('/pelecard-make-payment-add-to-wallet', async (req, res, next) => {
    res.return(response);
 });
 
+ 
 
 /**
  * @swagger

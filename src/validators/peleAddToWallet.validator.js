@@ -25,6 +25,14 @@ export const peleAddToWalletValidator = async (data, i18n) => {
         "string.empty": i18n.__("CARD_TOKEN_REQUIRED"),
         "any.required": i18n.__("CARD_TOKEN_REQUIRED"),
       }),
+      cvv2: joi.string()
+              .pattern(/^\d{3,4}$/)
+              .required()
+              .messages({
+                "string.pattern.base": i18n.__("CVV_STRING"),
+                "string.empty": i18n.__("CVV_REQUIRED"),
+                "any.required": i18n.__("CVV_REQUIRED"),
+      }),
     });
     return [null, await schema.validateAsync(data)];
   } catch (e) {

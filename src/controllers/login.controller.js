@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import { otpWhatsappService, otpSmsService } from "../services/messages.service.js";
 import { registerValidator } from "../validators/register.validator.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
+import { setNewPinValidator } from "../validators/setNewPin.validator.js";
 
 const { User, Op } = db;
 
@@ -212,7 +213,7 @@ export default class LoginController {
                 pinCode: payload.pinCode
             };
 
-            const [validationError, validatedData] = await registerValidator(updatedData, i18n);
+            const [validationError, validatedData] = await setNewPinValidator(updatedData, i18n);
             if (validationError) return validationError;
 
             const user = await User.findOne({ where: { phoneNumber: validatedData?.phoneNumber } });
@@ -221,7 +222,7 @@ export default class LoginController {
                 return {
                     status: 404,
                     data: [],
-                    error: { message: i18n.__("USER_NOT_FOUND_WITH_PHONE", { phone: validatedData?.phoneNumber }) }
+                    error: { message: i18n.__("USER_NOT_FOUND_WITH_PHONE", { phone: validatedData?.phoneNumber, pinCode: validatedData?.pinCode }) }
                 };
             }
 
@@ -230,7 +231,7 @@ export default class LoginController {
 
             return {
                 status: 200,
-                data: { phoneNumber: user.phoneNumber },
+                data: { phoneNumber: user.phoneNumber, pinCode: validatedData?.pinCode },
                 message: i18n.__("SUCCESSFULLY_UPDATED_PIN"),
                 error: {}
             };

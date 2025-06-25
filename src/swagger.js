@@ -15,7 +15,8 @@ const options = {
       { name: 'Login routes', description: 'User login endpoints' },
       { name: 'Auth-Profile routes', description: 'User profile management endpoints' },
       { name: 'Currency routes', description: 'Currency management endpoints' },
-      { name: 'Auth-Deposit routes', description: 'Pelecard deposit endpoints' }
+      { name: 'Auth-Deposit routes', description: 'Pelecard deposit endpoints' },
+      { name: 'Auth-Wallet routes', description: 'Wallet management endpoints' },
     ],
     servers: [
       {

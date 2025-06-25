@@ -69,6 +69,11 @@
 	"CURRENCY_REQUIRED": "Currency is required.",
 	"CARD_TOKEN_STRING": "Card token must be a string.",
 	"CARD_TOKEN_REQUIRED": "Card token is required.",
-	"INVALID_TYPE_ENUM":"Invalid type. Must be one of: register, login",
-	"TYPE_REQUIRED": "Type is required."
+	"INVALID_TYPE_ENUM": "Invalid type. Must be one of: register, login",
+	"TYPE_REQUIRED": "Type is required.",
+	"PELECARD_PAYMENT_FAILED": "Pelecard payment failed. Please check the details and try again.",
+	"ADD_TO_WALLET_FAILED": "Failed to add to wallet. Please contact support and mention this transaction ID: %s.",
+	"PELECARD_PAYMENT_SUCCESS": "Pelecard payment successful.",
+	"GET_USER_WALLET_FAILED":"Failed to get user wallet. Please try again later.",
+	"USER_WALLET_FETCHED_SUCCESSFULLY": "User wallet fetched successfully."
 }
