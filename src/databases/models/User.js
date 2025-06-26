@@ -3,7 +3,7 @@ export default function User(sequelize, DataTypes) {
     "User",
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         autoIncrement: true,
         primaryKey: true,
       },

@@ -3,12 +3,12 @@ export default function UserWallet(sequelize, DataTypes) {
     "UserWallet",
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         primaryKey: true,
         autoIncrement: true,
       },
       userId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false,
       },
       balance: {
@@ -30,18 +30,11 @@ export default function UserWallet(sequelize, DataTypes) {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
+     
     },
     {
       tableName: "user_wallets",
-      timestamps: false, // since you're manually managing timestamps
+      timestamps: true, // since you're manually managing timestamps
       underscored: true, // if you're using snake_case columns
     }
   );

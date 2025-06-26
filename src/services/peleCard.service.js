@@ -2,6 +2,8 @@ import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import axios from "axios";
 import { getPeleCardCurrencyNumber } from "../libraries/utility.js";
+import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
+import InterestRatesService from "./interestRates.service.js";
 
 export default class PeleCardService {
   static async ConvertToToken(data) {
@@ -34,10 +36,30 @@ export default class PeleCardService {
       };
     }
   }
-  static async makePayment(args){
-    const { amount, fromCurrency, userCard } = args;
+  static async calculatePaymentAmount(args) {
+    const { amount, number_of_payment } = args;
+    let interestRate = 0; 
+    const getInterestRate = await InterestRatesService.getInterestRatesByPaymentNumber(number_of_payment);
+    if (getInterestRate?.data?.interestRate) {
+      interestRate = parseFloat(getInterestRate.data.interestRate);
+    }
+    const interestAmount = (amount * interestRate) / 100;
+    const totalAmount = amountUptotwoDecimalPlaces(amount + interestAmount);
+    const firstPayment = amountUptotwoDecimalPlaces(totalAmount / number_of_payment);
+    const data =  {
+      totalAmount,
+      interestAmount,
+      interestRate: interestRate || 0,
+      firstPayment,
+    };
+    
+    return{data};
+  }
+  static async makePayment(args) {
+    const { amount, fromCurrency, userCard, nationalId, userId, number_of_payment } = args;
     const peleCardCurrencyNumber = getPeleCardCurrencyNumber();
     const currency = peleCardCurrencyNumber[fromCurrency];
+    let  endPointUrl = "https://gateway20.pelecard.biz/services/DebitRegularType";
     const reqData = {
         terminalNumber: process.env.PELECARD_TERMINAL_NUMBER,
         user: process.env.PELECARD_USER,
@@ -46,12 +68,32 @@ export default class PeleCardService {
         token: userCard?.Token,
         total:amount * 100, // PeleCard expects amount in cents
         currency: currency,
-        cvv2:args?.cvv2 || "",
-        id:"890108566", // Customer national ID
+        id: nationalId || "", // Customer national ID
         authorizationNumber:"", // Authorization number if available
-        paramX: "test", // Additional parameter, can be used for custom data
+        paramX: JSON.stringify({ userId: userId || "" }) // Additional parameter, can be used for custom data
     };
-    const endPointUrl = "https://gateway20.pelecard.biz/services/DebitRegularType";
+    let interestRate = 0;
+    const getInterestRate = await InterestRatesService.getInterestRatesByPaymentNumber(parseInt(number_of_payment));
+    if(getInterestRate?.data?.interestRate) {
+        interestRate = parseFloat(getInterestRate.data.interestRate);
+    }
+    const getInterestAmount = (amount * interestRate) / 100;
+    const totalAmount = amountUptotwoDecimalPlaces(amount + getInterestAmount);
+    reqData.total = totalAmount * 100; 
+
+    if(parseInt(number_of_payment) > 1) {
+       endPointUrl = "https://gateway20.pelecard.biz/services/DebitPaymentsType";
+       const firstPayment = amountUptotwoDecimalPlaces(totalAmount / number_of_payment);
+       reqData.paymentsNumber = number_of_payment; 
+       reqData.firstPayment = firstPayment * 100; 
+       
+
+      //  console.log("PeleCard payment request data:", reqData);
+
+    }
+
+    // return 
+    
 
     try {
       const response = await axios.post(
@@ -66,6 +108,7 @@ export default class PeleCardService {
       return response?.data || {};
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      console.error("Error making payment:", e);
       return {
         ERROR: 1,
       };

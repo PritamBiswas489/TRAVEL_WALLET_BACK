@@ -3,7 +3,7 @@ export default function ContactUs(sequelize, DataTypes) {
 		'ContactUs',
 		{
 			id: {
-				type: DataTypes.INTEGER,
+				type: DataTypes.BIGINT,
 				autoIncrement: true,
 				primaryKey: true,
 			},

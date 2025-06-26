@@ -2,7 +2,6 @@ import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import WalletService from "../services/wallet.service.js";
 export default class WalletController {
-    
   static async getUserWallet(request) {
     const {
       headers: { i18n },
@@ -35,5 +34,40 @@ export default class WalletController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+  static async getUserWalletTransactionHistory(request) {
+      const {
+        payload,
+        headers: { i18n },
+        user,
+      } = request;
+      try {
+        const { page, limit } = payload;
+        const userWalletTransactionHistory = await WalletService.getUserWalletTransactionHistory(user.id, { page, limit });
+        if (userWalletTransactionHistory?.ERROR) {
+          return {
+            status: 500,
+            data: [],
+            error: {
+              message: i18n.__("GET_USER_WALLET_TRANSACTION_HISTORY_FAILED"),
+              reason: userWalletTransactionHistory.ERROR,
+            },
+          };
+        }
+        return {
+          status: 200,
+          data: userWalletTransactionHistory,
+          message: i18n.__("USER_WALLET_TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY"),
+          error: {},
+        };
+      } catch (e) {
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+        return {
+          status: 500,
+          data: [],
+          error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        };
+      }
+
   }
 }

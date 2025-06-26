@@ -8,7 +8,7 @@ export default (req, res, next) => {
 	const i18n = req.headers.i18n;
 	try {
 		const { authorization, refreshtoken } = req.headers;
-		console.log({ authorization, refreshtoken });
+		// console.log({ authorization, refreshtoken });
 
 
 		if (!authorization) {

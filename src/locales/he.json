@@ -75,4 +75,11 @@
 	"ADD_TO_WALLET_FAILED": "הוספה לארנק נכשלה. אנא פנה לתמיכה וציין את מזהה העסקה: %s.",
 	"PELECARD_PAYMENT_SUCCESS": "התשלום ב-Pelecard הצליח.",
 	"GET_USER_WALLET_FAILED": "נכשל באחזור ארנק המשתמש. אנא נסה שוב מאוחר יותר.",
-	"USER_WALLET_FETCHED_SUCCESSFULLY": "ארנק המשתמש נשלף בהצלחה."
+	"USER_WALLET_FETCHED_SUCCESSFULLY": "ארנק המשתמש נשלף בהצלחה.",
+	"GET_USER_WALLET_TRANSACTION_HISTORY_FAILED": "נכשל באחזור היסטוריית העסקאות של ארנק המשתמש. אנא נסה שוב מאוחר יותר.",
+	"USER_WALLET_TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY": "היסטוריית העסקאות של ארנק המשתמש נשלפה בהצלחה.",
+	"SETTINGS_FETCHED_SUCCESSFULLY": "הגדרות נשלפו בהצלחה.",
+	"SETTINGS_UPDATED_SUCCESSFULLY": "הגדרות עודכנו בהצלחה.",
+	"SETTING_FETCHED_SUCCESSFULLY": "הגדרה נשלפה בהצלחה.",
+	"ONLY_ILS_ALLOWED_FOR_MULTIPLE_PAYMENTS": "רק ILS מותר עבור תשלומים מרובים."
+}

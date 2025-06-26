@@ -3,13 +3,13 @@ export default function UserCard(sequelize, DataTypes)   {
     "UserCard",
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         autoIncrement: true,
         primaryKey: true,
       },
 
       userId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false,
       },
       cardHolderName: { type: DataTypes.STRING, allowNull: true },

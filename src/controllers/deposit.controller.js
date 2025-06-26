@@ -9,6 +9,7 @@ import WalletService from "../services/wallet.service.js";
 import { peleCardValidator } from "../validators/peleAddCard.validator.js";
 import { peleAddToWalletValidator } from "../validators/peleAddToWallet.validator.js";
 import PaymentService from "../services/payment.service.js";
+import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 const { User, UserCard, Currency, Op } = db;
 
 export default class DepositController {
@@ -216,6 +217,9 @@ export default class DepositController {
       const fromCurrency = validatedData?.fromCurrency; // Currency payment
       const cardToken = validatedData?.cardToken; //card token to be used for payment
       const cvv2 = validatedData?.cvv2; // CVV2 code for the card
+      const number_of_payment = validatedData?.number_of_payment || 1; // Number of payments, default is 1
+
+      
 
       //Check card token in user cards record
       const userCard = await UserCard.findOne({
@@ -232,12 +236,16 @@ export default class DepositController {
           error: { message: i18n.__("USER_CARD_NOT_FOUND") },
         };
       }
+      const nationalId = "890108566";
       //make payment using PeleCardService
       const paymentResult = await PeleCardService.makePayment({
         amount,
         fromCurrency,
         userCard,
         cvv2,
+        nationalId,
+        userId: user.id,
+        number_of_payment,
       });
 
       if (paymentResult?.ERROR) {
@@ -284,6 +292,7 @@ export default class DepositController {
             },
           };
         }
+        const paidAmount = parseFloat(savepaymentDetails.DebitTotal) / 100;
         //update user wallet balance
         const updatedWallet =
           await WalletService.updateUserWalletBalanceAfterPayment(
@@ -310,16 +319,24 @@ export default class DepositController {
         return {
           status: 200,
           data: {
-            paymentAmount: amount,
+            actualAmount: amount,
+            paidAmount: paidAmount,
+            numberOfPayment: savepaymentDetails?.TotalPayments || 1,
+            firstPayment:
+              amountUptotwoDecimalPlaces(
+                parseInt(savepaymentDetails?.FirstPaymentTotal) / 100
+              ) || 0,
             paidCurrency: fromCurrency,
             pelecardTransactionId: savepaymentDetails?.PelecardTransactionId,
             peleStatusCode: paymentResult?.StatusCode,
             paymentStatus:
               paymentResult?.StatusCode === "000" ? "success" : "failed",
-            paymentEnStatusMessage: paymentResult?.EnStatusMessage,
-            paymentHeStatusMessage: paymentResult?.HeStatusMessage,
+            paymentEnStatusMessage: savepaymentDetails?.EnStatusMessage,
+            paymentHeStatusMessage: savepaymentDetails?.HeStatusMessage,
             userWallet: updatedWallet?.userWallet || {},
             currencyDetails: updatedWallet?.currencyDetails || {},
+            walletTransactionDetails:
+              updatedWallet?.walletTransactionDetails || {},
           },
           message: i18n.__("PELECARD_PAYMENT_SUCCESS"),
           error: {},
@@ -368,6 +385,29 @@ export default class DepositController {
         message: i18n.__("USER_WALLET_FETCHED_SUCCESSFULLY"),
         error: {},
       };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async calculatePaymentAmount(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+    const { amount, number_of_payment } = request.payload;
+
+    try {
+      const response = await PeleCardService.calculatePaymentAmount({
+        amount,
+        number_of_payment,
+        user,
+      });
+      return response;
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return {

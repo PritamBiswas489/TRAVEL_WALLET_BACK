@@ -65,6 +65,39 @@ router.get('/pelecard-user-card-list', async (req, res, next) => {
   res.return(response);
 });
 
+/**
+ * @swagger
+ * /api/auth/deposit/calculate-payment-amount:
+ *   post:
+ *     summary:  Calculate payment amount 
+ *     tags:
+ *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *               number_of_payment:
+ *                 type: integer
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Success -  Payment made and added to wallet
+ */
+
+router.post('/calculate-payment-amount', async (req, res, next) => {
+  const response = await depositController.calculatePaymentAmount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
 
 /**
  * @swagger
@@ -90,11 +123,11 @@ router.get('/pelecard-user-card-list', async (req, res, next) => {
  *                 type: string
  *                 example: ILS
  *               cardToken:
- *                type:  string 
- *                example: 4206129454
- *               cvv2:
- *                type: string
- *                example: "773" 
+ *                 type: string 
+ *                 example: 4206129454
+ *               number_of_payment:
+ *                 type: integer
+ *                 example: 1
  *     responses:
  *       200:
  *         description: Success -  Payment made and added to wallet

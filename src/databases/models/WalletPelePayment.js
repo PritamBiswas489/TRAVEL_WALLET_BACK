@@ -3,11 +3,11 @@ export default function WalletPelePayment(sequelize, DataTypes) {
     "WalletPelePayment",
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         autoIncrement: true,
         primaryKey: true,
       },
-      userId: DataTypes.INTEGER,
+      userId: DataTypes.BIGINT,
       StatusCode: DataTypes.STRING,
       EnStatusMessage: DataTypes.STRING,
       HeStatusMessage: DataTypes.STRING,
