@@ -26,10 +26,6 @@ export default function WalletTransaction(sequelize, DataTypes) {
         type: DataTypes.STRING(3),
         allowNull: true,
       },
-      thbAmount: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-      },
       oldWalletBalance: {
         type: DataTypes.DECIMAL(15, 2),
         allowNull: false,

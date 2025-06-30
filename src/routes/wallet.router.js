@@ -7,19 +7,32 @@ const router = express.Router();
 /**
  * @swagger
  * /api/auth/wallet/user-wallet:
- *   get:
+ *   post:
  *     summary: Get user wallet information
  *     tags:
  *       - Auth-Wallet routes
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currency:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["ILS", "USD", "EUR"]
+ *                 description: Filter by currency (array of currency codes, e.g. ["ILS", "USD", "EUR"])
  *     responses:
  *       200:
  *         description: Success - User wallet information retrieved
  */
-router.get('/user-wallet', async (req, res, next) => {
-  const response = await WalletController.getUserWallet({ headers: req.headers, user: req.user });
+router.post('/user-wallet', async (req, res, next) => {
+  const response = await WalletController.getUserWallet({ headers: req.headers, user: req.user, payload: req.body });
   res.return(response);
 });
 
@@ -27,32 +40,46 @@ router.get('/user-wallet', async (req, res, next) => {
 /**
  * @swagger
  * /api/auth/wallet/user-wallet-transaction-history:
- *   get:
+ *   post:
  *     summary: Get user wallet transaction history
  *     tags:
  *       - Auth-Wallet routes
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number for pagination
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currency:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["ILS", "USD", "EUR"]
+ *                 description: Filter by currency (array of currency codes, e.g. ["ILS", "USD", "EUR"])
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 description: Page number for pagination
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 description: Number of items per page
+ *               status:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["completed", "failed"]
+ *                 description: Filter by transaction status (array of status values, e.g. ["completed", "failed"])
  *     responses:
  *       200:
  *         description: Success - User wallet transaction history retrieved
  */
-router.get('/user-wallet-transaction-history', async (req, res, next) => {
-  const response = await WalletController.getUserWalletTransactionHistory({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+router.post('/user-wallet-transaction-history', async (req, res, next) => {
+  const response = await WalletController.getUserWalletTransactionHistory({ headers: req.headers, user: req.user, payload: req.body });
   res.return(response);
 });
 

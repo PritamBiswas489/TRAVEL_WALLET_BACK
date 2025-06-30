@@ -334,7 +334,6 @@ export default class DepositController {
             paymentEnStatusMessage: savepaymentDetails?.EnStatusMessage,
             paymentHeStatusMessage: savepaymentDetails?.HeStatusMessage,
             userWallet: updatedWallet?.userWallet || {},
-            currencyDetails: updatedWallet?.currencyDetails || {},
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
           },

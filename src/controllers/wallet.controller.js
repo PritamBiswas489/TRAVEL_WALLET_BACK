@@ -4,12 +4,15 @@ import WalletService from "../services/wallet.service.js";
 export default class WalletController {
   static async getUserWallet(request) {
     const {
+      payload,
       headers: { i18n },
       user,
     } = request;
 
     try {
-      const userWallet = await WalletService.getUserWallet(user.id);
+      const { currency } = payload;
+      console.log("currency", currency);
+      const userWallet = await WalletService.getUserWallet(user.id, currency);
       if (userWallet?.ERROR) {
         return {
           status: 500,
@@ -42,8 +45,8 @@ export default class WalletController {
         user,
       } = request;
       try {
-        const { page, limit } = payload;
-        const userWalletTransactionHistory = await WalletService.getUserWalletTransactionHistory(user.id, { page, limit });
+        const { currency, status,  page, limit } = payload;
+        const userWalletTransactionHistory = await WalletService.getUserWalletTransactionHistory(user.id, { currency, status, page, limit });
         if (userWalletTransactionHistory?.ERROR) {
           return {
             status: 500,

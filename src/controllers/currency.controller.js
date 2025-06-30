@@ -33,6 +33,7 @@ export default class CurrencyController {
         const rate_usd_to_thb = rates.THB / rates.USD;
         const rate_thb_to_usd = rates.USD / rates.THB;
         const rate_ils_to_usd = rates.USD / rates.ILS;
+        const rate_thb_to_eur = 1 / rates.THB;
 
         const insertOrUpdateCurrencyResult =
           await CurrencyService.insertOrUpdateCurrency({
@@ -45,6 +46,7 @@ export default class CurrencyController {
             THB_TO_USD: rate_thb_to_usd,
             ILS_TO_USD: rate_ils_to_usd,
             EUR_TO_USD: rates.USD,
+            THB_TO_EUR: rate_thb_to_eur,
           });
 
         if (insertOrUpdateCurrencyResult?.ERROR) {
@@ -70,6 +72,7 @@ export default class CurrencyController {
             THB_TO_USD: rate_thb_to_usd,
             ILS_TO_USD: rate_ils_to_usd,
             EUR_TO_USD: rates.USD,
+            THB_TO_EUR: rate_thb_to_eur,
           },
           message: i18n.__("CURRENCY_UPDATED_SUCCESSFULLY"),
           error: {},
@@ -143,21 +146,99 @@ export default class CurrencyController {
       };
     }
   }
-  static async convertToTHB(request) {
+  static async convertFromTHB(request) {
     const {
       payload,
-      headers: { i18n }
+      headers: { i18n },
     } = request;
 
     try {
-      const { amount, fromCurrency } = payload;
-      if(!['USD', 'ILS', 'EUR'].includes(fromCurrency)) {
+      const { amount, toCurrency } = payload;
+      if (!Array.isArray(toCurrency) || toCurrency.length === 0) {
         return {
           status: 400,
           data: [],
           error: {
             message: i18n.__("INVALID_CURRENCY_CODE"),
-            reason: i18n.__("CURRENCY_NOT_SUPPORTED", { currency: fromCurrency }),
+            reason: i18n.__("CURRENCY_CODE_ARRAY_REQUIRED"),
+          },
+        };
+      }
+
+      const supportedCurrencies = ["USD", "ILS", "EUR"];
+      const unsupported = toCurrency.filter(
+        (cur) => !supportedCurrencies.includes(cur)
+      );
+      if (unsupported.length > 0) {
+        return {
+          status: 400,
+          data: [],
+          error: {
+            message: i18n.__("INVALID_CURRENCY_CODE"),
+            reason: i18n.__("CURRENCY_NOT_SUPPORTED", {
+              currency: unsupported.join(", "),
+            }),
+          },
+        };
+      }
+      const result = await CurrencyService.convertFromTHB(amount, toCurrency);
+      if (result?.ERROR) {
+        return {
+          status: 500,
+          data: [],
+          error: {
+            message: i18n.__("CURRENCY_CONVERSION_FAILED"),
+            reason: result.ERROR,
+          },
+        };
+      }
+      return {
+        status: 200,
+        data: result.data || [],
+        message: i18n.__("CURRENCY_CONVERSION_SUCCESSFUL"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async convertToTHB(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    try {
+      const { amount, fromCurrency } = payload;
+      if (!Array.isArray(fromCurrency) || fromCurrency.length === 0) {
+        return {
+          status: 400,
+          data: [],
+          error: {
+            message: i18n.__("INVALID_CURRENCY_CODE"),
+            reason: i18n.__("CURRENCY_CODE_ARRAY_REQUIRED"),
+          },
+        };
+      }
+
+      const supportedCurrencies = ["USD", "ILS", "EUR"];
+      const unsupported = fromCurrency.filter(
+        (cur) => !supportedCurrencies.includes(cur)
+      );
+      if (unsupported.length > 0) {
+        return {
+          status: 400,
+          data: [],
+          error: {
+            message: i18n.__("INVALID_CURRENCY_CODE"),
+            reason: i18n.__("CURRENCY_NOT_SUPPORTED", {
+              currency: unsupported.join(", "),
+            }),
           },
         };
       }

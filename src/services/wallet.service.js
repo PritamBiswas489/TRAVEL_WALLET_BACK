@@ -14,83 +14,64 @@ export default class WalletService {
   ) {
     // console.log("user id ", paymentData.userId);
     try {
-        const thbrate = await CurrencyService.getCurrencyByCode(
-            `${paidCurrency}_TO_THB`
-        );
-        if (!thbrate?.data?.value) {
-            return { ERROR: "Currency rate not found" };
-        }
-        const setting = await SettingsService.getSetting("delta_percentage");
-        const thaiRate = thbrate?.data?.value;
-        const deltaCutPercentage = parseFloat(setting.data.value) || 0;
-        const cutValue = (thaiRate * deltaCutPercentage) / 100;
-        const finalRateValue = thaiRate - cutValue;
-        const thaiAmount = amountUptotwoDecimalPlaces(walletAmount * finalRateValue);
-        const currencyDetails = { thaiRate, deltaCutPercentage, cutValue, finalRateValue, thaiAmount };
         let oldWalletBalance = 0;
         let newWalletBalance = 0;
-      
 
         const existingWallet = await UserWallet.findOne({
-          where: { userId: paymentData.userId },
+          where: { userId: paymentData.userId, currency: paidCurrency },
         });
         if (existingWallet) {
           oldWalletBalance = parseFloat(existingWallet.balance);
         }
+         if (paymentData.StatusCode === "000") {
+           if (existingWallet) {
+                const updatedBalance =
+                parseFloat(existingWallet.balance) + walletAmount;
+                await UserWallet.update(
+                  { balance: updatedBalance },
+                  { where: { id: existingWallet.id } }
+                );
+           }else{
+              await UserWallet.create({
+                  userId: paymentData.userId,
+                  balance: walletAmount,
+                  currency: paidCurrency,
+              });
+           }
+         }
+         const userWallet = await UserWallet.findOne({
+            where: {
+              userId: paymentData.userId,
+              currency: paidCurrency,
+            },
+         });
+         newWalletBalance = parseFloat(userWallet?.balance || 0);
 
-      if (paymentData.StatusCode === "000") {
-
-       
-        if (existingWallet) {
-          // Update existing wallet balance
-          const updatedBalance =
-            parseFloat(existingWallet.balance) + thaiAmount;
-          await UserWallet.update(
-            { balance: updatedBalance },
-            { where: { id: existingWallet.id } }
-          );
-        } else {
-          // Create new wallet entry
-          await UserWallet.create({
-            userId: paymentData.userId,
-            balance: thaiAmount,
-          });
-        }
-      }
-     
-      //Fetch the updated user wallet
-      const userWallet = await UserWallet.findOne({
-        where: {
-          userId: paymentData.userId,
-        },
-      });
-      newWalletBalance = parseFloat(userWallet?.balance || 0);
-       //update wallet transaction table
-      const walletTransactionDetails = await WalletTransaction.create({
-        userId: paymentData.userId,
-        walletId: userWallet?.id || 0,
-        paymentAmt: walletAmount,
-        paymentCurrency: paidCurrency,
-        thbAmount: thaiAmount,
-        oldWalletBalance: oldWalletBalance,
-        newWalletBalance: newWalletBalance,
-        type: "credit",
-        description: `Add ${thaiAmount} THB. ${paymentData.StatusCode === "000" ? "completed" : "failed"} payment`,
-        status: paymentData.StatusCode === "000" ? "completed" : "failed",
-        paymentId: paymentData?.id,
-      });
-      return { userWallet, currencyDetails, walletTransactionDetails };
+          const walletTransactionDetails = await WalletTransaction.create({
+              userId: paymentData.userId,
+              walletId: userWallet?.id || 0,
+              paymentAmt: walletAmount,
+              paymentCurrency: paidCurrency,
+              oldWalletBalance: oldWalletBalance,
+              newWalletBalance: newWalletBalance,
+              type: "credit",
+              description: `Add ${walletAmount} ${paidCurrency}. ${paymentData.StatusCode === "000" ? "completed" : "failed"} payment`,
+              status: paymentData.StatusCode === "000" ? "completed" : "failed",
+              paymentId: paymentData?.id,
+        });
+        return { userWallet,  walletTransactionDetails };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: e.message };
     }
   }
 
-  static async getUserWallet(userId) {
+  static async getUserWallet(userId, currency = []) {
     try {
-      const userWallet = await UserWallet.findOne({
+      const userWallet = await UserWallet.findAndCountAll({
         where: {
           userId: userId,
+          ...(currency.length > 0 && { currency: { [Op.in]: currency } }),
         },
       });
       return userWallet;
@@ -99,12 +80,14 @@ export default class WalletService {
       return { ERROR: e.message };
     }
   }
-  static async getUserWalletTransactionHistory(userId, { page = 1, limit = 10 }) {
+  static async getUserWalletTransactionHistory(userId, { currency, status, page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
       const userWalletTransactions = await WalletTransaction.findAndCountAll({
         where: {
           userId: userId,
+          ...(currency.length > 0 && { paymentCurrency: { [Op.in]: currency } }),
+          ...(status && status.length > 0 && { status: { [Op.in]: status } }),
         },
         order: [["createdAt", "DESC"]],
         offset: offset,

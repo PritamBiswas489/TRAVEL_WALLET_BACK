@@ -12,14 +12,14 @@ export default function UserWallet(sequelize, DataTypes) {
         allowNull: false,
       },
       balance: {
-        type: DataTypes.DECIMAL(15, 2),
+        type: DataTypes.DECIMAL(15, 2),  
         allowNull: false,
         defaultValue: 0.0,
       },
       currency: {
         type: DataTypes.STRING(3),
         allowNull: false,
-        defaultValue: "THB", // Default to Thai Baht
+        defaultValue: "ILS", // Default to Israeli Shekel
       },
       status: {
         type: DataTypes.STRING(20),

@@ -79,7 +79,7 @@ router.get("/allCurrencies", async (req, res, next) => {
  * @swagger
  * /api/currency/amount-convert-to-thb:
  *   post:
- *     summary: Convert amount to THB
+ *     summary: Convert amount(s) to THB
  *     tags:
  *       - Currency routes
  *     requestBody:
@@ -93,16 +93,62 @@ router.get("/allCurrencies", async (req, res, next) => {
  *                 type: number
  *                 example: 100
  *               fromCurrency:
- *                 type: string
- *                 example: ILS
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["ILS", "USD", "EUR"]
  *     responses:
  *       200:
- *         description: Success - Amount converted to THB
+ *         description: Success - Amount(s) converted to THB
  */
 
 router.post("/amount-convert-to-thb", async (req, res, next) => {
   try {
     const result = await CurrencyController.convertToTHB({
+      payload: { ...req.params, ...req.query, ...req.body },
+      headers: req.headers,
+    });
+    res.return(result);
+  } catch (e) {
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+    res.return({
+      status: 500,
+      data: [],
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/currency/amount-from-thb-to-another:
+ *   post:
+ *     summary: Convert amount(s) from THB to another currency
+ *     tags:
+ *       - Currency routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *               toCurrency:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["ILS", "USD", "EUR"]
+ *     responses:
+ *       200:
+ *         description: Success - Amount(s) converted from THB
+ */
+
+router.post("/amount-from-thb-to-another", async (req, res, next) => {
+  try {
+    const result = await CurrencyController.convertFromTHB({
       payload: { ...req.params, ...req.query, ...req.body },
       headers: req.headers,
     });
