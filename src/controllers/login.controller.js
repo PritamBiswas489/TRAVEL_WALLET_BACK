@@ -23,6 +23,8 @@ export default class LoginController {
             const phoneNumber = payload.phoneNumber;
             const messageType = payload.messageType || "whatsapp";
 
+            
+
             const phoneRegex = /^\+\d{1,3}\d{4,14}$/;
             if (!phoneRegex.test(phoneNumber)) {
                 return {
@@ -30,6 +32,14 @@ export default class LoginController {
                     data: [],
                     error: { message: i18n.__("INVALID_PHONE_NUMBER_FORMAT") }
                 };
+            }
+
+            let isNewUser = false;
+
+            const user = await User.findOne({ where: { phoneNumber: payload?.phoneNumber } });
+
+            if (!user) {
+                isNewUser = true;
             }
 
             const [whatsappResult, smsResult] = await Promise.all([
@@ -55,7 +65,7 @@ export default class LoginController {
 
             return {
                 status: 200,
-                data: { whatsapp: whatsappResult, sms: smsResult, otp },
+                data: { isNewUser, whatsapp: whatsappResult, sms: smsResult, otp },
                 message: i18n.__("OTP_SENT_SUCCESSFULLY"),
                 error: {}
             };
