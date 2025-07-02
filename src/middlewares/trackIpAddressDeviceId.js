@@ -31,7 +31,7 @@ const trackIpAddressDeviceId = async (req, res, next) => {
         ipLat = getTrackByIpAddress.data.ipLat || "";
         ipLon = getTrackByIpAddress.data.ipLon || "";
         ipTimezone = getTrackByIpAddress.data.ipTimezone || "";
-        userId = req?.user?.id || 0;
+        userId = req?.user?.id || null;
     } else {
       const apiUrl = `https://pro.ip-api.com/json/${ip}?key=${process.env.IP_TRACKER_API_KEY}&fields=status,message,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,currency,isp,org,as,mobile,proxy,query`;
 
@@ -55,7 +55,7 @@ const trackIpAddressDeviceId = async (req, res, next) => {
       ipLat = extractData?.lat || "";
       ipLon = extractData?.lon || "";
       ipTimezone = extractData?.timezone || "";
-      userId = req?.user?.id || 0;
+      userId = req?.user?.id || null;
     }
 
     await TrackIpAddressDeviceIdService.createTrackIpAddressDeviceId({

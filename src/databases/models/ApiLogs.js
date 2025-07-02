@@ -5,7 +5,7 @@ export default function ApiLogs(sequelize, DataTypes) {
       id: {
         type: DataTypes.BIGINT,
         autoIncrement: true,
-        primaryKey: true,
+        primaryKey: true, 
       },
       ip: {
         type: DataTypes.STRING,
