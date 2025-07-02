@@ -102,6 +102,7 @@ export default class LoginController {
                     if (!isPinCodeValid) {
                         return {
                             status: 400,
+                            isNewUser,
                             data: [],
                             error: { message: i18n.__("EXISTING_PIN_CODE_INVALID") }
                         };
@@ -133,6 +134,7 @@ export default class LoginController {
 
                 return {
                     status: 200,
+                    isNewUser,
                     data: { accessToken, refreshToken },
                     message: i18n.__("SUCCESSFULLY_VERIFIED_PIN"),
                     error: {}
@@ -149,6 +151,7 @@ export default class LoginController {
                 if (!newUser) {
                     return {
                         status: 500,
+                        isNewUser,
                         data: [],
                         error: { message: i18n.__("FAILED_TO_CREATE_NEW_USER") }
                     };
@@ -176,6 +179,7 @@ export default class LoginController {
 
                 return {
                     status: 200,
+                    isNewUser,
                     data: { accessToken, refreshToken },
                     message: i18n.__("SUCCESSFULLY_CREATED_NEW_USER"),
                     error: {}
@@ -184,6 +188,7 @@ export default class LoginController {
 
             return {
                 status: 200,
+                isNewUser,
                 data: validatedData,
                 message: i18n.__("SUCCESSFULLY_CREATED_OR_VERIFIED_PIN"),
                 error: {}
