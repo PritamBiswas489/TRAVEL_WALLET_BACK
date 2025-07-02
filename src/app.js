@@ -15,6 +15,7 @@ import basicAuth from "express-basic-auth";
 import multer from "multer";
 import customReturn from "./middlewares/responseBuilder.js";
 import locales from "./middlewares/locales.js";
+
 import { initializeSentry } from "./config/sentry.config.js";
 
 // import "./cron/index.js"
@@ -54,6 +55,7 @@ app.use(
 app.use(compression());
 app.use(helmet());
 app.use(locales);
+// app.use(trackIpAddressDeviceId);
 app.use(customReturn);
 
 app.use(

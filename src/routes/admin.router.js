@@ -2,7 +2,9 @@ import '../config/environment.js';
 import express from 'express';
 import AdminSettingsController from '../controllers/admin.settings.controller.js';
 import AdminController from '../controllers/admin.controller.js';
+ 
 const router = express.Router();
+ 
 /**
  * @swagger
  * /api/admin/update-settings:
@@ -156,6 +158,45 @@ router.get("/get-installment-payment-interest-rates", async (req, res, next) => 
  */
 router.post("/add-installment-payment-interest-rates", async (req, res, next) => {
     res.return(await AdminController.addInstallmentPaymentInterestRates({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+/**
+ * @swagger
+ * /api/admin/get-api-endpoint-logs:
+ *   get:
+ *     summary: Get API endpoint logs
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved API endpoint logs
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get("/get-api-endpoint-logs", async (req, res, next) => {
+    res.return(await AdminController.getApiEndpointLogs({
         payload: { ...req.params, ...req.query, ...req.body },
         headers: req.headers,
         user: req.user,

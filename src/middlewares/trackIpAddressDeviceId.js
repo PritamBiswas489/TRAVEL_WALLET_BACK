@@ -1,0 +1,82 @@
+import axios from "axios";
+
+import TrackIpAddressDeviceIdService from "../services/trackIpAddressDeviceId.service.js";
+import "../config/environment.js";
+import * as Sentry from "@sentry/node";
+
+const trackIpAddressDeviceId = async (req, res, next) => {
+  try {
+    const ip = req?.headers?.["X-Ip-Address"] || "186.102.114.93"; // Default IP for testing
+    const deviceId = req?.headers?.["X-Device-ID"] || "api-developer-device-id";
+    const routePath = req.originalUrl;
+
+    let ipCountry = "";
+    let ipRegion = "";
+    let ipCity = "";
+    let ipIsp = "";
+    let ipLat = "";
+    let ipLon = "";
+    let ipTimezone = "";
+    let userId = "";
+
+    const getTrackByIpAddress =
+      await TrackIpAddressDeviceIdService.getTrackByIpAddress(ip);
+
+    if (getTrackByIpAddress?.data?.id) {
+        console.log("Track already exists for IP:", ip);
+        ipCountry = getTrackByIpAddress.data.ipCountry || "";
+        ipRegion = getTrackByIpAddress.data.ipRegion || "";
+        ipCity = getTrackByIpAddress.data.ipCity || "";
+        ipIsp = getTrackByIpAddress.data.ipIsp || "";
+        ipLat = getTrackByIpAddress.data.ipLat || "";
+        ipLon = getTrackByIpAddress.data.ipLon || "";
+        ipTimezone = getTrackByIpAddress.data.ipTimezone || "";
+        userId = req?.user?.id || 0;
+    } else {
+      const apiUrl = `https://pro.ip-api.com/json/${ip}?key=${process.env.IP_TRACKER_API_KEY}&fields=status,message,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,currency,isp,org,as,mobile,proxy,query`;
+
+      const response = await axios.get(apiUrl);
+      let extractData = {};
+      try {
+        if (response.data && typeof response.data === "object") {
+          extractData = response.data;
+        }
+      } catch (err) {
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
+        extractData = {};
+      }
+
+      // console.log("extractData:", extractData);
+
+      ipCountry = extractData?.country || "";
+      ipRegion = extractData?.regionName || "";
+      ipCity = extractData?.city || "";
+      ipIsp = extractData?.isp || "";
+      ipLat = extractData?.lat || "";
+      ipLon = extractData?.lon || "";
+      ipTimezone = extractData?.timezone || "";
+      userId = req?.user?.id || 0;
+    }
+
+    await TrackIpAddressDeviceIdService.createTrackIpAddressDeviceId({
+      ip,
+      deviceId,
+      userId,
+      routePath,
+      ipCountry,
+      ipRegion,
+      ipCity,
+      ipIsp,
+      ipLat,
+      ipLon,
+      ipTimezone,
+    });
+  } catch (e) {
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+    console.error("Error tracking IP address and device ID:", e.message);
+  }
+
+  next();
+};
+
+export default trackIpAddressDeviceId;

@@ -15,6 +15,10 @@ const options = {
         description: "Endpoints for testing purposes",
       },
       {
+        name: "Redis testing routes",
+        description: "Endpoints for Redis cache management",
+      },
+      {
         name: "Non authenticated routes",
         description: "Endpoints that do not require authentication",
       },

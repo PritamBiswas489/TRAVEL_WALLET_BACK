@@ -2,6 +2,8 @@ import "../config/environment.js";
 import express from "express";
 const router = express.Router();
 import CurrencyController from "../controllers/currency.controller.js";
+import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
+router.use(trackIpAddressDeviceId);
 /**
  * @swagger
  * /api/currency/fixerExchangeRates:
