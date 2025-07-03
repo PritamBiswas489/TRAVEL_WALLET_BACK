@@ -5,7 +5,7 @@ import SettingsService from "./settings.service.js";
 import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import { where } from "sequelize";
 
-const { Currency, Op } = db;
+const { Currency, Op, BankhapoalimExchangeRate } = db;
 
 export default class CurrencyService {
   static async insertOrUpdateCurrency(data) {
@@ -152,6 +152,57 @@ export default class CurrencyService {
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: 1 };
+    }
+  }
+
+
+  static async bankhapoalimExchangeRateUpdate(data) {
+    try {
+      const codes = [
+        "ILS_TO_THB",
+        "THB_TO_ILS",
+      ];
+
+      const existingCurrencies = await BankhapoalimExchangeRate.findAll({
+        where: { code: { [Op.in]: codes } },
+      });
+
+      const existingMap = {};
+      existingCurrencies.forEach((currency) => {
+        existingMap[currency.code] = currency;
+      });
+
+      for (let code of codes) {
+        if (existingMap[code]) {
+          await BankhapoalimExchangeRate.update(
+            { value: data[code] },
+            { where: { id: existingMap[code].id } }
+          );
+        } else {
+          await BankhapoalimExchangeRate.create({
+            code: code,
+            value: data[code],
+          });
+        }
+      }
+
+      return { SUCCESS: 1 };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return { ERROR: e.message };
+    }
+  }
+
+  static async getBankHapoalimExchangeRate() {
+    try {
+      const exchangeRate = await BankhapoalimExchangeRate.findAll();
+      if (!exchangeRate || exchangeRate.length === 0) {
+        return { ERROR: "No exchange rate found" };
+      }
+      return exchangeRate;
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return { ERROR: e.message };
     }
   }
 }

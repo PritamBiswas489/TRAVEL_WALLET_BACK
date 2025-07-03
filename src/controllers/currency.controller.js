@@ -3,6 +3,7 @@ import "../config/environment.js";
 import axios from "axios";
 import CurrencyService from "../services/currency.service.js";
 import * as Sentry from "@sentry/node";
+ 
 
 export default class CurrencyController {
   static async fixerExchangeRates(request) {
@@ -267,5 +268,39 @@ export default class CurrencyController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+  static async getBankHapoalimExchangeRate(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    try {
+      const exchangeRate = await CurrencyService.getBankHapoalimExchangeRate();
+      if (exchangeRate.error) {
+        return {
+          status: 500,
+          data: [],
+          error: {
+            message: i18n.__("EXCHANGE_RATE_FETCH_FAILED"),
+            reason: exchangeRate.error,
+          },
+        };
+      }
+      return {
+        status: 200,
+        data: exchangeRate,
+        message: i18n.__("EXCHANGE_RATE_FETCH_SUCCESSFUL"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
   }
 }

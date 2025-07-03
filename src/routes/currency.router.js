@@ -165,4 +165,28 @@ router.post("/amount-from-thb-to-another", async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/currency/get-bankhapoalim-exchange-rate:
+ *   get:
+ *     summary: Get exchange rate from Bank Hapoalim
+ *     tags:
+ *       - Currency routes
+ *     responses:
+ *       200:
+ *         description: Success - Exchange rate retrieved
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get("/get-bankhapoalim-exchange-rate", async (req, res, next) => {
+  const exchangeRate = await CurrencyController.getBankHapoalimExchangeRate({
+    payload: { ...req.params, ...req.query, ...req.body },
+    headers: req.headers,
+    user: req.user,
+  });
+  res.return(exchangeRate);
+
+
+});
+
 export default router;
