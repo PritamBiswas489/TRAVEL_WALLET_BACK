@@ -81,11 +81,13 @@
 	"SETTING_FETCHED_SUCCESSFULLY": "Setting fetched successfully.",
 	"GET_USER_WALLET_TRANSACTION_HISTORY_FAILED": "Failed to get user wallet transaction history. Please try again later.",
 	"USER_WALLET_TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY": "User wallet transaction history fetched successfully.",
-	"NUMBER_OF_PAYMENT_MUST_BE_NUMBER": "NUMBER_OF_PAYMENT_MUST_BE_NUMBER",
-	"NUMBER_OF_PAYMENT_MUST_BE_INTEGER": "NUMBER_OF_PAYMENT_MUST_BE_INTEGER",
-	"NUMBER_OF_PAYMENT_REQUIRED": "NUMBER_OF_PAYMENT_REQUIRED",
+	"NUMBER_OF_PAYMENT_MUST_BE_NUMBER": "Number of payments must be a number.",
+	"NUMBER_OF_PAYMENT_MUST_BE_INTEGER": "Number of payments must be an integer.",
+	"NUMBER_OF_PAYMENT_REQUIRED": "Number of payments is required.",
 	"ONLY_ILS_ALLOWED_FOR_MULTIPLE_PAYMENTS": "Only ILS is allowed for multiple payments.",
-	"API_LOGS_FETCHED_SUCCESSFULLY": "API_LOGS_FETCHED_SUCCESSFULLY",
-	"EXCHANGE_RATE_FETCH_FAILED": "EXCHANGE_RATE_FETCH_FAILED",
-	"EXCHANGE_RATE_FETCH_SUCCESSFUL": "EXCHANGE_RATE_FETCH_SUCCESSFUL"
+	"API_LOGS_FETCHED_SUCCESSFULLY": "API logs fetched successfully.",
+	"EXCHANGE_RATE_FETCH_FAILED": "Failed to fetch exchange rate.",
+	"EXCHANGE_RATE_FETCH_SUCCESSFUL": "Exchange rate fetched successfully.",
+	"TOO_MANY_FAILED_ATTEMPTS": "Too many failed attempts. Try again in %d minute(s).",
+	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "Wrong password. %d attempt(s) remaining."
 }

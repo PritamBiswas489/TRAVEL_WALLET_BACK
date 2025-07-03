@@ -81,5 +81,13 @@
 	"SETTINGS_FETCHED_SUCCESSFULLY": "הגדרות נשלפו בהצלחה.",
 	"SETTINGS_UPDATED_SUCCESSFULLY": "הגדרות עודכנו בהצלחה.",
 	"SETTING_FETCHED_SUCCESSFULLY": "הגדרה נשלפה בהצלחה.",
-	"ONLY_ILS_ALLOWED_FOR_MULTIPLE_PAYMENTS": "רק ILS מותר עבור תשלומים מרובים."
+	"NUMBER_OF_PAYMENT_MUST_BE_NUMBER": "מספר התשלומים חייב להיות מספר.",
+	"NUMBER_OF_PAYMENT_MUST_BE_INTEGER": "מספר התשלומים חייב להיות מספר שלם.",
+	"NUMBER_OF_PAYMENT_REQUIRED": "מספר התשלומים נדרש.",
+	"ONLY_ILS_ALLOWED_FOR_MULTIPLE_PAYMENTS": "רק ILS מותר עבור תשלומים מרובים.",
+	"API_LOGS_FETCHED_SUCCESSFULLY": "יומני API נשלפו בהצלחה.",
+	"EXCHANGE_RATE_FETCH_FAILED": "נכשל באחזור שער החליפין.",
+	"EXCHANGE_RATE_FETCH_SUCCESSFUL": "שער החליפין נשלף בהצלחה.",
+	"TOO_MANY_FAILED_ATTEMPTS": "יותר מדי ניסיונות כושלים. אנא נסה שוב בעוד %d דקות.",
+	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "סיסמה שגויה. %d ניסיון(ים) נותרו."
 }

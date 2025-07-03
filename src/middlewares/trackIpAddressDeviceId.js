@@ -72,11 +72,12 @@ const trackIpAddressDeviceId = async (req, res, next) => {
       ipLon,
       ipTimezone,
     });
+     req.headers['deviceid'] = deviceId;
   } catch (e) {
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
     console.error("Error tracking IP address and device ID:", e.message);
   }
-
+ 
   next();
 };
 
