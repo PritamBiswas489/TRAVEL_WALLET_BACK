@@ -9,6 +9,7 @@ import { registerValidator } from "../validators/register.validator.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import { setNewPinValidator } from "../validators/setNewPin.validator.js";
 import redisClient from "../config/redis.config.js";
+
 const { User, Op } = db;
 
 export default class LoginController {
@@ -22,6 +23,8 @@ export default class LoginController {
       payload,
       headers: { i18n },
     } = request;
+
+    let isNewUser = false;
 
     try {
       const otp = generateOtp();
@@ -37,7 +40,7 @@ export default class LoginController {
         };
       }
 
-      let isNewUser = false;
+      
 
       const user = await User.findOne({
         where: { phoneNumber: payload?.phoneNumber },

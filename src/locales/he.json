@@ -89,5 +89,6 @@
 	"EXCHANGE_RATE_FETCH_FAILED": "נכשל באחזור שער החליפין.",
 	"EXCHANGE_RATE_FETCH_SUCCESSFUL": "שער החליפין נשלף בהצלחה.",
 	"TOO_MANY_FAILED_ATTEMPTS": "יותר מדי ניסיונות כושלים. אנא נסה שוב בעוד %d דקות.",
-	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "סיסמה שגויה. %d ניסיון(ים) נותרו."
+	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "סיסמה שגויה. %d ניסיון(ים) נותרו.",
+	"TOO_MANY_OTP_REQUESTS": "יותר מדי בקשות OTP מהמכשיר הזה. אנא נסה שוב בעוד דקה."
 }

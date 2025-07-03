@@ -1,6 +1,7 @@
 import "../config/environment.js";
 import express from "express";
 import LoginController from "../controllers/login.controller.js";
+import { otpRateLimiter } from "../middlewares/otpRateLimiter.js";
 const router = express.Router();
 
 
@@ -34,7 +35,7 @@ const router = express.Router();
  *       200:
  *         description: OTP sent successfully
  */
-router.post("/send-otp", async (req, res) => {
+router.post("/send-otp", otpRateLimiter, async (req, res) => {
   const response = await LoginController.sendOtpToMobileNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });

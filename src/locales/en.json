@@ -89,5 +89,6 @@
 	"EXCHANGE_RATE_FETCH_FAILED": "Failed to fetch exchange rate.",
 	"EXCHANGE_RATE_FETCH_SUCCESSFUL": "Exchange rate fetched successfully.",
 	"TOO_MANY_FAILED_ATTEMPTS": "Too many failed attempts. Try again in %d minute(s).",
-	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "Wrong password. %d attempt(s) remaining."
+	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "Wrong password. %d attempt(s) remaining.",
+	"TOO_MANY_OTP_REQUESTS": "Too many OTP requests from this device. Please try again after 1 minute."
 }
