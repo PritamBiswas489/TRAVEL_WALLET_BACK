@@ -7,8 +7,8 @@ export const otpRateLimiter = rateLimit({
   store: new RedisStore({
     sendCommand: (...args) => redisClient.call(...args),
   }),
-  windowMs: 30 * 1000, // 30 seconds
-  max: 1, // limit to 1 request per device
+  windowMs: 90 * 1000, // 90 seconds
+  max: 3, // limit to 3 requests per device
   keyGenerator: (req) => req.deviceid,
   handler: (req, res) => {
     const i18n = req.headers.i18n;
