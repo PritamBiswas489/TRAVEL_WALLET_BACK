@@ -1,9 +1,11 @@
+import cron from 'node-cron';
 import { chromium } from 'playwright';
 import process from 'process';
 import CurrencyService from './src/services/currency.service.js';
-import * as Sentry from "@sentry/node";
+import * as Sentry from '@sentry/node';
 import './src/config/environment.js';
 
+// Main logic
 async function getExchangeRate(currencyCode = "THB", amount = "10000") {
   const browser = await chromium.launch({ headless: true });
 
@@ -22,7 +24,7 @@ async function getExchangeRate(currencyCode = "THB", amount = "10000") {
   const page = await context.newPage();
   await page.addInitScript(`Object.defineProperty(navigator, 'webdriver', {get: () => undefined})`);
 
-  console.log(`Fetching exchange rate for ${currencyCode} with amount ${amount}`);
+  console.log(`🔄 Fetching exchange rate for ${currencyCode} with amount ${amount}`);
 
   try {
     await page.goto("https://terminal.public.bankhapoalim.co.il/ng-portals/terminal/he/order", {
@@ -66,30 +68,27 @@ async function getExchangeRate(currencyCode = "THB", amount = "10000") {
   }
 }
 
-// CLI usage
-(async () => {
-  try {
-    const currencyCode = "THB";
-    const amount = "10000";
+// Scheduler using node-cron
+cron.schedule('*/5 * * * *', async () => {
+  console.log(`\n⏰ [${new Date().toISOString()}] Running scheduled currency update...`);
 
+  const currencyCode = "THB";
+  const amount = "10000";
+
+  try {
     const result = await getExchangeRate(currencyCode, amount);
 
     if (result?.success) {
-      try {
-        const insertOrUpdateResult = await CurrencyService.bankhapoalimExchangeRateUpdate({
-          [`${currencyCode}_TO_ILS`]: result[`${currencyCode}_TO_ILS`],
-          [`ILS_TO_${currencyCode}`]: result[`ILS_TO_${currencyCode}`],
-        });
+      const insertOrUpdateResult = await CurrencyService.bankhapoalimExchangeRateUpdate({
+        [`${currencyCode}_TO_ILS`]: result[`${currencyCode}_TO_ILS`],
+        [`ILS_TO_${currencyCode}`]: result[`ILS_TO_${currencyCode}`],
+      });
 
-        if (insertOrUpdateResult?.ERROR) {
-          console.error("❌ Error updating currency:", insertOrUpdateResult.ERROR);
-          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(insertOrUpdateResult.ERROR);
-        } else {
-          console.log("✅ Currency updated:", {insertOrUpdateResult, result});
-        }
-      } catch (dbErr) {
-        console.error("❌ CurrencyService error:", dbErr.message || dbErr);
-        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(dbErr);
+      if (insertOrUpdateResult?.ERROR) {
+        console.error("❌ Error updating currency:", insertOrUpdateResult.ERROR);
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(insertOrUpdateResult.ERROR);
+      } else {
+        console.log("✅ Currency updated successfully:", { insertOrUpdateResult, result });
       }
     } else {
       console.error("❌ Failed to fetch exchange rate:", result?.error || result);
@@ -100,10 +99,6 @@ async function getExchangeRate(currencyCode = "THB", amount = "10000") {
     console.error("❌ Unexpected error:", err.message || err);
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
   }
-})();
+});
 
-
-//============== Instructions running on cron =============
-//Command: which node
-//Output: /usr/bin/node
-//Command: 10 * * * * DISPLAY=:0 xvfb-run -a /usr/bin/node /root/rate-app/rate.js >> /var/log/rate.log 2>&1
+console.log("✅ Bank Hapoalim scheduler is running with node-cron. Waiting for 1 AM...");
