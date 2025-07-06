@@ -69,7 +69,7 @@ async function getExchangeRate(currencyCode = "THB", amount = "10000") {
 }
 
 // Scheduler using node-cron
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 1 * * *', async () => {
   console.log(`\n⏰ [${new Date().toISOString()}] Running scheduled currency update...`);
 
   const currencyCode = "THB";
