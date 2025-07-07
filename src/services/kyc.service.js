@@ -13,7 +13,7 @@ export default class KycService {
       const URL_PATH = "/resources/accessTokens/sdk"; // Exact path, no domain
       const FULL_URL = process.env.SUMSUB_API_URL + URL_PATH;
       const body = {
-        userId: "686be916e29d6fcd11a3be0f",
+        userId: "1",
         levelName: "id-and-liveness",
         applicantIdentifiers: {
           email: "string@example.com",
