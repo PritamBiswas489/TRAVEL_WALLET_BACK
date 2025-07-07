@@ -1,4 +1,5 @@
 import moment from "moment-timezone";
+import "../../config/environment.js";
 export default function BankhapoalimExchangeRate(sequelize, DataTypes) {
   const BankhapoalimExchangeRate = sequelize.define(
     "BankhapoalimExchangeRate",
@@ -29,11 +30,11 @@ export default function BankhapoalimExchangeRate(sequelize, DataTypes) {
       const values = { ...this.get() };
   
       if (values.createdAt) {
-        values.createdAt = moment.utc(values.createdAt).tz("Asia/Bangkok").format("YYYY-MM-DD HH:mm:ss");
+        values.createdAt = moment.utc(values.createdAt).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
       }
   
       if (values.updatedAt) {
-        values.updatedAt = moment.utc(values.updatedAt).tz("Asia/Bangkok").format("YYYY-MM-DD HH:mm:ss");
+        values.updatedAt = moment.utc(values.updatedAt).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
       }
   
       

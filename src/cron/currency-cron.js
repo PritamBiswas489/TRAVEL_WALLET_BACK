@@ -1,4 +1,5 @@
 import CurrencyService from "../services/currency.service.js";
+import "../config/environment.js";
 // cronJob.js
 import cron from 'node-cron';
 
@@ -18,6 +19,6 @@ cron.schedule('0 1 * * *', () => {
     updateCurrencyRates();
 }, {
     scheduled: true,
-    timezone: 'Asia/Jerusalem'  // Set your timezone if needed
+    timezone: process.env.TIMEZONE
 });
 console.log('Cron job scheduled to run every day at 1 AM');
