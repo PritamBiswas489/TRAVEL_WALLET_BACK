@@ -1,3 +1,4 @@
+import moment from "moment-timezone";
 export default function BankhapoalimExchangeRate(sequelize, DataTypes) {
   const BankhapoalimExchangeRate = sequelize.define(
     "BankhapoalimExchangeRate",
