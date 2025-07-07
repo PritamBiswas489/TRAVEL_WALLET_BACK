@@ -1,3 +1,4 @@
+ 
 export default function Currency(sequelize, DataTypes) {
   return sequelize.define(
     "Currency",
@@ -15,21 +16,12 @@ export default function Currency(sequelize, DataTypes) {
       value: {
         type: DataTypes.FLOAT,
         allowNull: false,
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
-      },
+      }, 
     },
     {
       tableName: "currencies",
       timestamps: true,
-    }
+    },
+    
   );
 }

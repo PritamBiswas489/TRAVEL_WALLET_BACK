@@ -16,16 +16,7 @@ export default function BankhapoalimExchangeRate(sequelize, DataTypes) {
         type: DataTypes.FLOAT,
         allowNull: false,
       },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
-      },
+      
     },
     {
       tableName: "bank_hapoalim_exchange_rates",
