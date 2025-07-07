@@ -19,7 +19,6 @@ export default class KycService {
           email: "string@example.com",
           phone: "+911234567890",
         },
-        externalActionId: "action-001",
         ttlInSecs: 600,
       };
       const bodyJson = JSON.stringify(body);
