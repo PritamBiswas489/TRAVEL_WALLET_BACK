@@ -37,7 +37,7 @@ export default function Currency(sequelize, DataTypes) {
       values.updatedAt = moment.utc(values.updatedAt).tz("Asia/Bangkok").format("YYYY-MM-DD HH:mm:ss");
     }
 
-    values.hello = "world"; 
+    
     
 
     return values;
