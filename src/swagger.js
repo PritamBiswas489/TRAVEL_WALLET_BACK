@@ -27,6 +27,10 @@ const options = {
         name: "Auth-Profile routes",
         description: "User profile management endpoints",
       },
+      {
+        name: "Auth-KYC",
+        description: "KYC management endpoints",
+      },
       { name: "Currency routes", description: "Currency management endpoints" },
       {
         name: "Auth-Deposit routes",

@@ -6,6 +6,7 @@ import { default as currencyRouter } from './currency.router.js';
 import { default as redisRouter } from './redis.router.js';
 
 import { default as adminRouter } from './admin.router.js';
+import { default as kycRouter } from './kyc.router.js';
 
 
 
@@ -14,6 +15,6 @@ router.use('/redis', redisRouter);
 router.use('/auth', authRouter);
 router.use('/currency', currencyRouter);
 router.use('/admin', adminRouter);
-
+router.use('/kyc', kycRouter);
 
 export default router;
