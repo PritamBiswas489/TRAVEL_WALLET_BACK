@@ -52,6 +52,14 @@ export default class KycService {
           lastName: lastName,
           nationality: 'ISR',
           country: 'ISR',
+          countryOfBirth: 'ISR',
+          addresses:[
+            {
+              country: 'ISR',
+            }
+          ],
+          taxResidenceCountry: 'ISR',
+          residenceCountry: 'ISR',
         },
         type: "individual",
       };
