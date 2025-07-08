@@ -5,6 +5,7 @@ import { default as profileRouter } from './profile.router.js';
 import { default as depositRouter } from './deposit.router.js';
 import { default as walletRouter } from './wallet.router.js';
 import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
+import { default as kycRouter } from './kyc.router.js';
  
 const router = express.Router();
 
@@ -15,5 +16,6 @@ router.use(trackIpAddressDeviceId);
 router.use('/profile', profileRouter);
 router.use('/deposit', depositRouter);
 router.use('/wallet', walletRouter);
+router.use('/kyc', kycRouter);
 
 export default router;

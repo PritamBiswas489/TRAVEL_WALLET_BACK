@@ -91,6 +91,9 @@
 	"TOO_MANY_FAILED_ATTEMPTS": "Too many failed attempts. Try again in %d minute(s).",
 	"WRONG_PASSWORD_ATTEMPTS_REMAINING": "Wrong password. %d attempt(s) remaining.",
 	"TOO_MANY_OTP_REQUESTS": "Too many OTP requests from this device. Please try again after 1 minute.",
-	"SUMSUB_ACCESS_TOKEN_SUCCESS": "SumSub access token retrieved successfully.",
-	"SUMSUB_ACCESS_TOKEN_ERROR": "Failed to retrieve SumSub access token."
+	"SUMSUB_ACCESS_TOKEN_SUCCESS": "Access token retrieved successfully.",
+	"SUMSUB_ACCESS_TOKEN_ERROR": "Failed to retrieve  access token.",
+    "APPLICANT_CREATION_SUCCESS": "Applicant created successfully.",
+	"APPLICANT_CREATION_ERROR": "Failed to create applicant."
+
 }

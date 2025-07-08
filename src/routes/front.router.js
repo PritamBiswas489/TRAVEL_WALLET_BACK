@@ -4,6 +4,8 @@ import { default as loginRouter } from './login.router.js';
 import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
 const router = express.Router();
 import ContactUsController from '../controllers/contactus.controller.js';
+import fs from 'fs';
+import path from 'path';
 
 router.use(trackIpAddressDeviceId);
 
@@ -66,6 +68,47 @@ router.get('/contact-us', async (req, res, next) => {
    res.return(response)
 });
 
+/**
+ * @swagger
+ * /api/front/sumsub-kyc-webhook:
+ *   post:
+ *     summary: Handle Sumsub KYC webhook events
+ *     tags: [Kyc-webhook]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload sent by Sumsub KYC webhook
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+router.post('/sumsub-kyc-webhook', (req, res) => {
+   // Handle the webhook event
+   const data = JSON.stringify(req.body, null, 2);
+   const now = new Date();
+   const filename = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}.txt`;
+   const filePath = path.join(process.cwd(), 'public', filename);
+
+   fs.writeFile(filePath, data, (err) => {
+      if (err) {
+         console.error('Error writing webhook data:', err);
+         return res.status(500).send('Failed to save webhook data');
+      }
+      console.log('Received Sumsub KYC webhook:', req.body);
+      res.status(200).send('Webhook received');
+   });
+});
+
+
 router.use('/login',loginRouter)
+
+
+
 
 export default router;

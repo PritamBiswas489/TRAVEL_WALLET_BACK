@@ -31,6 +31,10 @@ const options = {
         name: "Auth-KYC",
         description: "KYC management endpoints",
       },
+      {
+        name: "Kyc-webhook",
+        description: "KYC webhook endpoints",
+      },
       { name: "Currency routes", description: "Currency management endpoints" },
       {
         name: "Auth-Deposit routes",
