@@ -4,7 +4,6 @@ import axios from "axios";
 import KycService from "../services/kyc.service.js";
 import * as Sentry from "@sentry/node";
 import UserService from "../services/user.service.js";
- 
 
 export default class KycController {
   static async createApplicant(request) {
@@ -14,46 +13,41 @@ export default class KycController {
       user,
     } = request;
 
-    try {
-      const userId = user?.id;
-      const reApply = payload?.re_apply || 0; //if kyc failed, reApply will be 1
+    const userId = user?.id;
+    const reApply = payload?.re_apply || 0;
 
-      const applicant = await KycService.createApplicant({
-        userId,
-        reApply
-      });
-      if (applicant.error) {
-        return {
-          status: 400,
+    return new Promise((resolve) => {
+      KycService.createApplicant({ userId, reApply }, (err, applicant) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(err.message),
+              reason: i18n.__("APPLICANT_CREATION_ERROR"),
+            },
+          });
+        }
+
+        if (applicant?.id) {
+          return resolve({
+            status: 200,
+            data: applicant,
+            message: i18n.__("APPLICANT_CREATION_SUCCESS"),
+            error: {},
+          });
+        }
+
+        return resolve({
+          status: 500,
           data: null,
           error: {
             message: i18n.__("APPLICANT_CREATION_ERROR"),
-            reason: applicant.error,
+            reason: "Unexpected failure",
           },
-        };
-      }
-      if(applicant?.id){
-         return {
-          status: 200,
-          data: applicant,
-          message: i18n.__("APPLICANT_CREATION_SUCCESS"),
-          error: {},
-        };
-      }else{
-        throw new Error(i18n.__("APPLICANT_CREATION_ERROR"));
-      }
-
-  } catch (error) {
-      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return {
-        status: 500,
-        data: null,
-        error: {
-          message: i18n.__("APPLICANT_CREATION_ERROR"),
-          reason: error.message,
-        },
-      };
-    }
+        });
+      });
+    });
   }
   static async getAccessToken(request) {
     const {
@@ -61,37 +55,30 @@ export default class KycController {
       headers: { i18n },
       user,
     } = request;
-    try {
-      const userId = user?.id;
-      const accessToken = await KycService.getSumSubAccessToken(userId);
-      if (accessToken.error) {
-        return {
-          status: 400,
-          data: null,
-          error: {
-            message: i18n.__("SUMSUB_ACCESS_TOKEN_ERROR"),
-            reason: accessToken.error,
-          },
-        };
-      }
 
-      return {
-        status: 200,
-        data: { accessToken: accessToken?.token ? accessToken.token : null },
-        message: i18n.__("SUMSUB_ACCESS_TOKEN_SUCCESS"),
-        error: {},
-      };
-    } catch (error) {
-      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return {
-        status: 500,
-        data: null,
-        error: {
-          message: i18n.__("SUMSUB_ACCESS_TOKEN_ERROR"),
-          reason: error.message,
-        },
-      };
-    }
+    const userId = user?.id;
+
+    return new Promise((resolve) => {
+      KycService.getSumSubAccessToken(userId, (err, token) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(err.message),
+              reason: i18n.__("SUMSUB_ACCESS_TOKEN_ERROR"),
+            },
+          });
+        }
+
+        return resolve({
+          status: 200,
+          data: { accessToken: token },
+          message: i18n.__("SUMSUB_ACCESS_TOKEN_SUCCESS"),
+          error: {},
+        });
+      });
+    });
   }
   static async getUserKycData(request) {
     const {
@@ -115,7 +102,9 @@ export default class KycController {
       }
       let logData = [];
       if (kycData && typeof kycData === "object" && kycData.applicantId) {
-        logData = await KycService.getWebhookDataByApplicantId(kycData.applicantId);
+        logData = await KycService.getWebhookDataByApplicantId(
+          kycData.applicantId
+        );
       }
 
       return {

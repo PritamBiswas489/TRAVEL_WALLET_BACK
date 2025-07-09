@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 const { Op, User, KycStatusWebhook } = db;
 
 export default class KycService {
-  static async createApplicant(args) {
+  static async createApplicant(args, callback) {
     try {
       const APP_TOKEN = process.env.SUMSUB_API_KEY; // Your token
       const SECRET_KEY = process.env.SUMSUB_API_SECRET; // ⚠️ Replace with your secret from Sumsub dashboard
@@ -24,6 +24,9 @@ export default class KycService {
       }
 
       const user = await UserService.getUserById(args.userId);
+
+      if (!user) return callback(new Error("USER_NOT_FOUND"));
+
 
       let firstName = "user " + user?.id;
       let lastName = user?.phoneNumber || "";
@@ -42,7 +45,7 @@ export default class KycService {
         typeof existingKycData.applicantId === "string" &&
         existingKycData.applicantId.trim() !== ""
       ) {
-        return existingKycData;
+        return callback(null, existingKycData);
       }
       // If KYC data exists, delete it before creating a new applicant
       if (existingKycData) {
@@ -56,7 +59,7 @@ export default class KycService {
         userId: args.userId,
       });
       if (!createSiteApplicant?.id) {
-        throw new Error("Failed to create site applicant");
+        return callback(new Error("FAILED_TO_CREATE_SITE_APPLICANT"));
       }
 
       const body = {
@@ -101,32 +104,33 @@ export default class KycService {
             applicantid: response.data?.id,
             id: createSiteApplicant.id,
           });
-          return await UserService.getUserKycData(args.userId);
+          const updatedKyc = await UserService.getUserKycData(args.userId);
+          return callback(null, updatedKyc);
         }
         // If the response does not contain an ID, delete the KYC data
         await UserService.deleteUserKycData(args.userId);
-        return response.data;
+        return callback(new Error("NO_APPLICANT_ID_IN_RESPONSE"));
       } catch (err) {
         if (err.response && err.response.status === 409) {
           // Applicant already exists, return a specific message or handle accordingly
-          return { error: "Applicant already exists", status: 409 };
+          return callback(new Error("APPLICANT_ALREADY_EXISTS"));
         } else {
-          throw err;
+          return callback(err);
         }
       }
     } catch (error) {
       console.error("Error occurred while creating applicant:", error);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return { error: error.message };
+      return callback(error);
     }
   }
-  static async getSumSubAccessToken(userId) {
+  static async getSumSubAccessToken(userId, callback) {
     try {
       const APP_TOKEN = process.env.SUMSUB_API_KEY; // Your token
       const SECRET_KEY = process.env.SUMSUB_API_SECRET; // ⚠️ Replace with your secret from Sumsub dashboard
       const userkyc = await UserService.getUserKycData(userId);
       if (!userkyc || !userkyc.applicantId) {
-        throw new Error("User KYC data not found");
+        return callback(new Error("APPLICANT_ID_NOT_FOUND"));
       }
       // console.log(userkyc.uuid);
 
@@ -155,13 +159,13 @@ export default class KycService {
       };
       const response = await axios.post(FULL_URL, bodyJson, { headers });
       if (response.data?.token) {
-        return { token: response.data.token };
+           return callback(null, response.data.token);
       } else {
-        throw new Error("Failed to retrieve access token from SumSub");
+        return callback(new Error("FAILED_TO_GET_ACCESS_TOKEN"));
       }
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return { error: error.message };
+      return callback(error);
     }
   }
   static async handleWebhookEvent(webhookData) {

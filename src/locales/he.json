@@ -96,5 +96,13 @@
 	"APPLICANT_CREATION_SUCCESS": "המועמד נוצר בהצלחה.",
 	"APPLICANT_CREATION_ERROR": "נכשל ביצירת המועמד.",
 	"USER_KYC_DATA_ERROR": "נכשל באחזור נתוני KYC של המשתמש.",
-	"USER_KYC_DATA_SUCCESS": "נתוני KYC של המשתמש נשלפו בהצלחה."
+	"USER_KYC_DATA_SUCCESS": "נתוני KYC של המשתמש נשלפו בהצלחה.",
+	"WEBHOOK_HANDLING_SUCCESS": "הטיפול ב-Webhook הצליח.",
+	"WEBHOOK_HANDLING_ERROR": "שגיאה בטיפול ב-Webhook.",
+	"USER_CARD_SET_AS_DEFAULT": "כרטיס המשתמש הוגדר כברירת מחדל.",
+	"APPLICANT_ID_NOT_FOUND": "מזהה מועמד לא נמצא.",
+	"FAILED_TO_GET_ACCESS_TOKEN": "נכשל בקבלת אסימון גישה.",
+	"FAILED_TO_CREATE_SITE_APPLICANT": "נכשל ביצירת מועמד לאתר.",
+	"NO_APPLICANT_ID_IN_RESPONSE": "אין מזהה מועמד בתגובה.",
+	"APPLICANT_ALREADY_EXISTS": "המועמד כבר קיים."
 }
