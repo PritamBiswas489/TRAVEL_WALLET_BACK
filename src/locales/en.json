@@ -21,7 +21,7 @@
 	"CONTENT_SAVED_SUCCESSFULLY": "Content saved successfully.",
 	"RECORDS_FETCHED_SUCCESSFULLY": "Records fetched successfully.",
 	"ONLY_IMAGES_ALLOWED": "Only images are allowed (jpeg, jpg, png, gif).",
-	"UNAUTHORIZED_ACTION": "Unauthorized action.",
+	"UNAUTHORIZED_ACTION": "Unauthorized action. Logout and login again.",
 	"TOKEN_NOT_FOUND": "Token not found.",
 	"REFRESH_TOKEN_NOT_FOUND": "Refresh token not found.",
 	"ADDRESS_REQUIRED": "Address is required.",
@@ -94,6 +94,8 @@
 	"SUMSUB_ACCESS_TOKEN_SUCCESS": "Access token retrieved successfully.",
 	"SUMSUB_ACCESS_TOKEN_ERROR": "Failed to retrieve  access token.",
     "APPLICANT_CREATION_SUCCESS": "Applicant created successfully.",
-	"APPLICANT_CREATION_ERROR": "Failed to create applicant."
+	"APPLICANT_CREATION_ERROR": "Failed to create applicant.",
+	"USER_KYC_DATA_ERROR": "Failed to fetch user KYC data.",
+	"USER_KYC_DATA_SUCCESS": "User KYC data fetched successfully."
 
 }

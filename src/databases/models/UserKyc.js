@@ -28,8 +28,8 @@ export default function UserKyc(sequelize, DataTypes) {
         allowNull: true,
       },
       status: {
-        type: DataTypes.ENUM("pending", "approved", "rejected"),
-        defaultValue: "pending",
+        type: DataTypes.STRING,
+        defaultValue: "Document_pending",
       },
     },
     {

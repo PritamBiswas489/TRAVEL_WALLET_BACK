@@ -148,4 +148,5 @@ export default class KycService {
       return { error: error.message };
     }
   }
+
 }

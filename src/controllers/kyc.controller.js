@@ -2,6 +2,8 @@ import db from "../databases/models/index.js";
 import "../config/environment.js";
 import axios from "axios";
 import KycService from "../services/kyc.service.js";
+import * as Sentry from "@sentry/node";
+import UserService from "../services/user.service.js";
  
 
 export default class KycController {
@@ -88,5 +90,47 @@ export default class KycController {
         },
       };
     }
+  }
+  static async getUserKycData(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const userId = user?.id;
+      const kycData = await UserService.getUserKycData(userId);
+      if (kycData.error) {
+        return {
+          status: 400,
+          data: null,
+          error: {
+            message: i18n.__("USER_KYC_DATA_ERROR"),
+            reason: kycData.error,
+          },
+        };
+      }
+
+      return {
+        status: 200,
+        data: kycData,
+        message: i18n.__("USER_KYC_DATA_SUCCESS"),
+        error: {},
+      };
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return {
+        status: 500,
+        data: null,
+        error: {
+          message: i18n.__("USER_KYC_DATA_ERROR"),
+          reason: error.message,
+        },
+      };
+    }
+
+
+
   }
 }

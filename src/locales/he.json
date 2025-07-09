@@ -21,7 +21,7 @@
 	"CONTENT_SAVED_SUCCESSFULLY": "התוכן נשמר בהצלחה",
 	"RECORDS_FETCHED_SUCCESSFULLY": "הרשומות נשלפו בהצלחה",
 	"ONLY_IMAGES_ALLOWED": "רק תמונות מותרות (jpeg, jpg, png, gif)",
-	"UNAUTHORIZED_ACTION": "פעולה לא מורשית",
+	"UNAUTHORIZED_ACTION": "פעולה לא מורשית. התנתק והתחבר שוב.",
 	"TOKEN_NOT_FOUND": "אסימון לא נמצא",
 	"REFRESH_TOKEN_NOT_FOUND": "אסימון רענון לא נמצא",
 	"ADDRESS_REQUIRED": "כתובת נדרשת",
@@ -94,5 +94,7 @@
 	"SUMSUB_ACCESS_TOKEN_SUCCESS": "אסימון הגישה של SumSub נשלף בהצלחה.",
 	"SUMSUB_ACCESS_TOKEN_ERROR": "נכשל באחזור אסימון הגישה של SumSub.",
 	"APPLICANT_CREATION_SUCCESS": "המועמד נוצר בהצלחה.",
-	"APPLICANT_CREATION_ERROR": "נכשל ביצירת המועמד."
+	"APPLICANT_CREATION_ERROR": "נכשל ביצירת המועמד.",
+	"USER_KYC_DATA_ERROR": "נכשל באחזור נתוני KYC של המשתמש.",
+	"USER_KYC_DATA_SUCCESS": "נתוני KYC של המשתמש נשלפו בהצלחה."
 }
