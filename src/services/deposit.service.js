@@ -24,15 +24,19 @@ export default class DepositService {
       return { error: e.message };
     }
   }
- static async markCardAsDefault(userId, cardId) {
-    await UserCard.update(
-      { isDefault: false },
-      { where: { userId } }
-    );
-    const d =  await UserCard.update(
-      { isDefault: true },
-      { where: { id: cardId } }
-    );
-    return d;
+  static async markCardAsDefault(userId, cardId) {
+    try {
+      await UserCard.update({ isDefault: false }, { where: { userId } });
+      const d = await UserCard.update(
+        { isDefault: true },
+        { where: { id: cardId } }
+      );
+      return d;
+    } catch (e) {
+      if (process.env.SENTRY_ENABLED === "true") {
+        Sentry.captureException(e);
+      }
+      return { error: e.message };
+    }
   }
 }
