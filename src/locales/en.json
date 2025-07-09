@@ -56,7 +56,7 @@
 	"CARDHOLDER_NAME_REQUIRED": "Cardholder name is required.",
 	"CARDHOLDER_NAME_MIN_LENGTH": "Cardholder name must be at least 2 characters long.",
 	"CARDHOLDER_NAME_MAX_LENGTH": "Cardholder name must be at most 50 characters long.",
-	"CARD_NUMBER_STRING": "Card number must be 16 digits.",
+	"CARD_NUMBER_STRING": "Card number must be a valid length.",
 	"CARD_NUMBER_REQUIRED": "Card number is required.",
 	"EXPIRATION_DATE_FORMAT": "Expiration date must be in MM/YY format.",
 	"EXPIRATION_DATE_REQUIRED": "Expiration date is required.",
@@ -93,9 +93,11 @@
 	"TOO_MANY_OTP_REQUESTS": "Too many OTP requests from this device. Please try again after 1 minute.",
 	"SUMSUB_ACCESS_TOKEN_SUCCESS": "Access token retrieved successfully.",
 	"SUMSUB_ACCESS_TOKEN_ERROR": "Failed to retrieve  access token.",
-    "APPLICANT_CREATION_SUCCESS": "Applicant created successfully.",
+	"APPLICANT_CREATION_SUCCESS": "Applicant created successfully.",
 	"APPLICANT_CREATION_ERROR": "Failed to create applicant.",
 	"USER_KYC_DATA_ERROR": "Failed to fetch user KYC data.",
-	"USER_KYC_DATA_SUCCESS": "User KYC data fetched successfully."
-
+	"USER_KYC_DATA_SUCCESS": "User KYC data fetched successfully.",
+	"WEBHOOK_HANDLING_SUCCESS": "WEBHOOK_HANDLING_SUCCESS",
+	"WEBHOOK_HANDLING_ERROR": "WEBHOOK_HANDLING_ERROR",
+	"USER_CARD_SET_AS_DEFAULT": "USER_CARD_SET_AS_DEFAULT"
 }

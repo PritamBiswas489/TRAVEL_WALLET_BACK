@@ -16,9 +16,11 @@ export default class KycController {
 
     try {
       const userId = user?.id;
-      
+      const reApply = payload?.re_apply || 0; //if kyc failed, reApply will be 1
+
       const applicant = await KycService.createApplicant({
-        userId
+        userId,
+        reApply
       });
       if (applicant.error) {
         return {
@@ -111,10 +113,14 @@ export default class KycController {
           },
         };
       }
+      let logData = [];
+      if (kycData && typeof kycData === "object" && kycData.applicantId) {
+        logData = await KycService.getWebhookDataByApplicantId(kycData.applicantId);
+      }
 
       return {
         status: 200,
-        data: kycData,
+        data: { ...kycData.dataValues, logData },
         message: i18n.__("USER_KYC_DATA_SUCCESS"),
         error: {},
       };
@@ -129,8 +135,43 @@ export default class KycController {
         },
       };
     }
+  }
+  static async createWebhookStatusResponse(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
 
+    try {
+      const webhookResponse = await KycService.handleWebhookEvent(payload);
+      if (webhookResponse.error) {
+        return {
+          status: 400,
+          data: null,
+          error: {
+            message: i18n.__("WEBHOOK_HANDLING_ERROR"),
+            reason: webhookResponse.error,
+          },
+        };
+      }
 
-
+      return {
+        status: 200,
+        data: webhookResponse,
+        message: i18n.__("WEBHOOK_HANDLING_SUCCESS"),
+        error: {},
+      };
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return {
+        status: 500,
+        data: null,
+        error: {
+          message: i18n.__("WEBHOOK_HANDLING_ERROR"),
+          reason: error.message,
+        },
+      };
+    }
   }
 }

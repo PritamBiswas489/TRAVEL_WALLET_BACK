@@ -14,6 +14,17 @@ const router = express.Router();
  *     security:
  *      - bearerAuth: []
  *      - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               re_apply:
+ *                 type: integer
+ *                 default: 0
+ *                 description: Indicates if the applicant is re-applying (0 = no, 1 = yes)
  *     responses:
  *       200:
  *         description: Applicant created successfully

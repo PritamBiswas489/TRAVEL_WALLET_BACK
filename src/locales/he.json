@@ -56,7 +56,7 @@
 	"CARDHOLDER_NAME_REQUIRED": "שם בעל הכרטיס נדרש",
 	"CARDHOLDER_NAME_MIN_LENGTH": "שם בעל הכרטיס חייב להכיל לפחות 2 תווים",
 	"CARDHOLDER_NAME_MAX_LENGTH": "שם בעל הכרטיס יכול להכיל עד 50 תווים",
-	"CARD_NUMBER_STRING": "מספר כרטיס חייב להיות בן 16 ספרות",
+	"CARD_NUMBER_STRING": "מספר כרטיס חייב להיות באורך תקין.",
 	"CARD_NUMBER_REQUIRED": "מספר כרטיס נדרש",
 	"EXPIRATION_DATE_FORMAT": "תאריך תפוגה חייב להיות בפורמט MM/YY",
 	"EXPIRATION_DATE_REQUIRED": "תאריך תפוגה נדרש",

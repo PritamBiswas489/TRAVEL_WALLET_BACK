@@ -1,6 +1,7 @@
 import "../config/environment.js";
 import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
+import KycService from "./kyc.service.js";
 
 const { Op, User, UserKyc } = db;
 
@@ -56,11 +57,35 @@ export default class UserService {
       throw error;
     }
   }
+  static async updateKycStatus({ applicantid, status }) {
+    try {
+      const updatedKyc = await UserKyc.update(
+        { status },
+        { where: { applicantId : applicantid } }
+      );
+      return updatedKyc;
+    } catch (error) {
+      console.error("Error updating KYC status:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw error;
+    }
+  }
   static async deleteUserKycData(userId) {
     try {
+      const userKyc = await UserKyc.findOne({
+        where: { userId },
+      });
+      if (!userKyc) {
+        // No KYC data found for this user
+        return 0;
+      }
+      const applicantId = userKyc.applicantId;
       const deletedKyc = await UserKyc.destroy({
         where: { userId },
       });
+      if (applicantId) {
+        await KycService.deleteWebHookStatus(applicantId);
+      }
       return deletedKyc;
     } catch (error) {
       console.error("Error deleting user KYC data:", error);

@@ -118,6 +118,50 @@ export default class DepositController {
       };
     }
   }
+  static async setDefaultCard(request){
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const { cardId } = payload;
+      const userCard = await UserCard.findOne({
+        where: { id: cardId, userId: user.id },
+      });
+
+      if (!userCard) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_CARD_NOT_FOUND") },
+        };
+      }
+
+      await DepositService.markCardAsDefault(user.id, cardId);
+
+      const updatedUserCard = await UserCard.findOne({
+        where: { id: cardId, userId: user.id },
+      });
+
+      return {
+        status: 200,
+        data: updatedUserCard,
+        message: i18n.__("USER_CARD_SET_AS_DEFAULT"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+      
+
+  }
   static async getPeleCardUserCardList(request) {
     const {
       payload,

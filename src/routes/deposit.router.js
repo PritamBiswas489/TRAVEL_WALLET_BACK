@@ -45,6 +45,37 @@ router.post('/pelecard-payment-add-card-and-card-token', async (req, res, next) 
   const response = await depositController.peleCardPaymentConvertToToken({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+/**
+ * @swagger
+ * /api/auth/deposit/set-default-card:
+ *   post:
+ *     summary: Set a card as the default card
+ *     tags:
+ *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cardId
+ *             properties:
+ *               cardId:
+ *                 type: string
+ *                 default: "1"
+ *                 description: ID of the card to set as default
+ *     responses:
+ *       200:
+ *         description: Success - Card set as default
+ */
+router.post('/set-default-card', async (req, res, next) => {
+  const response = await depositController.setDefaultCard({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
 
 /**
  * @swagger

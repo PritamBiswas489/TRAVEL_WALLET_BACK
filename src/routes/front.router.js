@@ -4,6 +4,7 @@ import { default as loginRouter } from './login.router.js';
 import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
 const router = express.Router();
 import ContactUsController from '../controllers/contactus.controller.js';
+import KycController from '../controllers/kyc.controller.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -88,21 +89,26 @@ router.get('/contact-us', async (req, res, next) => {
  *       200:
  *         description: Webhook received successfully
  */
-router.post('/sumsub-kyc-webhook', (req, res) => {
+router.post('/sumsub-kyc-webhook', async (req, res) => {
    // Handle the webhook event
-   const data = JSON.stringify(req.body, null, 2);
-   const now = new Date();
-   const filename = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}.txt`;
-   const filePath = path.join(process.cwd(), 'public', filename);
+   // const data = JSON.stringify(req.body, null, 2);
+   // const now = new Date();
+   // const filename = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}.txt`;
+   // const filePath = path.join(process.cwd(), 'public', filename);
 
-   fs.writeFile(filePath, data, (err) => {
-      if (err) {
-         console.error('Error writing webhook data:', err);
-         return res.status(500).send('Failed to save webhook data');
-      }
-      console.log('Received Sumsub KYC webhook:', req.body);
-      res.status(200).send('Webhook received');
-   });
+   // fs.writeFile(filePath, data, (err) => {
+   //    if (err) {
+   //       console.error('Error writing webhook data:', err);
+   //       return res.status(500).send('Failed to save webhook data');
+   //    }
+   //    console.log('Received Sumsub KYC webhook:', req.body);
+   //    res.status(200).send('Webhook received');
+   // });
+
+   const response = await KycController.createWebhookStatusResponse({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response)
+
+
 });
 
 
