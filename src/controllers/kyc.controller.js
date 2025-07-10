@@ -119,7 +119,7 @@ export default class KycController {
 
       return {
         status: 200,
-        data: { ...kycData?.dataValues, ...(logData.length > 0 && logData) },
+        data: { ...kycData?.dataValues, logData},
         message: i18n.__("USER_KYC_DATA_SUCCESS"),
         error: {},
       };
