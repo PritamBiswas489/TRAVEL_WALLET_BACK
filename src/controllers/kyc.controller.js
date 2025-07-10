@@ -90,13 +90,23 @@ export default class KycController {
     try {
       const userId = user?.id;
       const kycData = await UserService.getUserKycData(userId);
-      if (kycData.error) {
+      if (kycData?.error) {
         return {
           status: 400,
           data: null,
           error: {
             message: i18n.__("USER_KYC_DATA_ERROR"),
             reason: kycData.error,
+          },
+        };
+      }
+      if(!kycData?.id){
+        return {
+          status: 404,
+          data: null,
+          error: {
+            message: i18n.__("USER_KYC_DATA_NOT_FOUND"),
+            reason: i18n.__("USER_KYC_DATA_NOT_FOUND"),
           },
         };
       }
@@ -109,7 +119,7 @@ export default class KycController {
 
       return {
         status: 200,
-        data: { ...kycData.dataValues, logData },
+        data: { ...kycData?.dataValues, ...(logData.length > 0 && logData) },
         message: i18n.__("USER_KYC_DATA_SUCCESS"),
         error: {},
       };

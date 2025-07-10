@@ -102,9 +102,9 @@
 	"USER_CARD_SET_AS_DEFAULT": "User card set as default.",
 	"APPLICANT_ID_NOT_FOUND": "Applicant ID not found.",
 	"FAILED_TO_GET_ACCESS_TOKEN": "Failed to get access token.",
-	 "FAILED_TO_CREATE_SITE_APPLICANT": "Failed to create site applicant.",
-	 "NO_APPLICANT_ID_IN_RESPONSE": "No applicant ID in response.",
-	 "APPLICANT_ALREADY_EXISTS": "Applicant already exists."
+	"FAILED_TO_CREATE_SITE_APPLICANT": "Failed to create site applicant.",
+	"NO_APPLICANT_ID_IN_RESPONSE": "No applicant ID in response.",
+	"APPLICANT_ALREADY_EXISTS": "Applicant already exists.",
+	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found."
 
-	 
 }

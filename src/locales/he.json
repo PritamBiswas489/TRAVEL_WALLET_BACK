@@ -104,5 +104,6 @@
 	"FAILED_TO_GET_ACCESS_TOKEN": "נכשל בקבלת אסימון גישה.",
 	"FAILED_TO_CREATE_SITE_APPLICANT": "נכשל ביצירת מועמד לאתר.",
 	"NO_APPLICANT_ID_IN_RESPONSE": "אין מזהה מועמד בתגובה.",
-	"APPLICANT_ALREADY_EXISTS": "המועמד כבר קיים."
+	"APPLICANT_ALREADY_EXISTS": "המועמד כבר קיים.",
+	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found."
 }
