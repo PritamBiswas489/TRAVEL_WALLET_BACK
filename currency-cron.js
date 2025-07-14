@@ -53,10 +53,14 @@ const updateCurrencyRates = async () => {
 
 // Schedule the task to run every day at 1 AM
 
-cron.schedule("0 1 * * *", async () => {
-  try {
+cron.schedule(
+  "0 1 * * *", // Run at 1 AM daily
+  async () => {
+    console.log("[Cron] ⏰ Running scheduled job at 1 AM...");
     await updateCurrencyRates();
-  } catch (error) {
-    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+  },
+  {
+    scheduled: true,
+    timezone: process.env.TIMEZONE || "Asia/Bangkok",
   }
-});
+);
