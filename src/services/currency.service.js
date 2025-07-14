@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import SettingsService from "./settings.service.js";
 import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import { where } from "sequelize";
+import { formatDateToTimezone } from "../libraries/utility.js";
 
 const { Currency, Op, BankhapoalimExchangeRate } = db;
 
@@ -83,6 +84,8 @@ export default class CurrencyService {
             where: { code: `${fCur}_TO_THB` },
           });
 
+          // console.log("currency", currency);
+
           if (!currency) {
             return { ERROR: 1 };
           }
@@ -105,6 +108,7 @@ export default class CurrencyService {
             deltaCutPercentage,
             cutValue,
             finalRateValue,
+            updatedTime: formatDateToTimezone(currency.updatedAt),
           };
         })
       );
@@ -145,6 +149,7 @@ export default class CurrencyService {
             deltaCutPercentage,
             cutValue,
             finalRateValue : 1 / finalRateValue,
+            updatedTime: formatDateToTimezone(currency.updatedAt),
           };
         })
       );

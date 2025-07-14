@@ -1,5 +1,7 @@
 import handlebars from 'handlebars';
 import fs from 'fs';
+import moment from "moment-timezone";
+import "../config/environment.js";
 
 export const slugify = (str) =>
 	str
@@ -74,4 +76,8 @@ export function generateRandomPassword() {
 
   export function amountUptotwoDecimalPlaces(amount) {
 	return parseFloat(amount.toFixed(2));
+  }
+
+  export function formatDateToTimezone(date) {
+    return moment.utc(date).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
   }
