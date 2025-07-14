@@ -14,8 +14,8 @@ const updateCurrencyRates = async () => {
     }
 };
 
-// Schedule the task to run every day at 1 AM
-cron.schedule('0 1 * * *', () => {
+// Schedule the task to run every day at 12:30 PM
+cron.schedule('30 12 * * *', () => {
     updateCurrencyRates();
 }, {
     scheduled: true,
