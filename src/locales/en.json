@@ -105,6 +105,21 @@
 	"FAILED_TO_CREATE_SITE_APPLICANT": "Failed to create site applicant.",
 	"NO_APPLICANT_ID_IN_RESPONSE": "No applicant ID in response.",
 	"APPLICANT_ALREADY_EXISTS": "Applicant already exists.",
-	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found."
-
+	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found.",
+	"FCM_TOKEN_REQUIRED": "FCM token is required.",
+	"FCM_TOKEN_SAVED_SUCCESSFULLY": "FCM token saved successfully.",
+	"NO_USER_FOUND_SELECTED_MOBILE_NUMBER": "No user found with the selected mobile number.",
+	"CANT_SEND_MONEY_BECAUSE_OF_UNAPPROVED_KYC": "User restricted from receiving money.",
+	"INSUFFICIENT_BALANCE": "Insufficient balance in your wallet. Please recharge to continue.",
+	"SENDER_WALLET_NOT_FOUND": "Sender wallet not found for selected currency.",
+	"SENDER_WALLET_NOT_ACTIVE_OR_LOCKED": "Sender wallet is not active or locked.",
+	"TRANSFER_CREATION_FAILED": "Failed to create transfer.",
+	"PENDING_TRANSFER_EXISTS": "A pending transfer already exists.",
+	"RECEIVER_STATUS_CHECKED_SUCCESSFULLY": "Receiver status checked successfully.",
+	"TRANSFER_EXECUTED_SUCCESSFULLY": "Transfer executed successfully.",
+	"TRANSFER_REJECTED_SUCCESSFULLY": "TRANSFER_REJECTED_SUCCESSFULLY",
+	"TRANSFER_NOT_FOUND_OR_NOT_PENDING": "Transfer not found or not in pending status.",
+	"INVALID_STATUS": "Invalid status.",
+	"TRANSFER_ACCEPTED_SUCCESSFULLY": "Transfer accepted successfully.",
+	"TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY": "TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY"
 }

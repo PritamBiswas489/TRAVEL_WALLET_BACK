@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, UserWallet, ApiLogs } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserFcm, Transfer } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -10,11 +10,31 @@ const relation = (db) => {
   WalletPelePayment.belongsTo(User, { foreignKey: "userId", as: "user" });
 
   //user wallets
-  User.hasOne(UserWallet, { foreignKey: "userId", as: "wallets" });
+  User.hasMany(UserWallet, { foreignKey: "userId", as: "wallets" });
   UserWallet.belongsTo(User, { foreignKey: "userId", as: "user" });
 
   User.hasMany(ApiLogs, { foreignKey: "userId", as: "apiLogs" });
   ApiLogs.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+  User.hasOne(UserKyc, { foreignKey: "userId", as: "kyc" });
+  UserKyc.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+  User.hasOne(UserFcm, { foreignKey: "userId", as: "fcm" });
+  UserFcm.belongsTo(User, { foreignKey: "userId", as: "user" }); 
+  
+  //WalletTransaction may belong to WalletPelePayment via paymentId (nullable)
+  WalletPelePayment.hasOne(WalletTransaction, { foreignKey: "paymentId", as: "transaction" });
+  WalletTransaction.belongsTo(WalletPelePayment, { foreignKey: "paymentId", as: "walletPayment" });
+
+  //Transfer model relations
+  User.hasMany(Transfer, { foreignKey: "senderId", as: "sentTransfers" });
+  User.hasMany(Transfer, { foreignKey: "receiverId", as: "receivedTransfers" });
+  Transfer.belongsTo(User, { foreignKey: "senderId", as: "sender" });
+  Transfer.belongsTo(User, { foreignKey: "receiverId", as: "receiver" });
+
+
+  WalletTransaction.belongsTo(Transfer, { foreignKey: "transferId", as: "transfer" });
+  Transfer.hasMany(WalletTransaction, { foreignKey: "transferId", as: "transactions" });
 
 };
 

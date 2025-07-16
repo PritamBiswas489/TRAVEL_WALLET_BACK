@@ -105,5 +105,20 @@
 	"FAILED_TO_CREATE_SITE_APPLICANT": "נכשל ביצירת מועמד לאתר.",
 	"NO_APPLICANT_ID_IN_RESPONSE": "אין מזהה מועמד בתגובה.",
 	"APPLICANT_ALREADY_EXISTS": "המועמד כבר קיים.",
-	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found."
+	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found.",
+	"FCM_TOKEN_REQUIRED": "נדרש אסימון FCM.",
+	"FCM_TOKEN_SAVED_SUCCESSFULLY": "אסימון FCM נשמר בהצלחה.",
+	"NO_USER_FOUND_SELECTED_MOBILE_NUMBER": "לא נמצא משתמש עם מספר הטלפון הנבחר.",
+	"CANT_SEND_MONEY_BECAUSE_OF_UNAPPROVED_KYC": "המשתמש מוגבל מלקבל כסף.",
+	"INSUFFICIENT_BALANCE": "יתרה לא מספיקה בארנק שלך. אנא טען שוב כדי להמשיך.",
+	"SENDER_WALLET_NOT_FOUND": "ארנק השולח לא נמצא עבור המטבע הנבחר.",
+	"SENDER_WALLET_NOT_ACTIVE_OR_LOCKED": "ארנק השולח אינו פעיל או נעול.",
+	"TRANSFER_CREATION_FAILED": "יצירת העברה נכשלה.",
+	"PENDING_TRANSFER_EXISTS": "קיימת העברה ממתינה.",
+	"RECEIVER_STATUS_CHECKED_SUCCESSFULLY": "סטטוס המקבל נבדק בהצלחה.",
+	"TRANSFER_EXECUTED_SUCCESSFULLY": "העברה בוצעה בהצלחה.",
+	"TRANSFER_REJECTED_SUCCESSFULLY": "העברה נדחתה בהצלחה.",
+	"TRANSFER_NOT_FOUND_OR_NOT_PENDING": "העברה לא נמצאה או שאינה במצב ממתין.",
+	"INVALID_STATUS": "סטטוס לא תקין.",
+	"TRANSFER_ACCEPTED_SUCCESSFULLY": "ההעברה התקבלה בהצלחה."
 }

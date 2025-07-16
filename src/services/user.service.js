@@ -3,7 +3,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import KycService from "./kyc.service.js";
 
-const { Op, User, UserKyc } = db;
+const { Op, User, UserKyc, UserWallet, UserFcm } = db;
 
 export default class UserService {
   static async getUserById(userId) {
@@ -61,7 +61,7 @@ export default class UserService {
     try {
       const updatedKyc = await UserKyc.update(
         { status },
-        { where: { applicantId : applicantid } }
+        { where: { applicantId: applicantid } }
       );
       return updatedKyc;
     } catch (error) {
@@ -89,6 +89,36 @@ export default class UserService {
       return deletedKyc;
     } catch (error) {
       console.error("Error deleting user KYC data:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw error;
+    }
+  }
+  static async getUserDetails(userId) {
+    try {
+      const user = await User.findOne({
+        where: { id: userId },
+        attributes: ["id", "name", "email", "phoneNumber", "role", "avatar"],
+        include: [
+          {
+            model: UserKyc,
+            as: "kyc",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+          {
+            model: UserWallet,
+            as: "wallets",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+          {
+            model: UserFcm,
+            as: "fcm",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+        ],
+      });
+      return user;
+    } catch (error) {
+      console.error("Error fetching user details:", error);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       throw error;
     }

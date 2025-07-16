@@ -122,6 +122,34 @@ router.put("/update-pin", async (req, res) => {
 });
 /**
  * @swagger
+ * /api/auth/profile/save-fcm-token:
+ *   post:
+ *     summary: Save user's mobile FCM token
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fcmToken:
+ *                 type: string
+ *                 description: The FCM token to register/update
+ *                 example: "fcm_token_example_123"
+ *     responses:
+ *       200:
+ *         description: Success - FCM token updated
+ */
+router.post("/save-fcm-token", async (req, res) => {
+  const response = await ProfileController.saveFcmToken({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+/**
+ * @swagger
  * /api/auth/profile/delete:
  *   delete:
  *     summary: Remove user account
@@ -141,5 +169,6 @@ router.delete("/delete", async (req, res) => {
   const response = await ProfileController.removeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
 
 export default router;

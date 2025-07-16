@@ -44,6 +44,10 @@ const options = {
         name: "Auth-Wallet routes",
         description: "Wallet management endpoints",
       },
+      {
+        name: "Auth-Transfer routes",
+        description: "Transfer management endpoints",
+      },
       { name: "Admin routes", description: "Admin management endpoints" },
     ],
     servers: [

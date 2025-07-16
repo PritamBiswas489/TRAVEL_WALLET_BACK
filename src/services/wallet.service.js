@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/node";
 import { getPeleCardCurrencyNumber, amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import CurrencyService from "./currency.service.js";
 import SettingsService from "./settings.service.js";
-const { WalletPelePayment, Op, User, UserWallet, WalletTransaction } = db;
+const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer } = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
@@ -89,6 +89,30 @@ export default class WalletService {
           ...(currency.length > 0 && { paymentCurrency: { [Op.in]: currency } }),
           ...(status && status.length > 0 && { status: { [Op.in]: status } }),
         },
+        include:[
+          {
+            model: WalletPelePayment,
+            as: "walletPayment",
+            attributes: ["id", "PelecardTransactionId", "VoucherId","CreditCardNumber","Token"],
+          },
+          {
+            model: Transfer,
+            as: "transfer",
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["name","phoneNumber"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["name","phoneNumber"],
+              }
+
+            ]
+          },
+        ],
         order: [["createdAt", "DESC"]],
         offset: offset,
         limit: limit,
