@@ -12,13 +12,13 @@ const __dirname = dirname(__filename);
 // Use production key if available, fallback to development
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
   ? process.env.FIREBASE_SERVICE_ACCOUNT_PATH
-  : join(__dirname, '../../firebase/testingfcm123-f729f-firebase-adminsdk-fbsvc-549a799cc9.json');
+  : join(__dirname, '../../firebase/testingfcm123-f729f-firebase-adminsdk-fbsvc-d7ccee6d7c.json');
 console.log(serviceAccountPath)
 
 // Read and parse the key
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath), 'utf8');
 
-console.log(serviceAccount)
+// console.log(serviceAccount)
 
 if (!admin.apps.length) {
   admin.initializeApp({
