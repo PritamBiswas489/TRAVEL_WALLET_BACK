@@ -25,7 +25,7 @@ const router = express.Router();
  *             properties:
  *               mobile:
  *                 type: string
- *                 default: "+9830990065"
+ *                 default: "+919830990065"
  *                 description: Mobile number of the receiver
  *     responses:
  *       200:

@@ -51,7 +51,6 @@ export default function UserCard(sequelize, DataTypes)   {
     },
     {
       tableName: "user_cards",
-      underscored: true,
       timestamps: true,
     }
   );

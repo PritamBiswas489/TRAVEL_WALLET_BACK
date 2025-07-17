@@ -49,6 +49,10 @@ const options = {
         description: "Transfer management endpoints",
       },
       { name: "Admin routes", description: "Admin management endpoints" },
+      {
+        name: "Notification routes - Testing purposes",
+        description: "Endpoints for testing notification service",
+      },
     ],
     servers: [
       {

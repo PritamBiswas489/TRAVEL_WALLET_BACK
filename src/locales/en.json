@@ -121,5 +121,15 @@
 	"TRANSFER_NOT_FOUND_OR_NOT_PENDING": "Transfer not found or not in pending status.",
 	"INVALID_STATUS": "Invalid status.",
 	"TRANSFER_ACCEPTED_SUCCESSFULLY": "Transfer accepted successfully.",
-	"TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY": "TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY"
+	"TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY": "TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY",
+	"User or FCM token not found": "User or FCM token not found",
+	"PUSH_NOTIFICATION_ERROR": "Push notification failed.",
+	"PUSH_NOTIFICATION_SUCCESS": "Push notification sent successfully.",
+	"TRANSFER_NOTIFICATION_TITLE": "You've Received Money",
+	"TRANSFER_NOTIFICATION_BODY": "{{amount}} has been received from {{senderPhoneNumber}} to your wallet ({{receiverPhoneNumber}}).",
+	"TRANSFER_REJECTION_NOTIFICATION_TITLE": "Transfer Rejected",
+	"TRANSFER_REJECTION_NOTIFICATION_BODY": "Your transfer of {{amount}} to {{receiverPhoneNumber}} was rejected by the receiver. The amount has been returned to your wallet.",
+	"TRANSFER_ACCEPTED_NOTIFICATION_TITLE": "Transfer Accepted",
+	"TRANSFER_ACCEPTED_NOTIFICATION_BODY": "Your transfer of {{amount}} to {{receiverPhoneNumber}} was accepted by the receiver.",
+	"USER_NOTIFICATIONS_FETCHED_SUCCESSFULLY": "USER_NOTIFICATIONS_FETCHED_SUCCESSFULLY"
 }

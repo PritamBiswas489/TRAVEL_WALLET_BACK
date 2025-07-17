@@ -14,6 +14,8 @@ export default class TransferController {
     const mobileNumber = payload.mobile;
     const userId = user?.id;
 
+    console.log("Check Receiver Status Request", userId, mobileNumber);
+
     return new Promise((resolve) => {
       TransferService.checkReceiverStatus(
         { userId, mobileNumber },
@@ -51,7 +53,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.executeTransfer(
-        { senderUserId: user.id, receiverId, currency, amount },
+        { senderUserId: user.id, receiverId, currency, amount, i18n },
         (err, response) => {
           if (err) {
             return resolve({
@@ -85,7 +87,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.acceptRejectTransfer(
-        { userId: user.id, transferId, status },
+        { userId: user.id, transferId, status , i18n },
         (err, response) => {
           if (err) {
             return resolve({

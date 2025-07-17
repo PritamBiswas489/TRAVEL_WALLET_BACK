@@ -6,6 +6,8 @@ import { hashStr, compareHashedStr } from "../libraries/auth.js";
 import { updatepinValidator } from "../validators/updatepin.validator.js";
 import * as Sentry from "@sentry/node";
 import UserService from "../services/user.service.js";
+import PushNotificationService from "../services/pushNotification.service.js";
+import NotificationService from "../services/notification.service.js";
 
 const { User, Op, UserKyc, UserWallet, UserFcm } = db;
 
@@ -282,5 +284,68 @@ export default class ProfileController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+  static async sendPushNotification(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    return new Promise((resolve) => {
+      const title = payload?.title || "Hi from Travel Wallet";
+      const body =
+        payload?.body ||
+        "Dummy push notification for testing purposes.Ignore it.";
+      PushNotificationService.sendNotification(
+        { userId: user.id, title, body, data: { action: 'testing_message' } },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message),
+                reason: i18n.__("PUSH_NOTIFICATION_ERROR"),
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("PUSH_NOTIFICATION_SUCCESS"),
+            error: {},
+          });
+        }
+      );
+    });
+  }
+
+  static async getUserNotifications(request) {
+    const {
+      headers: { i18n },
+      payload,
+      user,
+    } = request;
+
+    try {
+
+      const notifications = await NotificationService.getNotifications(user.id, payload?.page || 1, payload?.limit || 10);
+
+      return {
+        status: 200,
+        data: notifications,
+        message: i18n.__("USER_NOTIFICATIONS_FETCHED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
   }
 }

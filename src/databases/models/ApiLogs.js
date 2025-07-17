@@ -56,7 +56,6 @@ export default function ApiLogs(sequelize, DataTypes) {
     {
       tableName: "api_logs",
       timestamps: true, // createdAt, updatedAt
-      underscored: true,
     }
   );
 

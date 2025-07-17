@@ -35,7 +35,6 @@ export default function UserKyc(sequelize, DataTypes) {
     {
       tableName: "user_kyc",
       timestamps: true,
-      underscored: true,
     }
   );
 }

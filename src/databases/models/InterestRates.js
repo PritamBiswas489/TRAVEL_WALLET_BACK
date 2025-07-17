@@ -10,17 +10,17 @@ export default function InterestRates(sequelize, DataTypes) {
       paymentNumber: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        field: "payment_number",
+         
       },
       interestRate: {
         type: DataTypes.DECIMAL(5, 2),
         allowNull: true,
-        field: "interest_rate",
+        
       },
     },
     {
       tableName: "interest_rates",
-      underscored: true,
+      
       timestamps: true,
     }
   );

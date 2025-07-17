@@ -120,5 +120,16 @@
 	"TRANSFER_REJECTED_SUCCESSFULLY": "העברה נדחתה בהצלחה.",
 	"TRANSFER_NOT_FOUND_OR_NOT_PENDING": "העברה לא נמצאה או שאינה במצב ממתין.",
 	"INVALID_STATUS": "סטטוס לא תקין.",
-	"TRANSFER_ACCEPTED_SUCCESSFULLY": "ההעברה התקבלה בהצלחה."
+	"TRANSFER_ACCEPTED_SUCCESSFULLY": "ההעברה התקבלה בהצלחה.",
+	"TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY": "היסטוריית ההעברות נשלפה בהצלחה.",
+	"User or FCM token not found": "User or FCM token not found",
+	"PUSH_NOTIFICATION_ERROR": "שגיאה בהודעת דחיפה.",
+	"PUSH_NOTIFICATION_SUCCESS": "הודעת דחיפה נשלחה בהצלחה.",
+	"TRANSFER_NOTIFICATION_TITLE": "קיבלת כסף",
+	"TRANSFER_NOTIFICATION_BODY": "{{amount}} התקבל מ{{senderPhoneNumber}} לארנק שלך ({{receiverPhoneNumber}}).",
+	"TRANSFER_REJECTION_NOTIFICATION_TITLE": "ההעברה נדחתה",
+	"TRANSFER_REJECTION_NOTIFICATION_BODY": "ההעברה שלך של {{amount}} ל{{receiverPhoneNumber}} נדחתה על ידי המקבל. הסכום הוחזר לארנק שלך.",
+	"TRANSFER_ACCEPTED_NOTIFICATION_TITLE": "ההעברה התקבלה",
+	"TRANSFER_ACCEPTED_NOTIFICATION_BODY": "ההעברה שלך של {{amount}} ל{{receiverPhoneNumber}} התקבלה על ידי המקבל."
+
 }

@@ -45,7 +45,7 @@ await (async () => {
 })();
 relation(db);
 //Sequelize sync means it will create the tables in the database if they do not exist, based on the models defined.
-sequelize.sync();
+// sequelize.sync();
 //Op means operators in Sequelize, which are used for building complex queries.
 db.Op = Op;
 // Sequelize instance and DataTypes are added to the db object for easy access

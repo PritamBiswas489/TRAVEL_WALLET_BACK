@@ -177,7 +177,7 @@ export default class DepositController {
             model: UserCard,
             as: "cards",
             separate: true, // Important: allows independent sorting
-            order: [["created_at", "DESC"]],
+            order: [["createdAt", "DESC"]],
           },
         ],
       });

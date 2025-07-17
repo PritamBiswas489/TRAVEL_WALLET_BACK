@@ -21,7 +21,6 @@ export default function UserFcm(sequelize, DataTypes) {
     {
       tableName: "user_fcm",
       timestamps: true,
-      underscored: true,
     }
   );
 }

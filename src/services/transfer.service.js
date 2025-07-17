@@ -4,14 +4,17 @@ import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import UserService from "./user.service.js";
 const { Op, User, Transfer, WalletTransaction, UserWallet } = db;
+import { handleCallback } from "../libraries/utility.js";
+import NotificationService from "./notification.service.js";
 
 export default class TransferService {
-  static async checkReceiverStatus({ senderUserId, mobileNumber }, callback) {
+  static async checkReceiverStatus({ userId, mobileNumber }, callback) {
+    console.log("Check Receiver Status", userId, mobileNumber);
     try {
       const user = await User.findOne({
         where: {
           phoneNumber: mobileNumber,
-          id: { [Op.ne]: senderUserId },
+          id: { [Op.ne]: userId },
         },
         attributes: ["id"],
       });
@@ -37,7 +40,7 @@ export default class TransferService {
     }
   }
   static async executeTransfer(
-    { senderUserId, receiverId, currency, amount },
+    { senderUserId, receiverId, currency, amount, i18n },
     callback
   ) {
     const tran = await db.sequelize.transaction();
@@ -136,6 +139,7 @@ export default class TransferService {
           currency: currency,
         },
       });
+      NotificationService.walletTransferNotification(createTransfer.id, i18n);
 
       return callback(null, {
         data: {
@@ -150,7 +154,7 @@ export default class TransferService {
       return callback(error, null);
     }
   }
-  static async acceptRejectTransfer({ transferId, userId, status }, callback) {
+  static async acceptRejectTransfer({ transferId, userId, status, i18n }, callback) {
     // console.log("Accept/Reject Transfer", transferId, userId, status);
 
     const tran = await db.sequelize.transaction();
@@ -212,6 +216,7 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
+        NotificationService.walletTransferRejectionNotification(transferId, i18n);
         return callback(null, {
           data: {
             walletTransaction,
@@ -278,6 +283,7 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
+        NotificationService.walletTransferAcceptanceNotification(transferId, i18n);
 
         return callback(null, {
           data: {
@@ -344,6 +350,36 @@ export default class TransferService {
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(error, null);
+    }
+  }
+  static async getTransferById(transferId, callback) {
+     
+    try {
+      const transfer = await Transfer.findOne({
+        where: {
+          id: transferId,
+        },
+        include: [
+          {
+            model: User,
+            as: "sender",
+            attributes: ["name", "phoneNumber"],
+          },
+          {
+            model: User,
+            as: "receiver",
+            attributes: ["name", "phoneNumber"],
+          },
+        ],
+      });
+
+      if (!transfer) {
+        return handleCallback(new Error("TRANSFER_NOT_FOUND"), null, callback);
+      }
+      return handleCallback(null, { data: transfer }, callback);
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return handleCallback(error, null, callback);
     }
   }
 }

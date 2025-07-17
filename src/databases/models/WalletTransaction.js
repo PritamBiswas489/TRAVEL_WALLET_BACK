@@ -10,12 +10,12 @@ export default function WalletTransaction(sequelize, DataTypes) {
       userId: {
         type: DataTypes.BIGINT,
         allowNull: false,
-        field: "user_id",
+        
       },
       walletId: {
         type: DataTypes.BIGINT,
         allowNull: false,
-        field: "wallet_id",
+        
       },
       paymentAmt: {
         type: DataTypes.DECIMAL(15, 2),
@@ -51,7 +51,7 @@ export default function WalletTransaction(sequelize, DataTypes) {
         type: DataTypes.BIGINT,
         allowNull: true,
         defaultValue: null,
-        field: "payment_id",
+         
       },
       transferId: {
         type: DataTypes.BIGINT,
@@ -61,7 +61,6 @@ export default function WalletTransaction(sequelize, DataTypes) {
     },
     {
       tableName: "wallet_transactions",
-      underscored: true,
       timestamps: true, // Adds createdAt and updatedAt automatically
     }
   );

@@ -91,7 +91,7 @@ export default function KycStatusWebhook(sequelize, DataTypes) {
     {
       tableName: "kyc_status_webhook",
       timestamps: true,
-      underscored: true,
+     
     }
   );
 

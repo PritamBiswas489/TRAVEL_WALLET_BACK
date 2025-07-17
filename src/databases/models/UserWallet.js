@@ -35,7 +35,6 @@ export default function UserWallet(sequelize, DataTypes) {
     {
       tableName: "user_wallets",
       timestamps: true, // since you're manually managing timestamps
-      underscored: true, // if you're using snake_case columns
     }
   );
   return UserWallet;

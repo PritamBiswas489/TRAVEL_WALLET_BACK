@@ -30,7 +30,6 @@ export default function Transfer(sequelize, DataTypes) {
     },
     {
       tableName: "transfer",
-      underscored: true,
       timestamps: true,
     }
   );

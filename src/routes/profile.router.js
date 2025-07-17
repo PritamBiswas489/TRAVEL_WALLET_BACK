@@ -148,6 +148,93 @@ router.post("/save-fcm-token", async (req, res) => {
   const response = await ProfileController.saveFcmToken({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
+
+/**
+ * @swagger
+ * /api/auth/profile/send-push-notification:
+ *   post:
+ *     summary: Send push notification to connected mobile via firebase
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - body
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Hi from Travel Wallet"
+ *               body:
+ *                 type: string
+ *                 example: "Dummy push notification for testing purposes.Ignore it."
+ *     responses:
+ *       200:
+ *         description: Success - JSON received
+ */
+router.post("/send-push-notification", async (req, res) => {
+   const response = await ProfileController.sendPushNotification({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+})
+
+/**
+ * @swagger
+ * /api/auth/profile/get-notifications:
+ *   post:
+ *     summary: Get paginated list of user notifications
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 minimum: 1
+ *                 maximum: 100
+ *                 description: Maximum number of notifications to return
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 minimum: 1
+ *                 description: Page number to return
+ *     responses:
+ *       200:
+ *         description: Success - Paginated user notifications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 profiles:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Profile'
+ */
+
+router.post("/get-notifications", async (req, res) => {
+   const response = await ProfileController.getUserNotifications({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
 /**
  * @swagger
  * /api/auth/profile/delete:

@@ -3,3 +3,4 @@
 .env
 *.zip
 package-lock.json
+command.txt

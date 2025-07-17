@@ -29,8 +29,8 @@ export default function ContactUs(sequelize, DataTypes) {
 			},
 		},
 		{
-			underscored: true,
-			tableName: 'contact_us', 
+			tableName: 'contact_us',
+			timestamps: true,
 		}
 	);
 }

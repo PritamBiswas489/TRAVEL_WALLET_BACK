@@ -1,5 +1,5 @@
 export default function User(sequelize, DataTypes) {
-  return sequelize.define(
+  const User = sequelize.define(
     "User",
     {
       id: {
@@ -34,10 +34,16 @@ export default function User(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: "USER",
       },
+      status: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "active",
+      },
     },
     {
-      underscored: true,
       tableName: "users",
     }
   );
+
+  return User;
 }

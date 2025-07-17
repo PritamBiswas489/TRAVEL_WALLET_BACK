@@ -81,3 +81,22 @@ export function generateRandomPassword() {
   export function formatDateToTimezone(date) {
     return moment.utc(date).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
   }
+
+  export const handleCallback = (err, result, callback) => {
+      if (typeof callback === 'function') {
+        return callback(err, result);
+      } else if (err) {
+        throw err;
+      } else {
+        return result;
+      }
+};
+export const getcurrencySymbols = (Code) => {
+  const currencySymbols = {
+    USD: "$",
+    EUR: "€",
+    ILS: "₪",
+	THB: "฿",
+  };
+  return currencySymbols[Code] || "";
+}
