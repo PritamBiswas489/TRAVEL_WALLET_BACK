@@ -18,7 +18,7 @@ console.log(serviceAccountPath)
 // Read and parse the key
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath), 'utf8');
 
-// console.log(serviceAccount)
+console.log(serviceAccount)
 
 if (!admin.apps.length) {
   admin.initializeApp({
