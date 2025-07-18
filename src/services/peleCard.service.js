@@ -105,7 +105,7 @@ export default class PeleCardService {
           },
         }
       );
-      return response?.data || {};
+      return {...response?.data,interestRate} || {};
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       console.error("Error making payment:", e);
