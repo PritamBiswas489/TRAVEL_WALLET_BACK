@@ -365,6 +365,7 @@ export default class DepositController {
           data: {
             actualAmount: amount,
             paidAmount: paidAmount,
+            interestRate: amountUptotwoDecimalPlaces((paidAmount - amount) / amount * 100 || 0),
             numberOfPayment: savepaymentDetails?.TotalPayments || 1,
             firstPayment:
               amountUptotwoDecimalPlaces(
