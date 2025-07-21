@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/node";
 import axios from "axios";
 
 // Your scheduled task
-const updateCurrencyRates = async () => {
+export const updateCurrencyRates = async () => {
   try {
     const apiKey = process.env.FIXER_API_KEY;
 

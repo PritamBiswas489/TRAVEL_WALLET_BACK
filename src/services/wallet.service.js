@@ -123,6 +123,22 @@ export default class WalletService {
 
             ]
           },
+          {
+            model: TransferRequests,
+            as: "transferRequest",
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["name","phoneNumber"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["name","phoneNumber"],
+              }
+            ]
+          }
         ],
         order: [["createdAt", "DESC"]],
         offset: offset,

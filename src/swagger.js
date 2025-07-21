@@ -48,6 +48,10 @@ const options = {
         name: "Auth-Transfer routes",
         description: "Transfer management endpoints",
       },
+      {
+        name: "Auth-Transfer Requests routes",
+        description: "Transfer requests management endpoints",
+      },
       { name: "Admin routes", description: "Admin management endpoints" },
       {
         name: "Notification routes - Testing purposes",

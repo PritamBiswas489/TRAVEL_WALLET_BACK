@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserFcm, Transfer, Notification } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserFcm, Transfer, Notification, TransferRequests } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -33,8 +33,19 @@ const relation = (db) => {
   Transfer.belongsTo(User, { foreignKey: "receiverId", as: "receiver" });
 
 
+  //TransferRequests model relations
+  User.hasMany(TransferRequests, { foreignKey: "senderId", as: "sentTransferRequests" });
+  User.hasMany(TransferRequests, { foreignKey: "receiverId", as: "receivedTransferRequests" });
+  TransferRequests.belongsTo(User, { foreignKey: "senderId", as: "sender" });
+  TransferRequests.belongsTo(User, { foreignKey: "receiverId", as: "receiver" });
+
+
   WalletTransaction.belongsTo(Transfer, { foreignKey: "transferId", as: "transfer" });
   Transfer.hasMany(WalletTransaction, { foreignKey: "transferId", as: "transactions" });
+
+
+  WalletTransaction.belongsTo(TransferRequests, { foreignKey: "transferRequestId", as: "transferRequest" });
+  TransferRequests.hasMany(WalletTransaction, { foreignKey: "transferRequestId", as: "transactions" });
 
 
   Notification.belongsTo(User, { foreignKey: "userId", as: "user" });
