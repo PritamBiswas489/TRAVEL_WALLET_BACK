@@ -7,11 +7,11 @@ export default function TransferRequests(sequelize, DataTypes) {
         autoIncrement: true,
         primaryKey: true,
       },
-      sender_id: {
+      senderId: {
         type: DataTypes.BIGINT,
         allowNull: false,
       },
-      receiver_id: {
+      receiverId: {
         type: DataTypes.BIGINT,
         allowNull: false,
       },
