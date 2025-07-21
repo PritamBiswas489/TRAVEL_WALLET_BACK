@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/node";
 import { getPeleCardCurrencyNumber, amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import CurrencyService from "./currency.service.js";
 import SettingsService from "./settings.service.js";
-const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer } = db;
+const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests } = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
