@@ -93,7 +93,18 @@ export default class WalletService {
           {
             model: WalletPelePayment,
             as: "walletPayment",
-            attributes: ["id", "PelecardTransactionId", "VoucherId","CreditCardNumber","Token"],
+            attributes: [
+              "id", 
+              "PelecardTransactionId", 
+              "VoucherId",
+              "CreditCardNumber",
+              "Token",
+              "CreditCardNumber",
+              "CreditCardExpDate",
+              "DebitApproveNumber",
+              "CardHebName",
+              "TotalPayments"
+            ],
           },
           {
             model: Transfer,

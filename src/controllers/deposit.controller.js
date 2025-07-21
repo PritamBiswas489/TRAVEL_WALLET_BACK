@@ -378,9 +378,15 @@ export default class DepositController {
               paymentResult?.StatusCode === "000" ? "success" : "failed",
             paymentEnStatusMessage: savepaymentDetails?.EnStatusMessage,
             paymentHeStatusMessage: savepaymentDetails?.HeStatusMessage,
+            creditCardNumber: savepaymentDetails?.CreditCardNumber || "",  
+            creditCardExpDate: savepaymentDetails?.CreditCardExpDate || "",
+            approvalNumber: savepaymentDetails?.DebitApproveNumber || "",
+            cardHebName: savepaymentDetails?.CardHebName || "",  
             userWallet: updatedWallet?.userWallet || {},
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
+            
+            
           },
           message: i18n.__("PELECARD_PAYMENT_SUCCESS"),
           error: {},

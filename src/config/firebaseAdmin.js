@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
   ? process.env.FIREBASE_SERVICE_ACCOUNT_PATH
   : join(__dirname, '../../firebase/testingfcm123-f729f-firebase-adminsdk-fbsvc-d7ccee6d7c.json');
-console.log(serviceAccountPath)
+// console.log(serviceAccountPath)
 
 // Read and parse the key
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath), 'utf8');
