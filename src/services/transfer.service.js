@@ -149,12 +149,17 @@ export default class TransferService {
         },
       });
     } catch (error) {
-      await tran.rollback();
+      if (tran?.finished !== "commit") {
+        await tran.rollback();
+      }
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(error, null);
     }
   }
-  static async acceptRejectTransfer({ transferId, userId, status, i18n }, callback) {
+  static async acceptRejectTransfer(
+    { transferId, userId, status, i18n },
+    callback
+  ) {
     // console.log("Accept/Reject Transfer", transferId, userId, status);
 
     const tran = await db.sequelize.transaction();
@@ -216,7 +221,10 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
-        NotificationService.walletTransferRejectionNotification(transferId, i18n);
+        NotificationService.walletTransferRejectionNotification(
+          transferId,
+          i18n
+        );
         return callback(null, {
           data: {
             walletTransaction,
@@ -283,7 +291,10 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
-        NotificationService.walletTransferAcceptanceNotification(transferId, i18n);
+        NotificationService.walletTransferAcceptanceNotification(
+          transferId,
+          i18n
+        );
 
         return callback(null, {
           data: {
@@ -298,7 +309,9 @@ export default class TransferService {
       await tran.rollback();
       return callback(new Error("INVALID_STATUS"), null);
     } catch (error) {
-      await tran.rollback();
+      if (tran?.finished !== "commit") {
+        await tran.rollback();
+      }
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(error, null);
     }
@@ -353,7 +366,6 @@ export default class TransferService {
     }
   }
   static async getTransferById(transferId, callback) {
-     
     try {
       const transfer = await Transfer.findOne({
         where: {

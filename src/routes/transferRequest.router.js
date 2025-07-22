@@ -30,6 +30,9 @@ const router = express.Router();
  *               amount:
  *                 type: number
  *                 description: Amount to transfer
+ *               message:
+ *                 type: string
+ *                 description: Optional message for the transfer request
  *             required:
  *               - receiverId
  *               - currency
@@ -71,7 +74,7 @@ router.post('/send-request', async (req, res, next) => {
  *   post:
  *     tags:
  *       - Auth-Transfer Requests routes
- *     summary: Accept or reject a transfer
+ *     summary: Approved or reject a transfer
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
@@ -148,7 +151,7 @@ router.post("/accept-reject-transfer-request", async (req, res, next) => {
  *                 type: object
  *                 default:
  *                   type: ["incoming", "outgoing"]
- *                   status: ["rejected", "accepted"]
+ *                   status: ["rejected", "approved"]
  *                 properties:
  *                   type:
  *                     type: array
@@ -160,8 +163,8 @@ router.post("/accept-reject-transfer-request", async (req, res, next) => {
  *                     type: array
  *                     items:
  *                       type: string
- *                     description: Filter by transfer status (e.g., ["rejected", "accepted"])
- *                     default: ["rejected", "accepted"]
+ *                     description: Filter by transfer status (e.g., ["rejected", "approved"])
+ *                     default: ["rejected", "approved"]
  *     responses:
  *       200:
  *         description: Transfer history retrieved successfully
@@ -199,6 +202,52 @@ router.post("/get-transfer-request-history", async (req, res, next) => {
     const response = await TransferRequestController.getTransferRequestHistory({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })
+/**
+ * @swagger
+ * /api/auth/transfer-request/get-transfer-details:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer Requests routes
+ *     summary: Get transfer request details by ID
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transferRequestId:
+ *                 type: string
+ *                 description: Unique identifier of the transfer request
+ *             required:
+ *               - transferRequestId
+ *     responses:
+ *       200:
+ *         description: Transfer request details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transferRequest:
+ *                   type: object
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/get-transfer-details", async (req, res, next) => {
+    const response = await TransferRequestController.getTransferRequestById({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
 
 export default router;
 

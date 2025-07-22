@@ -25,8 +25,8 @@ export default class TransferController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message),
-                reason: i18n.__(err.message),
+                message: i18n.__("FAILED_TO_CHECK_RECEIVER_STATUS"),
+                reason: err.message,
               },
             });
           }
@@ -60,8 +60,8 @@ export default class TransferController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message),
-                reason: i18n.__(err.message),
+                message: i18n.__("FAILED_TO_EXECUTE_TRANSFER"),
+                reason: err.message,
               },
             });
           }
@@ -83,26 +83,28 @@ export default class TransferController {
     } = request;
 
     const transferId = payload.transferId;
-    const status = payload.isAccepted === true ? 'accepted' : 'rejected';
+    const status = payload.isAccepted === true ? "accepted" : "rejected";
 
     return new Promise((resolve) => {
       TransferService.acceptRejectTransfer(
-        { userId: user.id, transferId, status , i18n },
+        { userId: user.id, transferId, status, i18n },
         (err, response) => {
           if (err) {
             return resolve({
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message),
-                reason: i18n.__(err.message),
+                message: i18n.__("FAILED_TO_ACCEPT_REJECT_TRANSFER"),
+                reason: err.message,
               },
             });
           }
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__( response.data.message || "TRANSFER_STATUS_UPDATED_SUCCESSFULLY"),
+            message: i18n.__(
+              response.data.message || "TRANSFER_STATUS_UPDATED_SUCCESSFULLY"
+            ),
             error: null,
           });
         }
@@ -129,8 +131,8 @@ export default class TransferController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message),
-                reason: i18n.__(err.message),
+                message: i18n.__("FAILED_TO_GET_TRANSFER_HISTORY"),
+                reason: err.message,
               },
             });
           }
@@ -142,6 +144,36 @@ export default class TransferController {
           });
         }
       );
+    });
+  }
+  static async getTransferById(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const transferId = payload.transferId;
+
+    return new Promise((resolve) => {
+      TransferService.getTransferById(transferId, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__("FAILED_TO_GET_TRANSFER_REQUEST"),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("TRANSFER_RETRIEVED_SUCCESSFULLY"),
+          error: null,
+        });
+      });
     });
   }
 }

@@ -246,4 +246,51 @@ router.post("/get-transfer-history", async (req, res, next) => {
     const response = await TransferController.getTransferHistory({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })
+
+/**
+ * @swagger
+ * /api/auth/transfer/get-transfer-details:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer routes
+ *     summary: Get Transfer details by ID
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transferId:
+ *                 type: string
+ *                 description: Unique identifier of the Transfer
+ *             required:
+ *               - transferId
+ *     responses:
+ *       200:
+ *         description: Transfer details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transferRequest:
+ *                   type: object
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/get-transfer-details", async (req, res, next) => {
+    const response = await TransferController.getTransferById({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
 export default router;
