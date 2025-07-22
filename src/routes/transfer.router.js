@@ -195,7 +195,7 @@ router.post("/accept-reject-transfer", async (req, res, next) => {
  *                 type: object
  *                 default:
  *                   type: ["incoming", "outgoing"]
- *                   status: ["rejected", "accepted"]
+ *                   status: ["rejected", "accepted", "pending"]
  *                 properties:
  *                   type:
  *                     type: array
@@ -207,8 +207,8 @@ router.post("/accept-reject-transfer", async (req, res, next) => {
  *                     type: array
  *                     items:
  *                       type: string
- *                     description: Filter by transfer status (e.g., ["rejected", "accepted"])
- *                     default: ["rejected", "accepted"]
+ *                     description: Filter by transfer status (e.g., ["rejected", "accepted", "pending"])
+ *                     default: ["rejected", "accepted", "pending"]
  *     responses:
  *       200:
  *         description: Transfer history retrieved successfully
