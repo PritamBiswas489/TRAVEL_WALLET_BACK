@@ -6,6 +6,7 @@ import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
 const router = express.Router();
 import ContactUsController from '../controllers/contactus.controller.js';
 import KycController from '../controllers/kyc.controller.js';
+import ContentController from '../controllers/content.controller.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -69,6 +70,61 @@ router.get('/contact-us', async (req, res, next) => {
    const response = await ContactUsController.listAll({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response)
 });
+
+/**
+ * @swagger
+ * /api/front/faq-list:
+ *   get:
+ *     summary: Get list of FAQs
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: List of FAQs retrieved successfully
+ */
+router.get('/faq-list', async (req, res, next) => {
+   const response = await ContentController.listFaqs({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/front/terms-and-conditions:
+ *   get:
+ *     summary: Get terms and conditions content
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Terms and conditions retrieved successfully
+ */
+router.get('/terms-and-conditions', async (req, res, next) => {
+   const response = await ContentController.getTermsAndConditions({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/front/privacy-policy:
+ *   get:
+ *     summary: Get privacy policy content
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Privacy policy retrieved successfully
+ */
+router.get('/privacy-policy', async (req, res, next) => {
+   const response = await ContentController.getPrivacyPolicy({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
 
 /**
  * @swagger

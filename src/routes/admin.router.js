@@ -203,4 +203,47 @@ router.get("/get-api-endpoint-logs", async (req, res, next) => {
     }));
 });
 
+
+/**
+ * @swagger
+ * /api/admin/add-faq:
+ *   post:
+ *     summary: Add a new FAQ
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               question:
+ *                 type: string
+ *                 example: What is the refund policy?
+ *               answer:
+ *                 type: string
+ *                 example: Refunds are processed within 7 business days.
+ *               order:
+ *                 type: integer
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Success - FAQ added
+ *       400:
+ *         description: Bad Request - Invalid input
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post('/add-faq', async (req, res, next) => {
+    res.return(await AdminController.addFaq({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
 export default router;

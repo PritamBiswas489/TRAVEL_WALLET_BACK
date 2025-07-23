@@ -2,9 +2,14 @@ import InterestRatesService from "../services/interestRates.service.js";
 import * as Sentry from "@sentry/node";
 import "../config/environment.js";
 import TrackIpAddressDeviceIdService from "../services/trackIpAddressDeviceId.service.js";
+import FaqService from "../services/faq.service.js";
 export default class AdminController {
   static async getInstallmentPaymentInterestRates(request) {
-    const { payload, headers: { i18n }, user } = request;
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
     try {
       const settings = await InterestRatesService.getInterestRates();
       if (settings.ERROR) {
@@ -39,7 +44,10 @@ export default class AdminController {
     } = request;
     try {
       Object.values(payload).forEach((setting) => {
-        InterestRatesService.addInterestRate(setting.payment_number, setting.interest_rate);
+        InterestRatesService.addInterestRate(
+          setting.payment_number,
+          setting.interest_rate
+        );
       });
       return {
         status: 200,
@@ -56,11 +64,18 @@ export default class AdminController {
     }
   }
   static async getApiEndpointLogs(request) {
-    const { payload, headers: { i18n }, user } = request;
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
     const page = parseInt(payload.page, 10) || 1;
     const limit = parseInt(payload.limit, 10) || 10;
     try {
-      const logs = await TrackIpAddressDeviceIdService.getApiEndpointLogs({ page, limit });
+      const logs = await TrackIpAddressDeviceIdService.getApiEndpointLogs({
+        page,
+        limit,
+      });
       if (logs.ERROR) {
         return {
           status: 500,
@@ -76,6 +91,42 @@ export default class AdminController {
         data: logs.data,
         pagination: logs.pagination || { page, limit },
         message: i18n.__("API_LOGS_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async addFaq(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const faq = await FaqService.addFaq(
+        payload.question,
+        payload.answer,
+        payload.order
+      );
+      if (faq.ERROR) {
+        return {
+          status: 500,
+          data: [],
+          error: {
+            message: i18n.__("CATCH_ERROR"),
+            reason: "Error adding FAQ",
+          },
+        };
+      }
+      return {
+        status: 200,
+        data: faq.data,
+        message: i18n.__("FAQ_ADDED_SUCCESSFULLY"),
       };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
