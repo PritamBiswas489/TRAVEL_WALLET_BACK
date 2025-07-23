@@ -55,7 +55,7 @@ export default class ProfileController {
     } = request;
 
     try {
-      const updatedData = { name: payload.name, email: payload.email };
+      const updatedData = { name: payload.name, email: payload.email, address: payload.address, dob: payload.dob, language: payload.language };
 
       const [validationError, validatedData] = await profileEditValidator(
         updatedData,

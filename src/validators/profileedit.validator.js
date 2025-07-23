@@ -13,6 +13,11 @@ export const profileEditValidator = async (data, i18n) => {
 				'any.required': i18n.__('EMAIL_REQUIRED'),
 				'string.email': i18n.__('INVALID_EMAIL_FORMAT')
 			}),
+      address: joi.string().max(255).optional(),
+      dob: joi.string().isoDate().optional(),
+      language: joi.string().valid('en', 'he').default('he').optional().messages({
+        'any.only': i18n.__('INVALID_LANGUAGE'),
+      }),
 		});
     return [null, await schema.validateAsync(data)];
   } catch (e) {

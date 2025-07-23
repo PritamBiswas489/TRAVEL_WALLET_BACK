@@ -32,7 +32,7 @@ router.get("/detail", async (req, res, next) => {
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
- *       - refreshToken: [] 
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -49,6 +49,15 @@ router.get("/detail", async (req, res, next) => {
  *               email:
  *                 type: string
  *                 default: "john.doe@example.com"
+ *               address:
+ *                 type: string
+ *                 default: "123 Main St, City, Country"
+ *               dob:
+ *                 type: string
+ *                 default: "1990-01-01"
+ *               language:
+ *                 type: string
+ *                 default: "he"
  *     responses:
  *       200:
  *         description: Success - User profile updated

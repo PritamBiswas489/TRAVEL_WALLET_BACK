@@ -15,6 +15,14 @@ export default function User(sequelize, DataTypes) {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      dob: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       phoneNumber: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -38,6 +46,11 @@ export default function User(sequelize, DataTypes) {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: "active",
+      },
+      language: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "he",
       },
     },
     {

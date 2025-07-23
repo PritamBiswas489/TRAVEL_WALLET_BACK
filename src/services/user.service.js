@@ -97,7 +97,7 @@ export default class UserService {
     try {
       const user = await User.findOne({
         where: { id: userId },
-        attributes: ["id", "name", "email", "phoneNumber", "role", "avatar"],
+        attributes: ["id", "name", "email", "phoneNumber", "role", "avatar", "dob", "address", "language"],
         include: [
           {
             model: UserKyc,
