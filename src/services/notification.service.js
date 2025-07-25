@@ -406,27 +406,29 @@ export default class NotificationService {
     }
   }
   static async getLastPendingTransferNotification(userId) {
-    console.log(
-      "Fetching last pending transfer notification for user:",
-      userId
-    );
+    // console.log(
+    //   "Fetching last pending transfer notification for user:",
+    //   userId
+    // );
     try {
       const notifications = await db.sequelize.query(
         `
-  SELECT n.*
-  FROM "notifications" n
-  JOIN "transfer" t
-    ON t.id = (n.metadata->>'id')::bigint AND t.status = 'pending'
-  WHERE n."userId" = :userId AND n."isRead" = false AND n.type = 'TRANSFER'
-  ORDER BY n."createdAt" DESC
-  LIMIT 1
-`,
+      SELECT n.*, row_to_json(t.*) AS transfer
+      FROM "notifications" n
+      JOIN "transfer" t
+        ON t.id = (n.metadata->>'id')::bigint AND t.status = 'pending'
+      WHERE n."userId" = :userId AND n."isRead" = false AND n.type = 'TRANSFER'
+      ORDER BY n."createdAt" DESC
+      LIMIT 1
+    `,
         {
           replacements: { userId },
           type: db.Sequelize.QueryTypes.SELECT,
         }
       );
-      return notifications?.[0];
+      const { transfer, ...notificationWithoutTransfer } = notifications[0] || {};
+      return { ...notificationWithoutTransfer, metadata: { ...notificationWithoutTransfer.metadata, status: transfer.status } };
+
     } catch (error) {
       console.error(
         "Error fetching last pending transfer notification:",
@@ -434,5 +436,27 @@ export default class NotificationService {
       );
       return null;
     }
+  }
+  static async updatePendingTransferNotificationStatus(transferid, status) {
+    try {
+      const notification = await Notification.findOne({
+        where: {
+          type: "TRANSFER",
+          isRead: false,
+          metadata: {
+            id: transferid,
+          },
+        },
+       });
+       if(notification) {
+        notification.set('metadata', { ...notification.metadata, status });
+        await notification.save();
+        return notification;
+       }
+    } catch (error) {
+      console.error("Error fetching pending transfer notifications:", error);
+      return null;
+    }
+
   }
 }

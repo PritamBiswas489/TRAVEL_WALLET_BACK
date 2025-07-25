@@ -166,6 +166,7 @@ export default class TransferService {
     callback
   ) {
     // console.log("Accept/Reject Transfer", transferId, userId, status);
+    
 
     const tran = await db.sequelize.transaction();
     try {
@@ -226,6 +227,7 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
+        NotificationService.updatePendingTransferNotificationStatus(transferId, "rejected");
         NotificationService.walletTransferRejectionNotification(
           transferId,
           i18n
@@ -296,6 +298,7 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
+        NotificationService.updatePendingTransferNotificationStatus(transferId, "accepted");
         NotificationService.walletTransferAcceptanceNotification(
           transferId,
           i18n
