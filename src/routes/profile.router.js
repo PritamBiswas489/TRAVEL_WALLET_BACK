@@ -244,6 +244,89 @@ router.post("/get-notifications", async (req, res) => {
    res.return(response);
 });
 
+
+/**
+ * @swagger
+ * /api/auth/profile/mark-notification-as-read:
+ *   post:
+ *     summary: Mark a notification as read
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               notificationId:
+ *                 type: string
+ *                 description: The ID of the notification to mark as read
+ *                 example: "1"
+ *     responses:
+ *       200:
+ *         description: Success - Notification marked as read
+ */
+router.post("/mark-notification-as-read", async (req, res) => {
+   const response = await ProfileController.markNotificationAsRead({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+/**
+ * @swagger
+ * /api/auth/profile/mark-all-notifications-as-read:
+ *   post:
+ *     summary: Mark all notifications as read for the user
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - All notifications marked as read
+ */
+router.post("/mark-all-notifications-as-read", async (req, res) => {
+   const response = await ProfileController.markAllNotificationsAsRead({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+
+})
+/**
+ * @swagger
+ * /api/auth/profile/get-unread-notifications-count:
+ *   get:
+ *     summary: Get the count of unread notifications for the user
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Unread notifications count retrieved
+ */
+router.get("/get-unread-notifications-count", async (req, res) => {
+   const response = await ProfileController.getUnreadNotificationsCount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+})
+/**
+ * @swagger
+ * /api/auth/profile/get-last-unread-notification:
+ *   get:
+ *     summary: Get the last unread notification for the user
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Last notification retrieved
+ */
+router.get("/get-last-unread-notification", async (req, res) => {
+   const response = await ProfileController.getLastUnreadNotification({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+
+})
+
 /**
  * @swagger
  * /api/auth/profile/delete:

@@ -330,12 +330,153 @@ export default class ProfileController {
 
     try {
 
-      const notifications = await NotificationService.getNotifications(user.id, payload?.page || 1, payload?.limit || 10);
+      const [notifications, totalCount, totalUnread] = await Promise.all([
+        NotificationService.getNotifications(user.id, payload?.page || 1, payload?.limit || 10),
+        NotificationService.countNotifications(user.id),
+        NotificationService.countUnreadNotifications(user.id)
+      ]);
 
       return {
         status: 200,
-        data: notifications,
+        data: {
+          notifications,
+          totalCount,
+          totalUnread
+        },
         message: i18n.__("USER_NOTIFICATIONS_FETCHED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+  }
+  static async markNotificationAsRead(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const notificationId = payload.notificationId;
+
+      if (!notificationId) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("NOTIFICATION_ID_REQUIRED") },
+        };
+      }
+
+      const notification = await NotificationService.markAsRead(user.id, notificationId);
+
+      if (!notification) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("NOTIFICATION_NOT_FOUND") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: notification,
+        message: i18n.__("NOTIFICATION_MARKED_AS_READ"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async markAllNotificationsAsRead(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const updatedCount = await NotificationService.markAllAsReads(user.id);
+
+      if (updatedCount === 0) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("NO_UNREAD_NOTIFICATIONS_FOUND") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: { updatedCount },
+        message: i18n.__("ALL_NOTIFICATIONS_MARKED_AS_READ"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async getLastUnreadNotification(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const lastNotification = await NotificationService.getLastUnreadNotification(user.id);
+
+      if (!lastNotification) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("NO_NOTIFICATIONS_FOUND") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: lastNotification,
+        message: i18n.__("LAST_NOTIFICATION_FETCHED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+  }
+  static async getUnreadNotificationsCount(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const unreadCount = await NotificationService.countUnreadNotifications(user.id);
+
+      return {
+        status: 200,
+        data: { unreadCount },
+        message: i18n.__("UNREAD_NOTIFICATIONS_COUNT_FETCHED_SUCCESSFULLY"),
         error: {},
       };
     } catch (e) {

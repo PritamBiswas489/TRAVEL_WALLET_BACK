@@ -9,7 +9,7 @@ import TransferRequestService from "./transferRequest.service.js";
 
 export default class NotificationService {
 static async walletTransferNotification(transferId, i18n) {
-    TransferService.getTransferById(transferId, (error, result) => {
+    TransferService.getTransferById(transferId, async (error, result) => {
         if (error) return console.error("Error fetching transfer details:", error);
 
         const { senderId, receiverId, amount, currency, sender, receiver, id } = result.data;
@@ -22,7 +22,7 @@ static async walletTransferNotification(transferId, i18n) {
             receiverPhoneNumber: receiver?.phoneNumber,
         });
 
-        Notification.create({
+        const notificationData =  await  Notification.create({
             userId: receiverId,
             type: "TRANSFER",
             title: messageTitle,
@@ -40,6 +40,7 @@ static async walletTransferNotification(transferId, i18n) {
                     action: "TRANSFER",
                     amount: String(amount) + currencySymbol,
                     senderPhoneNumber: sender?.phoneNumber,
+                    notificationId: String(notificationData?.id),
                 },
             },
             (err, res) => {
@@ -52,7 +53,7 @@ static async walletTransferNotification(transferId, i18n) {
 }
   
 static async walletTransferRejectionNotification(transferId, i18n) {
-    TransferService.getTransferById(transferId, (error, result) => {
+    TransferService.getTransferById(transferId, async (error, result) => {
         if (error) return console.error("Error fetching transfer details:", error);
 
         const { senderId, amount, currency, receiver } = result.data;
@@ -64,7 +65,7 @@ static async walletTransferRejectionNotification(transferId, i18n) {
             receiverPhoneNumber: receiver?.phoneNumber,
         });
 
-        Notification.create({
+       const notificationData = await Notification.create({
             userId: senderId,
             type: "TRANSFER_REJECTION",
             title: messageTitle,
@@ -82,6 +83,7 @@ static async walletTransferRejectionNotification(transferId, i18n) {
                     action: "TRANSFER_REJECTION",
                     amount: String(amount) + currencySymbol,
                     receiverPhoneNumber: receiver?.phoneNumber,
+                    notificationId: String(notificationData?.id),
                 },
             },
             (err, res) => {
@@ -93,7 +95,7 @@ static async walletTransferRejectionNotification(transferId, i18n) {
     });
 }
 static async walletTransferAcceptanceNotification(transferId, i18n) {
-    TransferService.getTransferById(transferId, (error, result) => {
+    TransferService.getTransferById(transferId, async (error, result) => {
         if (error) return console.error("Error fetching transfer details:", error);
 
         const { senderId, amount, currency, receiver } = result.data;
@@ -105,7 +107,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
             receiverPhoneNumber: receiver?.phoneNumber,
         });
 
-        Notification.create({
+        const notificationData = await Notification.create({
             userId: senderId,
             type: "TRANSFER_ACCEPTED",
             title: messageTitle,
@@ -123,6 +125,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
                     action: "TRANSFER_ACCEPTED",
                     amount: String(amount) + currencySymbol,
                     receiverPhoneNumber: receiver?.phoneNumber,
+                    notificationId: String(notificationData?.id),
                 },
             },
             (err, res) => {
@@ -136,7 +139,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
   static async transferRequestNotification(transferRequestId, i18n) {
     TransferRequestService.getTransferRequestById(
       transferRequestId,
-      (error, result) => {
+      async (error, result) => {
         if (error)
           return console.error("Error fetching transfer details:", error);
 
@@ -152,7 +155,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
           receiverPhoneNumber,
         });
 
-        Notification.create({
+       const notificationData = await Notification.create({
           userId: receiverId,
           type: "TRANSFER_REQUEST",
           title: messageTitle,
@@ -170,6 +173,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
               action: "TRANSFER_REQUEST",
               amount: String(amount) + currencySymbol,
               senderPhoneNumber,
+              notificationId: String(notificationData.id),
             },
           },
           (err, res) => {
@@ -188,7 +192,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
   static async transferRequestRejectionNotification(transferRequestId, i18n) {
     TransferRequestService.getTransferRequestById(
       transferRequestId,
-      (error, result) => {
+      async (error, result) => {
         if (error)
           return console.error("Error fetching transfer request details:", error);
 
@@ -202,7 +206,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
           receiverPhoneNumber,
         });
 
-        Notification.create({
+       const notificationData = await Notification.create({
           userId: senderId,
           type: "TRANSFER_REQUEST_REJECTION",
           title: messageTitle,
@@ -220,6 +224,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
               action: "TRANSFER_REQUEST_REJECTION",
               amount: String(amount) + currencySymbol,
               receiverPhoneNumber,
+              notificationId: String(notificationData.id),
             },
           },
           (err, res) => {
@@ -241,7 +246,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
   static async transferRequestApprovalNotification(transferRequestId, i18n) {
     TransferRequestService.getTransferRequestById(
       transferRequestId,
-      (error, result) => {
+      async (error, result) => {
         if (error)
           return console.error("Error fetching transfer request details:", error);
 
@@ -255,7 +260,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
           receiverPhoneNumber,
         });
 
-        Notification.create({
+       const notificationData = await Notification.create({
           userId: senderId,
           type: "TRANSFER_REQUEST_APPROVAL",
           title: messageTitle,
@@ -273,6 +278,7 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
               action: "TRANSFER_REQUEST_APPROVAL",
               amount: String(amount) + currencySymbol,
               receiverPhoneNumber,
+              notificationId: String(notificationData.id),
             },
           },
           (err, res) => {
@@ -304,4 +310,73 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
       return [];
     }
   }
+  static async markAsRead(userId, notificationId) {
+    try {
+      const notification = await Notification.findOne({
+        where: { id: notificationId, userId },
+      });
+
+      if (!notification) {
+        return null;
+      }
+
+      notification.isRead = true;
+      await notification.save();
+
+      return {...notification.toJSON(), isRead: true};
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      return null;
+    }
+  }
+  static async getLastUnreadNotification(userId) {
+    try {
+      const lastNotification = await Notification.findOne({
+        where: { userId, isRead: false },
+        order: [["createdAt", "DESC"]],
+      });
+      return lastNotification;
+    } catch (error) {
+      console.error("Error fetching last notification:", error);
+      return null;
+    }
+  }
+  static async markAllAsReads(userId) {
+    try {
+      const [updatedCount] = await Notification.update(
+        { isRead: true },
+        {
+          where: { userId, isRead: false },
+        }
+      );
+      return updatedCount > 0;
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      return false;
+    }
+    
+  }
+  static async countNotifications(userId) {
+    try {
+      const count = await Notification.count({
+        where: { userId },
+      });
+      return count;
+    } catch (error) {
+      console.error("Error counting notifications:", error);
+      return 0;
+    }
+  }
+  static async countUnreadNotifications(userId) {
+    try {
+      const count = await Notification.count({
+        where: { userId, isRead: false },
+      });
+      return count;
+    } catch (error) {
+      console.error("Error counting notifications:", error);
+      return 0;
+    }
+  }
+  
 }
