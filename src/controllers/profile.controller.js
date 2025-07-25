@@ -489,4 +489,36 @@ export default class ProfileController {
     }
 
   }
+  static async getLastPendingTransferNotification(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const lastNotification = await NotificationService.getLastPendingTransferNotification(user.id);
+      if (!lastNotification) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("NO_PENDING_TRANSFER_NOTIFICATIONS_FOUND") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: lastNotification,
+        message: i18n.__("LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+  }
 }

@@ -326,6 +326,24 @@ router.get("/get-last-unread-notification", async (req, res) => {
    res.return(response);
 
 })
+/**
+ * @swagger
+ * /api/auth/profile/get-last-pending-transfer-notification:
+ *   get:
+ *     summary: Get the last pending transfer notification for the user
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Last pending transfer notification retrieved
+ */
+
+router.get("/get-last-pending-transfer-notification", async (req, res) => {
+   const response = await ProfileController.getLastPendingTransferNotification({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+})
 
 /**
  * @swagger

@@ -47,6 +47,11 @@ export default class TransferService {
     try {
       const senderUserDetails = await UserService.getUserDetails(senderUserId);
       const receiverUserDetails = await UserService.getUserDetails(receiverId);
+      if(senderUserId === receiverId) {
+        await tran.rollback();
+        return callback(new Error("CANT_SEND_MONEY_TO_SELF"), null);
+
+      }
       if (!receiverUserDetails) {
         await tran.rollback();
         return callback(
@@ -153,7 +158,7 @@ export default class TransferService {
         await tran.rollback();
       }
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return callback(error, null);
+      return callback(new Error("TRANSFER_FAILED"), null);
     }
   }
   static async acceptRejectTransfer(
@@ -313,7 +318,7 @@ export default class TransferService {
         await tran.rollback();
       }
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return callback(error, null);
+      return callback(new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER"), null);
     }
   }
   static async getTransferHistory(

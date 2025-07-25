@@ -60,7 +60,7 @@ export default class TransferController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_EXECUTE_TRANSFER"),
+                message: i18n.__(err.message || "TRANSFER_FAILED"),
                 reason: err.message,
               },
             });
@@ -94,7 +94,7 @@ export default class TransferController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_ACCEPT_REJECT_TRANSFER"),
+                message: i18n.__(err.message || "FAILED_TO_ACCEPT_REJECT_TRANSFER"),
                 reason: err.message,
               },
             });

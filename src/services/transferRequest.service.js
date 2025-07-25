@@ -15,6 +15,10 @@ export default class TransferRequestService {
     try {
       const senderUserDetails = await UserService.getUserDetails(senderUserId);
       const receiverUserDetails = await UserService.getUserDetails(receiverId);
+      if (senderUserId === receiverId) {
+        await tran.rollback();
+        return handleCallback(new Error("CANT_SEND_REQUEST_TO_SELF"), null, callback);
+      }
       if (!receiverUserDetails) {
         await tran.rollback();
         return handleCallback(
@@ -42,9 +46,10 @@ export default class TransferRequestService {
       if (pendingTransferRequest) {
         await tran.rollback();
         return handleCallback(
-          callback,
+          
           new Error("PENDING_TRANSFER_REQUEST_EXISTS"),
-          null
+          null,
+          callback
         );
       }
       const createTransferRequest = await TransferRequests.create(
@@ -75,7 +80,7 @@ export default class TransferRequestService {
         await tran.rollback();
       }
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return handleCallback(null, error, callback);
+      return handleCallback(new Error("TRANSFER_REQUEST_FAILED"), null, callback);
     }
   }
   static async acceptRejectTransferRequest(
@@ -262,7 +267,7 @@ export default class TransferRequestService {
       }
 
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return handleCallback(error, null, callback);
+      return handleCallback(new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"), null, callback);
     }
   }
 

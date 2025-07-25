@@ -378,5 +378,17 @@ static async walletTransferAcceptanceNotification(transferId, i18n) {
       return 0;
     }
   }
-  
+  static async getLastPendingTransferNotification(userId) {
+    console.log("Fetching last pending transfer notification for user:", userId);
+    try {
+      const lastNotification = await Notification.findOne({
+        where: { userId, isRead: false, type: "TRANSFER"  , metadata: { status: "pending" } },
+        order: [["createdAt", "DESC"]],
+      });
+      return lastNotification;
+    } catch (error) {
+      console.error("Error fetching last pending transfer notification:", error);
+      return null;
+    }
+  }
 }

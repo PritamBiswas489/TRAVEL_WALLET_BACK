@@ -169,5 +169,11 @@
 	"UNREAD_NOTIFICATIONS_COUNT_FETCHED_SUCCESSFULLY": "Unread notifications count fetched successfully.",
 	"NO_NOTIFICATIONS_FOUND": "No notifications found.",
 	"NO_UNREAD_NOTIFICATIONS_FOUND": "No unread notifications found.",
-	"NOTIFICATION_ID_REQUIRED": "Notification ID is required."
+	"NOTIFICATION_ID_REQUIRED": "Notification ID is required.",
+	"NO_PENDING_TRANSFER_NOTIFICATIONS_FOUND": "NO_PENDING_TRANSFER_NOTIFICATIONS_FOUND",
+	"LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY": "LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY",
+	"TRANSFER_FAILED": "Transfer failed. Please try again later.",
+	"CANT_SEND_MONEY_TO_SELF": "You cannot send money to yourself.",
+	"TRANSFER_REQUEST_FAILED": "Transfer request failed. Please try again later.",
+	"CANT_SEND_REQUEST_TO_SELF": "You cannot send a transfer request to yourself."
 }

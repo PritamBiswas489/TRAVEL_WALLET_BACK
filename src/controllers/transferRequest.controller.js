@@ -25,7 +25,7 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_SEND_TRANSFER_REQUEST"),
+                message: i18n.__(err.message || "FAILED_TO_SEND_TRANSFER_REQUEST"),
                 reason: err.message,
               },
             });
@@ -59,7 +59,7 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"),
+                message: i18n.__(err.message || "FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"),
                 reason: err.message,
               },
             });
