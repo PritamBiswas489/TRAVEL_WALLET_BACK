@@ -459,4 +459,26 @@ export default class NotificationService {
     }
 
   }
+  static async updatePendingTransferRequestNotificationStatus(transferid, status) {
+    try {
+      const notification = await Notification.findOne({
+        where: {
+          type: "TRANSFER_REQUEST",
+          isRead: false,
+          metadata: {
+            id: transferid,
+          },
+        },
+       });
+       if(notification) {
+        notification.set('metadata', { ...notification.metadata, status });
+        await notification.save();
+        return notification;
+       }
+    } catch (error) {
+      console.error("Error fetching pending transfer notifications:", error);
+      return null;
+    }
+
+  }
 }

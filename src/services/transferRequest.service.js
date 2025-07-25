@@ -114,6 +114,10 @@ export default class TransferRequestService {
           { transaction: tran }
         );
         await tran.commit();
+        NotificationService.updatePendingTransferRequestNotificationStatus(
+          transferRequest.id,
+          "rejected"
+        );
         NotificationService.transferRequestRejectionNotification(
           transferRequest.id,
           i18n
@@ -230,6 +234,10 @@ export default class TransferRequestService {
         );
 
         await tran.commit();
+        NotificationService.updatePendingTransferRequestNotificationStatus(
+          transferRequest.id,
+          "approved"
+        );
 
         NotificationService.transferRequestApprovalNotification(
           transferRequest.id,
