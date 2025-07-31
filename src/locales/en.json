@@ -108,7 +108,7 @@
 	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found.",
 	"FCM_TOKEN_REQUIRED": "FCM token is required.",
 	"FCM_TOKEN_SAVED_SUCCESSFULLY": "FCM token saved successfully.",
-	"NO_USER_FOUND_SELECTED_MOBILE_NUMBER": "No user found with the selected mobile number.",
+	"NO_USER_FOUND_SELECTED_MOBILE_NUMBER": "The phone number you entered is not associated with a Travel Money account.",
 	"CANT_SEND_MONEY_BECAUSE_OF_UNAPPROVED_KYC": "User restricted from receiving money.",
 	"INSUFFICIENT_BALANCE": "Insufficient balance in your wallet. Please recharge to continue.",
 	"SENDER_WALLET_NOT_FOUND": "Sender wallet not found for selected currency.",

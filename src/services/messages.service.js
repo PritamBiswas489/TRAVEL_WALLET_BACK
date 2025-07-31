@@ -108,7 +108,7 @@ export const otpWhatsappService = async (number, otp_code) => {
  * @throws {Error} - If the Twilio API request fails
  * @description This function sends an OTP code via SMS using Twilio's messaging service.
  */
-export const otpSmsService = async (number, otp_code) => {
+export const otpSmsService = async (number, otp_code, appHash) => {
      try {
          const accountSid = process.env.TWILLO_ACCOUNT_SID;
         const authToken = process.env.TWILLO_AUTH_TOKEN;
@@ -118,8 +118,8 @@ export const otpSmsService = async (number, otp_code) => {
 
        const response = await client.messages
         .create({
-            body: `שלום! הקוד שלך לכניסה לאפליקציית TRAVEL MONEY הוא: ${otp_code}. הקוד בתוקף ל-10 דקות. שמרו עליו בסוד 🤫`,
-            from: '+972535663007',
+            body: `<#> שלום! הקוד שלך לכניסה לאפליקציית TRAVEL MONEY הוא: ${otp_code}. הקוד בתוקף ל-10 דקות. שמרו עליו בסוד 🤫\n${appHash}`,
+            from: 'TravelMoney',
             to: number
         })
 

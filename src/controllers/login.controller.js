@@ -30,6 +30,7 @@ export default class LoginController {
       const otp = generateOtp();
       const phoneNumber = payload.phoneNumber;
       const messageType = payload.messageType || "whatsapp";
+      const appHash = payload.appHash || '';
 
       const phoneRegex = /^\+\d{1,3}\d{4,14}$/;
       if (!phoneRegex.test(phoneNumber)) {
@@ -54,7 +55,7 @@ export default class LoginController {
         messageType === "whatsapp"
           ? otpWhatsappService(phoneNumber, otp)
           : null,
-        messageType === "sms" ? otpSmsService(phoneNumber, otp) : null,
+        messageType === "sms" ? otpSmsService(phoneNumber, otp, appHash) : null,
       ]);
 
       if (messageType === "sms" && smsResult?.error) {
