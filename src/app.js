@@ -50,19 +50,28 @@ if (SENTRY_ENABLED === "true") {
 }
 app.use(
   cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "accesstoken",
+      "refreshtoken",
+    ],
     exposedHeaders: ["accesstoken", "refreshtoken"],
   })
 );
+app.options("*", cors());
 app.use(compression());
 app.use(helmet());
 app.use(locales);
 app.use((req, res, next) => {
-   const defaultHeaders = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-    'accept': '*/*',
-    'connection': 'keep-alive',
-    'referer': 'https://back.travelmoney.co.il/',
-    'cookie': 'cf_clearance=xyz123; session_token=abc456;',
+  const defaultHeaders = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    accept: "*/*",
+    connection: "keep-alive",
+    referer: "https://back.travelmoney.co.il/",
   };
 
   for (const [key, value] of Object.entries(defaultHeaders)) {
@@ -70,7 +79,6 @@ app.use((req, res, next) => {
       req.headers[key] = value;
     }
   }
-  // console.log("Request Headers:", req.headers);
   next();
 });
 // app.use(trackIpAddressDeviceId);
