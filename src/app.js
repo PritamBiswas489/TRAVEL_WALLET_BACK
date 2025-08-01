@@ -57,19 +57,20 @@ app.use(compression());
 app.use(helmet());
 app.use(locales);
 app.use((req, res, next) => {
-  if (!req.headers["user-agent"]) {
-    req.headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
+   const defaultHeaders = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    'accept': '*/*',
+    'connection': 'keep-alive',
+    'referer': 'https://back.travelmoney.co.il/',
+    'cookie': 'cf_clearance=xyz123; session_token=abc456;',
+  };
+
+  for (const [key, value] of Object.entries(defaultHeaders)) {
+    if (!req.headers[key]) {
+      req.headers[key] = value;
+    }
   }
-  if (!req.headers["accept"]) {
-    req.headers["accept"] = "*/*";
-  }
-  if (!req.headers["connection"]) {
-    req.headers["connection"] = "keep-alive";
-  }
-  if (!req.headers["referer"]) {
-    req.headers["referer"] = "https://back.travelmoney.co.il/";
-  }
-  // console.log(`Request Headers: ${JSON.stringify(req.headers)}`);
+  // console.log("Request Headers:", req.headers);
   next();
 });
 // app.use(trackIpAddressDeviceId);
