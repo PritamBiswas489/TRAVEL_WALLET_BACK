@@ -2,6 +2,7 @@ import "../config/environment.js";
 import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import KycService from "./kyc.service.js";
+import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 
 const { Op, User, UserKyc, UserWallet, UserFcm } = db;
 
@@ -123,4 +124,31 @@ export default class UserService {
       throw error;
     }
   }
+  static async createDefaultAdminUser() {
+
+    try{
+      const user = await User.findOne({
+        where: { role: "ADMIN" },
+      });
+      if (user) {
+        console.log("Admin user already exists.");
+        return;
+      }
+      const adminUser = {
+        name: "Admin User",
+        email: "admin@travelmoney.co.il",
+        phoneNumber: "1111111111",
+        password: await hashStr("admin@travelmoney.co.il"),
+        role: "ADMIN",
+        status: "active",
+      };
+      await User.create(adminUser);
+      console.log("Default admin user created successfully.");
+    }catch (error) {
+      console.error("Error creating default admin user:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw error;
+    }
+  }
 }
+

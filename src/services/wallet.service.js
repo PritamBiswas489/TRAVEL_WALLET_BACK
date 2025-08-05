@@ -88,6 +88,7 @@ export default class WalletService {
           userId: userId,
           ...(currency.length > 0 && { paymentCurrency: { [Op.in]: currency } }),
           ...(status && status.length > 0 && { status: { [Op.in]: status } }),
+         
         },
         include:[
           {

@@ -1,6 +1,7 @@
 //currency seeder script
 import { updateCurrencyRates } from "./currency-cron.js";
 import SettingsService from "./src/services/settings.service.js";
+import UserService from "./src/services/user.service.js";
 const seedCurrencyData = async () => {
   console.log("Seeding Currency Data...");
   await updateCurrencyRates();
@@ -34,3 +35,12 @@ const seedTermsAndConditionsAndPrivacyPolicy = async () => {
     console.log("Privacy Policy Seeding Completed.");
 };
 seedTermsAndConditionsAndPrivacyPolicy();
+
+
+//create admin user seeder
+const seedAdminUser = async () => {
+    console.log("Seeding Admin User...");
+    await UserService.createDefaultAdminUser();
+    console.log("Admin User Seeding Completed.");
+}
+seedAdminUser();

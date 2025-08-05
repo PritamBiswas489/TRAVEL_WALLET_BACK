@@ -1,9 +1,175 @@
+import db from "../databases/models/index.js";
 import InterestRatesService from "../services/interestRates.service.js";
 import * as Sentry from "@sentry/node";
 import "../config/environment.js";
 import TrackIpAddressDeviceIdService from "../services/trackIpAddressDeviceId.service.js";
 import FaqService from "../services/faq.service.js";
+import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
+const { User, Op , WalletTransaction, WalletPelePayment, Transfer, TransferRequests } = db;
 export default class AdminController {
+  static async adminLogin(request) {
+    //login by email and password
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+    try {
+      //email and password login logic
+      if (!payload.email || !payload.password) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("EMAIL_AND_PASSWORD_REQUIRED") },
+        };
+      }
+      const adminUser = await User.findOne({
+        where: {
+          email: payload.email,
+          role: "ADMIN",
+        },
+      });
+      if (!adminUser) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("ADMIN_USER_NOT_FOUND") },
+        };
+      }
+      const isPasswordValid = await compareHashedStr(
+        payload.password,
+        adminUser.password
+      );
+      if (!isPasswordValid) {
+        return {
+          status: 401,
+          data: [],
+          error: { message: i18n.__("INVALID_PASSWORD") },
+        };
+      }
+      const jwtPayload = {
+          id: adminUser.id,
+          phoneNumber: adminUser.phoneNumber,
+          email: adminUser.email,
+          role: adminUser.role,
+        };
+
+      const accessToken = await generateToken(
+        jwtPayload,
+        process.env.JWT_ALGO,
+        process.env.ACCESS_TOKEN_SECRET_KEY,
+        Number(process.env.ACCESS_TOKEN_EXPIRES_IN)
+      );
+
+      const refreshToken = await generateToken(
+        jwtPayload,
+        process.env.JWT_ALGO,
+        process.env.REFRESH_TOKEN_SECRET_KEY,
+        Number(process.env.REFRESH_TOKEN_EXPIRES_IN)
+      );
+      return {
+        status: 200,
+        data: {
+          user: {
+            id: adminUser.id,
+            name: adminUser.name,
+            email: adminUser.email,
+            role: adminUser.role,
+          },
+          accessToken,
+          refreshToken,
+        },
+        message: i18n.__("ADMIN_LOGIN_SUCCESS"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async getUserList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const page = parseInt(payload.page, 10) || 1;
+      const limit = parseInt(payload.limit, 10) || 10;
+      const offset = (page - 1) * limit;
+
+      const whereClause = { role: "USER" };
+      if (payload.search) {
+        whereClause[Op.or] = [
+          { name: { [Op.like]: `%${payload.search}%` } },
+          { email: { [Op.like]: `%${payload.search}%` } },
+          { phoneNumber: { [Op.like]: `%${payload.search}%` } },
+        ];
+      }
+
+      const users = await User.findAndCountAll({
+        where: whereClause,
+        limit,
+        offset,
+        order: [["createdAt", "DESC"]],
+        attributes: { exclude: ["password"] },
+      });
+
+      return {
+        status: 200,
+        data: users.rows,
+        pagination: {
+          totalItems: users.count,
+          totalPages: Math.ceil(users.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
+        message: i18n.__("USER_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+
+  }
+  static async changeUserStatus(request){
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const userToUpdate = await User.findByPk(payload.user_id);
+      if (!userToUpdate) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_NOT_FOUND") },
+        };
+      }
+      userToUpdate.status = payload.status;
+      await userToUpdate.save();
+      return {
+        status: 200,
+        data: userToUpdate,
+        message: i18n.__("USER_STATUS_UPDATED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
   static async getInstallmentPaymentInterestRates(request) {
     const {
       payload,
@@ -136,5 +302,126 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+  static async getTransactionList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const page = parseInt(payload.page, 10) || 1;
+      const limit = parseInt(payload.limit, 10) || 10;
+      const offset = (page - 1) * limit;
+      const currency = payload.currency || [];
+      const status = payload.status || [];
+      const type = payload.type || [];
+      const transaction_type = payload.transaction_type || [];
+
+      const whereClause = {};
+      if (payload.search) {
+        whereClause[Op.or] = [
+          { transactionId: { [Op.like]: `%${payload.search}%` } },
+          { userId: { [Op.like]: `%${payload.search}%` } },
+        ];
+      }
+
+      // Build transaction type filter
+      if (transaction_type && transaction_type.length > 0) {
+        whereClause[Op.or] = [
+          ...(transaction_type.includes("wallet")
+        ? [{ paymentId: { [Op.ne]: null } }]
+        : []),
+          ...(transaction_type.includes("transfer")
+        ? [{ transferId: { [Op.ne]: null }, transferRequestId: null }]
+        : []),
+          ...(transaction_type.includes("transfer_request")
+        ? [{ transferRequestId: { [Op.ne]: null } }]
+        : []),
+        ];
+      }
+
+      const transactions = await WalletTransaction.findAndCountAll({
+        where: {
+          ...whereClause,
+          ...(currency.length > 0 && { paymentCurrency: { [Op.in]: currency } }),
+          ...(status && status.length > 0 && { status: { [Op.in]: status } }),
+          ...(type && type.length > 0 && { type: { [Op.in]: type } })
+        },
+        include: [
+          {
+        model: WalletPelePayment,
+        as: "walletPayment",
+        attributes: [
+          "id",
+          "PelecardTransactionId",
+          "VoucherId",
+          "CreditCardNumber",
+          "Token",
+          "CreditCardExpDate",
+          "DebitApproveNumber",
+          "CardHebName",
+          "TotalPayments"
+        ],
+          },
+          {
+        model: Transfer,
+        as: "transfer",
+        include: [
+          {
+            model: User,
+            as: "sender",
+            attributes: ["name", "phoneNumber"],
+          },
+          {
+            model: User,
+            as: "receiver",
+            attributes: ["name", "phoneNumber"],
+          }
+        ]
+          },
+          {
+        model: TransferRequests,
+        as: "transferRequest",
+        include: [
+          {
+            model: User,
+            as: "sender",
+            attributes: ["name", "phoneNumber"],
+          },
+          {
+            model: User,
+            as: "receiver",
+            attributes: ["name", "phoneNumber"],
+          }
+        ]
+          }
+        ],
+        order: [["createdAt", "DESC"]],
+        offset: offset,
+        limit: limit,
+      });
+
+      return {
+        status: 200,
+        data: transactions.rows,
+        pagination: {
+          totalItems: transactions.count,
+          totalPages: Math.ceil(transactions.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
+        message: i18n.__("TRANSACTION_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+
   }
 }

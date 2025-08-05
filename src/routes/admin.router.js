@@ -4,7 +4,200 @@ import AdminSettingsController from '../controllers/admin.settings.controller.js
 import AdminController from '../controllers/admin.controller.js';
  
 const router = express.Router();
- 
+/**
+ * @swagger
+ * /api/admin/admin-login:
+ *   post:
+ *     summary: Admin login
+ *     tags:
+ *       - Admin routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: admin@travelmoney.co.il
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: admin@travelmoney.co.il
+ *     responses:
+ *       200:
+ *         description: Success - Admin logged in
+ *       400:
+ *         description: Bad Request - Invalid credentials
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post('/admin-login', async (req, res, next) => {
+    res.return(await AdminController.adminLogin({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+/**
+ * @swagger
+ * /api/admin/user-list:
+ *   post:
+ *     summary: Get user list with search
+ *     tags:
+ *       - Admin routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 example: 10
+ *                 description: Number of users to return per page
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 example: 1
+ *                 description: Page number to retrieve
+ *               search:
+ *                 type: string
+ *                 example: john
+ *                 description: Search term for filtering users
+ *     responses:
+ *       200:
+ *         description: Success - Paginated user list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post('/user-list', async (req, res, next) => {
+    res.return(await AdminController.getUserList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+/**
+ * @swagger
+ * /api/admin/change-user-status:
+ *   post:
+ *     summary: Change user status (active/inactive)
+ *     tags:
+ *       - Admin routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: string
+ *                 example: "1"
+ *                 description: The ID of the user to update
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *                 example: "active"
+ *                 description: The new status for the user
+ *     responses:
+ *       200:
+ *         description: Success - User status changed
+ *       400:
+ *         description: Bad Request - Invalid input
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post('/change-user-status', async (req, res, next) => {
+    res.return(await AdminController.changeUserStatus({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+
+});
+/**
+ * @swagger
+ * /api/admin/transaction-list:
+ *   post:
+ *     summary: Get transaction list with pagination
+ *     tags:
+ *       - Admin routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 example: 10
+ *                 description: Number of transactions to return per page
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 example: 1
+ *                 description: Page number to retrieve
+ *               status:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["completed", "failed"]
+ *                 description: Filter by transaction status (array of status values, e.g. ["completed", "failed"])
+ *               currency:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["ILS", "USD", "EUR"]
+ *                 description: Filter by currency (array of currency codes, e.g. ["ILS", "USD", "EUR"])
+ *               type:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["credit", "debit"]
+ *                 description: Filter by transaction type (array of type values, e.g. ["credit", "debit"])
+ *               transaction_type:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 default: ["wallet", "transfer", "transfer_request"]
+ *                 description: Filter by transaction type (array of type values, e.g. ["wallet", "transfer", "transfer_request"])
+ *               fromDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-01-01"
+ *                 description: Start date for filtering transactions (YYYY-MM-DD)
+ *               toDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-01-31"
+ *                 description: End date for filtering transactions (YYYY-MM-DD)
+ *
+ *     responses:
+ *       200:
+ *         description: Success - Paginated transaction list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post('/transaction-list', async (req, res, next) => {
+    res.return(await AdminController.getTransactionList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
 /**
  * @swagger
  * /api/admin/update-settings:

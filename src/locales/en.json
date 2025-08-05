@@ -175,5 +175,9 @@
 	"TRANSFER_FAILED": "Transfer failed. Please try again later.",
 	"CANT_SEND_MONEY_TO_SELF": "You cannot send money to yourself.",
 	"TRANSFER_REQUEST_FAILED": "Transfer request failed. Please try again later.",
-	"CANT_SEND_REQUEST_TO_SELF": "You cannot send a transfer request to yourself."
+	"CANT_SEND_REQUEST_TO_SELF": "You cannot send a transfer request to yourself.",
+	"ADMIN_LOGIN_SUCCESS": "ADMIN_LOGIN_SUCCESS",
+	"USER_LIST_FETCHED_SUCCESSFULLY": "USER_LIST_FETCHED_SUCCESSFULLY",
+	"USER_STATUS_UPDATED_SUCCESSFULLY": "USER_STATUS_UPDATED_SUCCESSFULLY",
+	"TRANSACTION_LIST_FETCHED_SUCCESSFULLY": "TRANSACTION_LIST_FETCHED_SUCCESSFULLY"
 }
