@@ -5,7 +5,18 @@ import "../config/environment.js";
 import TrackIpAddressDeviceIdService from "../services/trackIpAddressDeviceId.service.js";
 import FaqService from "../services/faq.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
-const { User, Op , WalletTransaction, WalletPelePayment, Transfer, TransferRequests } = db;
+import moment from "moment";
+const {
+  User,
+  Op,
+  WalletTransaction,
+  WalletPelePayment,
+  Transfer,
+  TransferRequests,
+  UserKyc,
+  UserWallet,
+  UserFcm,
+} = db;
 export default class AdminController {
   static async adminLogin(request) {
     //login by email and password
@@ -47,11 +58,11 @@ export default class AdminController {
         };
       }
       const jwtPayload = {
-          id: adminUser.id,
-          phoneNumber: adminUser.phoneNumber,
-          email: adminUser.email,
-          role: adminUser.role,
-        };
+        id: adminUser.id,
+        phoneNumber: adminUser.phoneNumber,
+        email: adminUser.email,
+        role: adminUser.role,
+      };
 
       const accessToken = await generateToken(
         jwtPayload,
@@ -115,6 +126,18 @@ export default class AdminController {
         offset,
         order: [["createdAt", "DESC"]],
         attributes: { exclude: ["password"] },
+        include: [
+          {
+            model: UserKyc,
+            as: "kyc",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+          {
+            model: UserWallet,
+            as: "wallets",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+        ],
       });
 
       return {
@@ -136,10 +159,8 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
-
   }
-  static async changeUserStatus(request){
+  static async changeUserStatus(request) {
     const {
       payload,
       headers: { i18n },
@@ -317,8 +338,24 @@ export default class AdminController {
       const status = payload.status || [];
       const type = payload.type || [];
       const transaction_type = payload.transaction_type || [];
+      const fromDate = payload.fromDate
+        ? moment(payload.fromDate).startOf("day")
+        : null;
+      const toDate = payload.toDate
+        ? moment(payload.toDate).endOf("day")
+        : null;
+      const mobile = payload.mobile || null;
+      const senderMobileNumber = payload.senderMobileNumber
+        ? payload.senderMobileNumber
+        : null;
+      const receiverMobileNumber = payload.receiverMobileNumber
+        ? payload.receiverMobileNumber
+        : null;
 
+      // Build where clause for transactions
       const whereClause = {};
+
+      // Search by transactionId or userId
       if (payload.search) {
         whereClause[Op.or] = [
           { transactionId: { [Op.like]: `%${payload.search}%` } },
@@ -341,15 +378,78 @@ export default class AdminController {
         ];
       }
 
-      const transactions = await WalletTransaction.findAndCountAll({
-        where: {
-          ...whereClause,
-          ...(currency.length > 0 && { paymentCurrency: { [Op.in]: currency } }),
-          ...(status && status.length > 0 && { status: { [Op.in]: status } }),
-          ...(type && type.length > 0 && { type: { [Op.in]: type } })
-        },
+      // Date filters
+      if (fromDate && toDate) {
+        whereClause.createdAt = {
+          [Op.between]: [fromDate.toDate(), toDate.toDate()],
+        };
+      } else if (fromDate) {
+        whereClause.createdAt = {
+          [Op.gte]: fromDate.toDate(),
+        };
+      } else if (toDate) {
+        whereClause.createdAt = {
+          [Op.lte]: toDate.toDate(),
+        };
+      }
+
+      // User phoneNumber filter (relation with User table)
+      const userInclude = {
+        model: User,
+        as: "user",
+        attributes: ["id", "name", "phoneNumber", "email"],
+      };
+      if (mobile) {
+        userInclude.where = {
+          phoneNumber: { [Op.like]: `%${mobile}%` },
+        };
+      }
+
+      // Only add sender/receiver mobile filters if the value is not null/blank
+      const isSenderMobileValid =
+        senderMobileNumber && senderMobileNumber.trim() !== "";
+      const isReceiverMobileValid =
+        receiverMobileNumber && receiverMobileNumber.trim() !== "";
+
+      const transferInclude = {
+        model: Transfer,
+        as: "transfer",
         include: [
           {
+        model: User,
+        as: "sender",
+        attributes: ["id", "name", "phoneNumber", "email"],
+       
+          },
+          {
+        model: User,
+        as: "receiver",
+        attributes: ["id", "name", "phoneNumber", "email"],
+        
+          },
+        ],
+      };
+
+      const transferRequestInclude = {
+        model: TransferRequests,
+        as: "transferRequest",
+        include: [
+          {
+        model: User,
+        as: "sender",
+        attributes: ["id", "name", "phoneNumber", "email"],
+         
+          },
+          {
+        model: User,
+        as: "receiver",
+        attributes: ["id", "name", "phoneNumber", "email"],
+         
+          },
+        ],
+      };
+
+      const walletInclude = {
         model: WalletPelePayment,
         as: "walletPayment",
         attributes: [
@@ -361,41 +461,28 @@ export default class AdminController {
           "CreditCardExpDate",
           "DebitApproveNumber",
           "CardHebName",
-          "TotalPayments"
+          "TotalPayments",
         ],
-          },
-          {
-        model: Transfer,
-        as: "transfer",
+      };
+
+      // If senderMobileNumber is null/blank, only show data where transfer.user.phoneNumber = senderMobileNumber
+      // If receiverMobileNumber is null/blank, only show data where transferRequest.user.phoneNumber = receiverMobileNumber
+      // This is already handled by the required: true and where clauses above
+
+      const transactions = await WalletTransaction.findAndCountAll({
+        where: {
+          ...whereClause,
+          ...(currency.length > 0 && {
+        paymentCurrency: { [Op.in]: currency },
+          }),
+          ...(status && status.length > 0 && { status: { [Op.in]: status } }),
+          ...(type && type.length > 0 && { type: { [Op.in]: type } }),
+        },
         include: [
-          {
-            model: User,
-            as: "sender",
-            attributes: ["name", "phoneNumber"],
-          },
-          {
-            model: User,
-            as: "receiver",
-            attributes: ["name", "phoneNumber"],
-          }
-        ]
-          },
-          {
-        model: TransferRequests,
-        as: "transferRequest",
-        include: [
-          {
-            model: User,
-            as: "sender",
-            attributes: ["name", "phoneNumber"],
-          },
-          {
-            model: User,
-            as: "receiver",
-            attributes: ["name", "phoneNumber"],
-          }
-        ]
-          }
+          userInclude,
+          walletInclude,
+          transferInclude,
+          transferRequestInclude,
         ],
         order: [["createdAt", "DESC"]],
         offset: offset,
@@ -421,7 +508,107 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
-
   }
+  static async getTransactionListByUser(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const page = parseInt(payload.page, 10) || 1;
+      const limit = parseInt(payload.limit, 10) || 10;
+      const offset = (page - 1) * limit;
+      const userId = payload.user_id;
+
+      if (!userId) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("USER_ID_REQUIRED") },
+        };
+      }
+
+      const transactions = await WalletTransaction.findAndCountAll({
+        where: { userId },
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "phoneNumber", "email"],
+          },
+          {
+            model: WalletPelePayment,
+            as: "walletPayment",
+            attributes: [
+              "id",
+              "PelecardTransactionId",
+              "VoucherId",
+              "CreditCardNumber",
+              "Token",
+              "CreditCardExpDate",
+              "DebitApproveNumber",
+              "CardHebName",
+              "TotalPayments",
+            ],
+          },
+          {
+            model: Transfer,
+            as: "transfer",
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+            ],
+          },
+          {
+            model: TransferRequests,
+            as: "transferRequest",
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+            ],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+        offset,
+        limit,
+      });
+
+      return {
+        status: 200,
+        data: transactions.rows,
+        pagination: {
+          totalItems: transactions.count,
+          totalPages: Math.ceil(transactions.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
+        message: i18n.__("TRANSACTION_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+
 }

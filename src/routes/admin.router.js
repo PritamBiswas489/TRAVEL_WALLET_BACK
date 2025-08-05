@@ -174,13 +174,17 @@ router.post('/change-user-status', async (req, res, next) => {
  *               fromDate:
  *                 type: string
  *                 format: date
- *                 example: "2024-01-01"
+ *                 example: "2025-01-01"
  *                 description: Start date for filtering transactions (YYYY-MM-DD)
  *               toDate:
  *                 type: string
  *                 format: date
- *                 example: "2024-01-31"
+ *                 example: "2028-12-31"
  *                 description: End date for filtering transactions (YYYY-MM-DD)
+ *               mobile:
+ *                 type: string
+ *                 example: "+919830990065"
+ *                 description: Filter by user's mobile number
  *
  *     responses:
  *       200:
@@ -192,6 +196,46 @@ router.post('/change-user-status', async (req, res, next) => {
  */
 router.post('/transaction-list', async (req, res, next) => {
     res.return(await AdminController.getTransactionList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+/**
+ * @swagger
+ * /api/admin/transaction-list-by-user:
+ *   post:
+ *     summary: Get transaction list by user
+ *     tags:
+ *       - Admin routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user_id:
+ *                 type: string
+ *                 example: "1"
+ *                 description: The ID of the user to retrieve transactions for
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 example: 10
+ *                 description: Number of transactions to return per page
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 example: 1
+ *                 description: Page number to retrieve
+ *
+ *     responses:
+ *       200:
+ *         description: Success - Transaction list for the user retrieved
+ */
+router.post('/transaction-list-by-user', async (req, res, next) => {
+    res.return(await AdminController.getTransactionListByUser({
         payload: { ...req.params, ...req.query, ...req.body },
         headers: req.headers,
         user: req.user,

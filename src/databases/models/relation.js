@@ -26,6 +26,9 @@ const relation = (db) => {
   WalletPelePayment.hasOne(WalletTransaction, { foreignKey: "paymentId", as: "transaction" });
   WalletTransaction.belongsTo(WalletPelePayment, { foreignKey: "paymentId", as: "walletPayment" });
 
+  User.hasMany(WalletTransaction, { foreignKey: "userId", as: "transactions" });
+  WalletTransaction.belongsTo(User, { foreignKey: "userId", as: "user" });
+
   //Transfer model relations
   User.hasMany(Transfer, { foreignKey: "senderId", as: "sentTransfers" });
   User.hasMany(Transfer, { foreignKey: "receiverId", as: "receivedTransfers" });
