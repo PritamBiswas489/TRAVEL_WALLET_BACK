@@ -80,8 +80,7 @@ export default class AdminController {
   static async getUserList(request) {
     const {
       payload,
-      headers: { i18n },
-      user,
+      headers: { i18n }
     } = request;
     try {
       const page = parseInt(payload.page, 10) || 1;
@@ -115,6 +114,7 @@ export default class AdminController {
             attributes: { exclude: ["createdAt", "updatedAt"] },
           },
         ],
+        distinct: true, // Ensures correct count when using include
       });
 
       return {
