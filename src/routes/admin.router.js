@@ -44,31 +44,31 @@ router.post('/admin-login', async (req, res, next) => {
 /**
  * @swagger
  * /api/admin/user-list:
- *   post:
+ *   get:
  *     summary: Get user list with search
  *     tags:
  *       - Admin routes
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               limit:
- *                 type: integer
- *                 default: 10
- *                 example: 10
- *                 description: Number of users to return per page
- *               page:
- *                 type: integer
- *                 default: 1
- *                 example: 1
- *                 description: Page number to retrieve
- *               search:
- *                 type: string
- *                 example: john
- *                 description: Search term for filtering users
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of users to return per page
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number to retrieve
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: john
+ *         description: Search term for filtering users
  *     responses:
  *       200:
  *         description: Success - Paginated user list
@@ -77,9 +77,9 @@ router.post('/admin-login', async (req, res, next) => {
  *       500:
  *         description: Internal Server Error
  */
-router.post('/user-list', async (req, res, next) => {
+router.get('/user-list', async (req, res, next) => {
     res.return(await AdminController.getUserList({
-        payload: { ...req.params, ...req.query, ...req.body },
+        payload: { ...req.params, ...req.query },
         headers: req.headers,
         user: req.user,
     }));
