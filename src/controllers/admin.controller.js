@@ -57,38 +57,15 @@ export default class AdminController {
           error: { message: i18n.__("INVALID_PASSWORD") },
         };
       }
-      const jwtPayload = {
-        id: adminUser.id,
-        phoneNumber: adminUser.phoneNumber,
-        email: adminUser.email,
-        role: adminUser.role,
-      };
-
-      const accessToken = await generateToken(
-        jwtPayload,
-        process.env.JWT_ALGO,
-        process.env.ACCESS_TOKEN_SECRET_KEY,
-        Number(process.env.ACCESS_TOKEN_EXPIRES_IN)
-      );
-
-      const refreshToken = await generateToken(
-        jwtPayload,
-        process.env.JWT_ALGO,
-        process.env.REFRESH_TOKEN_SECRET_KEY,
-        Number(process.env.REFRESH_TOKEN_EXPIRES_IN)
-      );
+      
       return {
         status: 200,
-        data: {
           user: {
             id: adminUser.id,
             name: adminUser.name,
             email: adminUser.email,
             role: adminUser.role,
           },
-          accessToken,
-          refreshToken,
-        },
         message: i18n.__("ADMIN_LOGIN_SUCCESS"),
       };
     } catch (e) {
