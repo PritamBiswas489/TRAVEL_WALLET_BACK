@@ -530,6 +530,7 @@ export default class AdminController {
         order: [["createdAt", "DESC"]],
         offset: offset,
         limit: limit,
+        distinct: true, // Ensures correct count when using include
       });
 
       return {
@@ -631,6 +632,7 @@ export default class AdminController {
         order: [["createdAt", "DESC"]],
         offset,
         limit,
+        distinct: true, // Ensures correct count when using include
       });
 
       return {
