@@ -84,6 +84,38 @@ router.get('/user-list', async (req, res, next) => {
         user: req.user,
     }));
 });
+
+
+/**
+ * @swagger
+ * /api/admin/user-detail-by-id:
+ *   get:
+ *     summary: Get user details by ID
+ *     tags:
+ *       - Admin routes
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "1"
+ *         description: The ID of the user to retrieve details for
+ *     responses:
+ *       200:
+ *         description: Success - User details retrieved
+ *       400:
+ *         description: Bad Request - Invalid input
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/user-detail-by-id', async (req, res, next) => {
+    res.return(await AdminController.getUserById({
+        payload: { ...req.params, ...req.query },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
 /**
  * @swagger
  * /api/admin/change-user-status:

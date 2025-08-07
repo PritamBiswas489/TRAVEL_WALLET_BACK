@@ -182,5 +182,6 @@
 	"TRANSACTION_LIST_FETCHED_SUCCESSFULLY": "Transaction list fetched successfully.",
 	"USER_ID_REQUIRED": "User ID is required.",
 	"NAME_MIN_LENGTH": "Name must be at least 2 characters long.",
-	"NAME_MAX_LENGTH": "Name must be at most 50 characters long."
+	"NAME_MAX_LENGTH": "Name must be at most 50 characters long.",
+	"USER_FETCHED_SUCCESSFULLY": "USER_FETCHED_SUCCESSFULLY"
 }

@@ -137,6 +137,48 @@ export default class AdminController {
       };
     }
   }
+  static async getUserById(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+    try {
+      const user = await User.findByPk(payload.user_id, {
+        attributes: { exclude: ["password"] },
+        include: [
+          {
+            model: UserKyc,
+            as: "kyc",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+          {
+            model: UserWallet,
+            as: "wallets",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+        ],
+      });
+      if (!user) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_NOT_FOUND") },
+        };
+      }
+      return {
+        status: 200,
+        data: user,
+        message: i18n.__("USER_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
   static async changeUserStatus(request) {
     const {
       payload,
