@@ -311,10 +311,34 @@ export default class AdminController {
       const page = parseInt(payload.page, 10) || 1;
       const limit = parseInt(payload.limit, 10) || 10;
       const offset = (page - 1) * limit;
-      const currency = payload.currency || [];
-      const status = payload.status || [];
-      const type = payload.type || [];
-      const transaction_type = payload.transaction_type || [];
+      // currency can be array or string
+      let currency = payload.currency;
+      if (typeof currency === "string") {
+        currency = [currency];
+      } else if (!Array.isArray(currency)) {
+        currency = [];
+      }
+      console.log("Currency:", currency);
+      // status can be array or string
+      let status = payload.status;
+      if (typeof status === "string") {
+        status = [status];
+      } else if (!Array.isArray(status)) {
+        status = [];
+      }
+      // type can be array or string
+      let type = payload.type;
+      if (typeof type === "string") {
+        type = [type];
+      } else if (!Array.isArray(type)) {
+        type = [];
+      }
+      let transaction_type = payload.transaction_type;
+      if (typeof transaction_type === "string") {
+        transaction_type = [transaction_type];
+      } else if (!Array.isArray(transaction_type)) {
+        transaction_type = [];
+      }
       const fromDate = payload.fromDate
         ? moment(payload.fromDate).startOf("day")
         : null;

@@ -126,66 +126,77 @@ router.post('/change-user-status', async (req, res, next) => {
 /**
  * @swagger
  * /api/admin/transaction-list:
- *   post:
+ *   get:
  *     summary: Get transaction list with pagination
  *     tags:
  *       - Admin routes
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               limit:
- *                 type: integer
- *                 default: 10
- *                 example: 10
- *                 description: Number of transactions to return per page
- *               page:
- *                 type: integer
- *                 default: 1
- *                 example: 1
- *                 description: Page number to retrieve
- *               status:
- *                 type: array
- *                 items:
- *                   type: string
- *                 default: ["completed", "failed"]
- *                 description: Filter by transaction status (array of status values, e.g. ["completed", "failed"])
- *               currency:
- *                 type: array
- *                 items:
- *                   type: string
- *                 default: ["ILS", "USD", "EUR"]
- *                 description: Filter by currency (array of currency codes, e.g. ["ILS", "USD", "EUR"])
- *               type:
- *                 type: array
- *                 items:
- *                   type: string
- *                 default: ["credit", "debit"]
- *                 description: Filter by transaction type (array of type values, e.g. ["credit", "debit"])
- *               transaction_type:
- *                 type: array
- *                 items:
- *                   type: string
- *                 default: ["wallet", "transfer", "transfer_request"]
- *                 description: Filter by transaction type (array of type values, e.g. ["wallet", "transfer", "transfer_request"])
- *               fromDate:
- *                 type: string
- *                 format: date
- *                 example: "2025-01-01"
- *                 description: Start date for filtering transactions (YYYY-MM-DD)
- *               toDate:
- *                 type: string
- *                 format: date
- *                 example: "2028-12-31"
- *                 description: End date for filtering transactions (YYYY-MM-DD)
- *               mobile:
- *                 type: string
- *                 example: "+919830990065"
- *                 description: Filter by user's mobile number
- *
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of transactions to return per page
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number to retrieve
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
+ *           default: ["completed", "failed"]
+ *         description: Filter by transaction status (array of status values, e.g. ["completed", "failed"])
+ *       - in: query
+ *         name: currency
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
+ *           default: ["ILS", "USD", "EUR"]
+ *         description: Filter by currency (array of currency codes, e.g. ["ILS", "USD", "EUR"])
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
+ *           default: ["credit", "debit"]
+ *         description: Filter by transaction type (array of type values, e.g. ["credit", "debit"])
+ *       - in: query
+ *         name: transaction_type
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
+ *           default: ["wallet", "transfer", "transfer_request"]
+ *         description: Filter by transaction type (array of type values, e.g. ["wallet", "transfer", "transfer_request"])
+ *       - in: query
+ *         name: fromDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2025-01-01"
+ *         description: Start date for filtering transactions (YYYY-MM-DD)
+ *       - in: query
+ *         name: toDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2028-12-31"
+ *         description: End date for filtering transactions (YYYY-MM-DD)
+ *       - in: query
+ *         name: mobile
+ *         schema:
+ *           type: string
+ *           example: "+919830990065"
+ *         description: Filter by user's mobile number
  *     responses:
  *       200:
  *         description: Success - Paginated transaction list
@@ -194,9 +205,9 @@ router.post('/change-user-status', async (req, res, next) => {
  *       500:
  *         description: Internal Server Error
  */
-router.post('/transaction-list', async (req, res, next) => {
+router.get('/transaction-list', async (req, res, next) => {
     res.return(await AdminController.getTransactionList({
-        payload: { ...req.params, ...req.query, ...req.body },
+        payload: { ...req.params, ...req.query },
         headers: req.headers,
         user: req.user,
     }));
@@ -204,39 +215,39 @@ router.post('/transaction-list', async (req, res, next) => {
 /**
  * @swagger
  * /api/admin/transaction-list-by-user:
- *   post:
+ *   get:
  *     summary: Get transaction list by user
  *     tags:
  *       - Admin routes
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               user_id:
- *                 type: string
- *                 example: "1"
- *                 description: The ID of the user to retrieve transactions for
- *               limit:
- *                 type: integer
- *                 default: 10
- *                 example: 10
- *                 description: Number of transactions to return per page
- *               page:
- *                 type: integer
- *                 default: 1
- *                 example: 1
- *                 description: Page number to retrieve
- *
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "1"
+ *         description: The ID of the user to retrieve transactions for
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of transactions to return per page
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number to retrieve
  *     responses:
  *       200:
  *         description: Success - Transaction list for the user retrieved
  */
-router.post('/transaction-list-by-user', async (req, res, next) => {
+router.get('/transaction-list-by-user', async (req, res, next) => {
     res.return(await AdminController.getTransactionListByUser({
-        payload: { ...req.params, ...req.query, ...req.body },
+        payload: { ...req.params, ...req.query },
         headers: req.headers,
         user: req.user,
     }));
