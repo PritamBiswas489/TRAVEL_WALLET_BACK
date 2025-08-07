@@ -553,6 +553,93 @@ export default class AdminController {
       };
     }
   }
+  static async getTransactionById(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const transaction = await WalletTransaction.findByPk(payload.id, {
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "phoneNumber", "email"],
+          },
+          {
+            model: WalletPelePayment,
+            as: "walletPayment",
+            attributes: [
+              "id",
+              "PelecardTransactionId",
+              "VoucherId",
+              "CreditCardNumber",
+              "Token",
+              "CreditCardExpDate",
+              "DebitApproveNumber",
+              "CardHebName",
+              "TotalPayments",
+            ],
+          },
+          {
+            model: Transfer,
+            as: "transfer",
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+            ],
+          },
+          {
+            model: TransferRequests,
+            as: "transferRequest",
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["id", "name", "phoneNumber", "email"],
+              },
+            ],
+          },
+        ],
+      });
+
+      if (!transaction) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("TRANSACTION_NOT_FOUND") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: transaction,
+        message: i18n.__("TRANSACTION_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+  }
   static async getTransactionListByUser(request) {
     const {
       payload,

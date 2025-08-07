@@ -244,6 +244,36 @@ router.get('/transaction-list', async (req, res, next) => {
         user: req.user,
     }));
 });
+
+/**
+ * @swagger
+ * /api/admin/transaction-detail-by-id:
+ *   get:
+ *     summary: Get transaction detail by ID
+ *     tags:
+ *       - Admin routes
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "1"
+ *         description: The ID of the transaction to retrieve
+ *     responses:
+ *       200:
+ *         description: Success - Transaction detail retrieved
+ */
+router.get('/transaction-detail-by-id', async (req, res, next) => {
+    res.return(await AdminController.getTransactionById({
+        payload: { ...req.params, ...req.query },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+ 
+
 /**
  * @swagger
  * /api/admin/transaction-list-by-user:
