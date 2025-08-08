@@ -121,6 +121,7 @@
 	"TRANSFER_NOT_FOUND_OR_NOT_PENDING": "Transfer not found or not in pending status.",
 	"INVALID_STATUS": "Invalid status.",
 	"TRANSFER_ACCEPTED_SUCCESSFULLY": "Transfer accepted successfully.",
+	
 	"TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY": "Transfer history retrieved successfully.",
 	"User or FCM token not found": "User or FCM token not found",
 	"PUSH_NOTIFICATION_ERROR": "Push notification failed.",
