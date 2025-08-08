@@ -340,9 +340,9 @@ export default class TransferService {
         [Op.or]: [{ senderId: userId }, { receiverId: userId }],
       };
 
-      if (filter.type.length === 1 && filter.type.includes("incoming")) {
+      if (filter.type && filter.type.length === 1 && filter.type.includes("incoming")) {
         whereClause = { receiverId: userId };
-      } else if (filter.type.length === 1 && filter.type.includes("outgoing")) {
+      } else if (filter.type && filter.type.length === 1 && filter.type.includes("outgoing")) {
         whereClause = { senderId: userId };
       }
       console.log("Where Clause:", whereClause);
