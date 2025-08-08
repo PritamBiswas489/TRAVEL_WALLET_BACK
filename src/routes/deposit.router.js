@@ -79,6 +79,25 @@ router.post('/set-default-card', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/deposit/get-default-card:
+ *   get:
+ *     summary: Get the default card for the user
+ *     tags:
+ *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Default card retrieved
+ */
+router.get('/get-default-card', async (req, res, next) => {
+  const response = await depositController.getDefaultCard({ headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+/**
+ * @swagger
  * /api/auth/deposit/pelecard-user-card-list:
  *   get:
  *     summary: Get list of user cards in Pelecard payment gateway

@@ -14,14 +14,21 @@ export default class TransferService {
       const user = await User.findOne({
         where: {
           phoneNumber: mobileNumber,
-          id: { [Op.ne]: userId },
         },
         attributes: ["id"],
       });
+     
 
-      if (!user) {
+      if (!user?.id) {
+        console.log("No user found with the selected mobile number");
         return callback(
           new Error("NO_USER_FOUND_SELECTED_MOBILE_NUMBER"),
+          null
+        );
+      }
+      if(user.id === userId) {
+        return callback(
+          new Error("CANT_SEND_MONEY_TO_SELF"),
           null
         );
       }
@@ -36,7 +43,7 @@ export default class TransferService {
       return callback(null, { data: userDetails });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return callback(error, null);
+      return callback(new Error("FAILED_TO_CHECK_RECEIVER_STATUS"), null);
     }
   }
   static async executeTransfer(

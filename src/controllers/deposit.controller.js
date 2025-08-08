@@ -162,6 +162,40 @@ export default class DepositController {
       
 
   }
+  static async getDefaultCard(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const userCard = await UserCard.findOne({
+        where: { userId: user.id, isDefault: true },
+      });
+
+      if (!userCard) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_DEFAULT_CARD_NOT_FOUND") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: userCard,
+        message: i18n.__("USER_DEFAULT_CARD_FETCHED"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
   static async getPeleCardUserCardList(request) {
     const {
       payload,

@@ -108,7 +108,7 @@
 	"USER_KYC_DATA_NOT_FOUND": "User KYC data not found.",
 	"FCM_TOKEN_REQUIRED": "FCM token is required.",
 	"FCM_TOKEN_SAVED_SUCCESSFULLY": "FCM token saved successfully.",
-	"NO_USER_FOUND_SELECTED_MOBILE_NUMBER": "The phone number you entered is not associated with a Travel Money account.",
+	"NO_USER_FOUND_SELECTED_MOBILE_NUMBER": "This contact isn’t on Travel Money.",
 	"CANT_SEND_MONEY_BECAUSE_OF_UNAPPROVED_KYC": "User restricted from receiving money.",
 	"INSUFFICIENT_BALANCE": "Insufficient balance in your wallet. Please recharge to continue.",
 	"SENDER_WALLET_NOT_FOUND": "Sender wallet not found for selected currency.",
@@ -121,7 +121,6 @@
 	"TRANSFER_NOT_FOUND_OR_NOT_PENDING": "Transfer not found or not in pending status.",
 	"INVALID_STATUS": "Invalid status.",
 	"TRANSFER_ACCEPTED_SUCCESSFULLY": "Transfer accepted successfully.",
-	
 	"TRANSFER_HISTORY_RETRIEVED_SUCCESSFULLY": "Transfer history retrieved successfully.",
 	"User or FCM token not found": "User or FCM token not found",
 	"PUSH_NOTIFICATION_ERROR": "Push notification failed.",
@@ -186,5 +185,6 @@
 	"NAME_MAX_LENGTH": "Name must be at most 50 characters long.",
 	"USER_FETCHED_SUCCESSFULLY": "USER_FETCHED_SUCCESSFULLY",
 	"TRANSACTION_NOT_FOUND": "TRANSACTION_NOT_FOUND",
-	"TRANSACTION_FETCHED_SUCCESSFULLY": "TRANSACTION_FETCHED_SUCCESSFULLY"
+	"TRANSACTION_FETCHED_SUCCESSFULLY": "TRANSACTION_FETCHED_SUCCESSFULLY",
+	"USER_DEFAULT_CARD_FETCHED": "USER_DEFAULT_CARD_FETCHED"
 }

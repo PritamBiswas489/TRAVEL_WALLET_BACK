@@ -14,7 +14,7 @@ export default class TransferController {
     const mobileNumber = payload.mobile;
     const userId = user?.id;
 
-    console.log("Check Receiver Status Request", userId, mobileNumber);
+    //console.log("Check Receiver Status Request", userId, mobileNumber);
 
     return new Promise((resolve) => {
       TransferService.checkReceiverStatus(
@@ -25,7 +25,7 @@ export default class TransferController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_CHECK_RECEIVER_STATUS"),
+                message:  i18n.__(err.message || "FAILED_TO_CHECK_RECEIVER_STATUS"),
                 reason: err.message,
               },
             });
