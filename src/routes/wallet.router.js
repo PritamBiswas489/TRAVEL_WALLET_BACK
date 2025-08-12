@@ -74,6 +74,17 @@ router.post('/user-wallet', async (req, res, next) => {
  *                   type: string
  *                 default: ["completed", "failed"]
  *                 description: Filter by transaction status (array of status values, e.g. ["completed", "failed"])
+ *               filter:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum:
+ *                     - sent
+ *                     - received
+ *                     - accepted
+ *                     - rejected
+ *                     - topup
+ *                 default: ["sent", "received", "accepted", "rejected", "topup"]
  *     responses:
  *       200:
  *         description: Success - User wallet transaction history retrieved

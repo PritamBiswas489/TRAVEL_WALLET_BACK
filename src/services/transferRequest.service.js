@@ -326,8 +326,18 @@ export default class TransferRequestService {
         whereClause = { receiverId: userId };
       } else if (filter.type && filter.type.length === 1 && filter.type.includes("outgoing")) {
         whereClause = { senderId: userId };
-      }
-      console.log("Where Clause:", whereClause);
+      } else if (
+        filter.type &&
+        Array.isArray(filter.type) &&
+        filter.type.includes("incoming") &&
+        filter.type.includes("outgoing")
+            ) {
+       
+              whereClause = {
+                [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+              };
+            }
+      // console.log("Where Clause:", whereClause);
       if (filter.status && filter.status.length > 0) {
         whereClause.status = { [Op.in]: filter.status };
       }
@@ -350,7 +360,7 @@ export default class TransferRequestService {
           },
         ],
       });
-
+       
       return callback(null, { data: transfers });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);

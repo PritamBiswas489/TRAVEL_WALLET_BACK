@@ -344,11 +344,22 @@ export default class TransferService {
         whereClause = { receiverId: userId };
       } else if (filter.type && filter.type.length === 1 && filter.type.includes("outgoing")) {
         whereClause = { senderId: userId };
-      }
+            } else if (
+        filter.type &&
+        Array.isArray(filter.type) &&
+        filter.type.includes("incoming") &&
+        filter.type.includes("outgoing")
+            ) {
+       
+              whereClause = {
+                [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+              };
+            }
       console.log("Where Clause:", whereClause);
       if (filter.status && filter.status.length > 0) {
         whereClause.status = { [Op.in]: filter.status };
       }
+      
 
       const transfers = await Transfer.findAll({
         where: whereClause,

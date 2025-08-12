@@ -80,72 +80,136 @@ export default class WalletService {
       return { ERROR: e.message };
     }
   }
-  static async getUserWalletTransactionHistory(userId, { currency, status, page = 1, limit = 10 }) {
+  static async getUserWalletTransactionHistory(userId, { currency, status, filter, transferStatus, transferRequestStatus, page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
-      const userWalletTransactions = await WalletTransaction.findAndCountAll({
-        where: {
-          userId: userId,
-          ...(currency.length > 0 && { paymentCurrency: { [Op.in]: currency } }),
-          ...(status && status.length > 0 && { status: { [Op.in]: status } }),
-         
-        },
-        include:[
-          {
-            model: WalletPelePayment,
-            as: "walletPayment",
-            attributes: [
-              "id", 
-              "PelecardTransactionId", 
-              "VoucherId",
-              "CreditCardNumber",
-              "Token",
-              "CreditCardNumber",
-              "CreditCardExpDate",
-              "DebitApproveNumber",
-              "CardHebName",
-              "TotalPayments"
-            ],
-          },
-          {
-            model: Transfer,
-            as: "transfer",
-            include: [
-              {
-                model: User,
-                as: "sender",
-                attributes: ["name","phoneNumber"],
-              },
-              {
-                model: User,
-                as: "receiver",
-                attributes: ["name","phoneNumber"],
-              }
 
-            ]
+      let whereClause = {
+      userId: userId,
+      ...(currency && currency.length > 0 ? { paymentCurrency: { [Op.in]: currency } } : {}),
+      ...(status && status.length > 0 ? { status: { [Op.in]: status } } : {}),
+      };
+      let transferWhere = {};
+      let transferRequestWhere = {};
+      if (filter && filter.length > 0) {
+      const orConditions = [
+        ...(filter.includes("topup") ? [{ paymentId: { [Op.ne]: null } }] : []),
+        ...(filter.includes("sent") ? [{ transferId: { [Op.ne]: null } }] : []),
+        ...(filter.includes("received") ? [{ transferRequestId: { [Op.ne]: null } }] : []),
+      ];
+      if (orConditions.length > 0) {
+        whereClause[Op.or] = orConditions;
+      }
+      if (filter.includes("accepted")) {
+        transferWhere.status = {
+          [Op.and]: [
+            { [Op.ne]: "rejected" },
+            { [Op.ne]: "pending" },
+            { [Op.eq]: "accepted" }
+          ]
+        };
+        transferRequestWhere.status = {
+          [Op.and]: [
+            { [Op.ne]: "rejected" },
+            { [Op.ne]: "pending" },
+            { [Op.eq]: "approved" }
+          ]
+        };
+
+        if (!whereClause[Op.or]) whereClause[Op.or] = [];
+        whereClause[Op.or].push({ transferId: { [Op.ne]: null } });
+        whereClause[Op.or].push({ transferRequestId: { [Op.ne]: null } });
+        whereClause[Op.or].push({ paymentId: { [Op.eq]: null } });
+      } else if (filter.includes("rejected")) {
+         transferWhere.status = {
+          [Op.and]: [
+            { [Op.eq]: "rejected" },
+            { [Op.ne]: "pending" },
+            { [Op.ne]: "accepted" }
+          ]
+        };
+        transferRequestWhere.status = {
+          [Op.and]: [
+            { [Op.eq]: "rejected" },
+            { [Op.ne]: "pending" },
+            { [Op.ne]: "approved" }
+          ]
+        };
+        if (!whereClause[Op.or]) whereClause[Op.or] = [];
+        whereClause[Op.or].push({ transferId: { [Op.ne]: null } });
+        whereClause[Op.or].push({ transferRequestId: { [Op.ne]: null } });
+        whereClause[Op.or].push({ paymentId: { [Op.eq]: null } });
+      }
+      }
+
+      const userWalletTransactions = await WalletTransaction.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+        model: WalletPelePayment,
+        as: "walletPayment",
+        attributes: [
+          "id",
+          "PelecardTransactionId",
+          "VoucherId",
+          "CreditCardNumber",
+          "Token",
+          "CreditCardNumber",
+          "CreditCardExpDate",
+          "DebitApproveNumber",
+          "CardHebName",
+          "TotalPayments"
+        ],
+        },
+        {
+        model: Transfer,
+        as: "transfer",
+        where: transferWhere,
+        required: false,
+        include: [
+          {
+          model: User,
+          as: "sender",
+          attributes: ["name", "phoneNumber"],
           },
           {
-            model: TransferRequests,
-            as: "transferRequest",
-            include: [
-              {
-                model: User,
-                as: "sender",
-                attributes: ["name","phoneNumber"],
-              },
-              {
-                model: User,
-                as: "receiver",
-                attributes: ["name","phoneNumber"],
-              }
-            ]
+          model: User,
+          as: "receiver",
+          attributes: ["name", "phoneNumber"],
           }
-        ],
-        order: [["createdAt", "DESC"]],
-        offset: offset,
-        limit: limit,
+        ]
+        },
+        {
+        model: TransferRequests,
+        as: "transferRequest",
+        where: transferRequestWhere,
+        required: false,
+        include: [
+          {
+          model: User,
+          as: "sender",
+          attributes: ["name", "phoneNumber"],
+          },
+          {
+          model: User,
+          as: "receiver",
+          attributes: ["name", "phoneNumber"],
+          }
+        ]
+        }
+      ],
+      order: [["createdAt", "DESC"]],
+      offset: offset,
+      limit: limit,
       });
-      return userWalletTransactions;
+
+      // Remove transactions where all 3 relations are null
+      const filteredRows = userWalletTransactions.rows.filter(tx => 
+      tx.walletPayment !== null ||
+      tx.transfer !== null ||
+      tx.transferRequest !== null
+      );
+      return { ...userWalletTransactions, rows: filteredRows };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: e.message };
