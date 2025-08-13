@@ -143,64 +143,82 @@ export default class WalletService {
       }
 
       const userWalletTransactions = await WalletTransaction.findAndCountAll({
-      where: whereClause,
-      include: [
-        {
-        model: WalletPelePayment,
-        as: "walletPayment",
-        attributes: [
-          "id",
-          "PelecardTransactionId",
-          "VoucherId",
-          "CreditCardNumber",
-          "Token",
-          "CreditCardNumber",
-          "CreditCardExpDate",
-          "DebitApproveNumber",
-          "CardHebName",
-          "TotalPayments"
+        where: whereClause,
+        include: [
+          {
+            model: WalletPelePayment,
+            as: "walletPayment",
+            attributes: [
+              "id",
+              "PelecardTransactionId",
+              "VoucherId",
+              "CreditCardNumber",
+              "Token",
+              "CreditCardNumber",
+              "CreditCardExpDate",
+              "DebitApproveNumber",
+              "CardHebName",
+              "TotalPayments",
+               [
+                db.Sequelize.literal(
+                  'CAST("walletPayment"."interestRate" AS FLOAT)'
+                ),
+                "interestRate",
+              ],
+              [
+                db.Sequelize.literal(
+                  'CAST("walletPayment"."DebitTotal" AS FLOAT) / 100.0'
+                ),
+                "DebitTotal",
+              ],
+              [
+                db.Sequelize.literal(
+                  'CAST("walletPayment"."FirstPaymentTotal" AS FLOAT) / 100.0'
+                ),
+                "FirstPaymentTotal",
+              ],
+            ],
+          },
+          {
+            model: Transfer,
+            as: "transfer",
+            where: transferWhere,
+            required: false,
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["name", "phoneNumber"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["name", "phoneNumber"],
+              },
+            ],
+          },
+          {
+            model: TransferRequests,
+            as: "transferRequest",
+            where: transferRequestWhere,
+            required: false,
+            include: [
+              {
+                model: User,
+                as: "sender",
+                attributes: ["name", "phoneNumber"],
+              },
+              {
+                model: User,
+                as: "receiver",
+                attributes: ["name", "phoneNumber"],
+              },
+            ],
+          },
         ],
-        },
-        {
-        model: Transfer,
-        as: "transfer",
-        where: transferWhere,
-        required: false,
-        include: [
-          {
-          model: User,
-          as: "sender",
-          attributes: ["name", "phoneNumber"],
-          },
-          {
-          model: User,
-          as: "receiver",
-          attributes: ["name", "phoneNumber"],
-          }
-        ]
-        },
-        {
-        model: TransferRequests,
-        as: "transferRequest",
-        where: transferRequestWhere,
-        required: false,
-        include: [
-          {
-          model: User,
-          as: "sender",
-          attributes: ["name", "phoneNumber"],
-          },
-          {
-          model: User,
-          as: "receiver",
-          attributes: ["name", "phoneNumber"],
-          }
-        ]
-        }
-      ],
-      order: [["createdAt", "DESC"]],
-      offset: offset,
-      limit: limit,
+        order: [["createdAt", "DESC"]],
+        offset: offset,
+        limit: limit,
       });
 
       // Remove transactions where all 3 relations are null

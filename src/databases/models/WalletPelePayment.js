@@ -59,6 +59,11 @@ export default function WalletPelePayment(sequelize, DataTypes) {
       ARC: DataTypes.STRING,
       TVR: DataTypes.STRING,
       AID: DataTypes.STRING,
+      interestRate: {
+        type: DataTypes.DECIMAL(5, 2), // e.g., 12.50%
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       tableName: "wallet_pele_payments",

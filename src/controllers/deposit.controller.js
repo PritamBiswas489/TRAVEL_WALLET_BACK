@@ -351,6 +351,7 @@ export default class DepositController {
           StatusCode: paymentResult?.StatusCode,
           EnStatusMessage: EnStatusMessage,
           HeStatusMessage: HeStatusMessage,
+          interestRate: paymentResult?.interestRate || null,
         };
         // console.log("upgradedData", upgradedData);
         // Save payment details to the database
