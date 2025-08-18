@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/node";
 import KycService from "./kyc.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 
-const { Op, User, UserKyc, UserWallet, UserFcm } = db;
+const { Op, User, UserKyc, UserWallet, UserFcm, UserSettings } = db;
 
 export default class UserService {
   static async getUserById(userId) {
@@ -115,6 +115,11 @@ export default class UserService {
             as: "fcm",
             attributes: { exclude: ["createdAt", "updatedAt"] },
           },
+          {
+            model: UserSettings,
+            as: "settings",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          }
         ],
       });
       return user;

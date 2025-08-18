@@ -190,5 +190,15 @@
 	"MOBILE_NUMBER_ADDED_SUCCESSFULLY_TO_WHITELIST": "Mobile number added successfully to whitelist.",
 	"FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST": "Failed to add mobile number to whitelist.",
 	"PIN_VERIFIED_SUCCESSFULLY": "PIN verified successfully.",
-	"PIN_CODE_INVALID": "PIN code is invalid."
+	"PIN_CODE_INVALID": "PIN code is invalid.",
+	"MOBILE_NUMBER_WHITELIST_FETCHED_SUCCESSFULLY": "Mobile number whitelist fetched successfully.",
+	"FAILED_TO_DELETE_MOBILE_NUMBER_FROM_WHITELIST": "Failed to delete mobile number from whitelist.",
+	"FAILED_TO_FETCH_MOBILE_NUMBER_WHITELIST": "Failed to fetch mobile number whitelist.",
+	"MOBILE_NUMBER_DELETED_SUCCESSFULLY_FROM_WHITELIST": "Mobile number deleted successfully from whitelist.",
+	"REQUEST_MONEY_RESTRICTION_SET_SUCCESSFULLY": "Request money restriction set successfully.",
+	"SEND_MONEY_RESTRICTION_SET_SUCCESSFULLY": "Send money restriction set successfully.",
+	"FAILED_TO_SET_SEND_MONEY_RESTRICTION": "Failed to set send money restriction.",
+	"FAILED_TO_SET_REQUEST_MONEY_RESTRICTION": "Failed to set request money restriction.",
+	"TYPE_REQUIRED_SEND_REQUEST": "Type is required and must be either 'send' or 'request'.",
+	"MOBILE_NUMBER_REQUIRED": "Mobile number is required."
 }

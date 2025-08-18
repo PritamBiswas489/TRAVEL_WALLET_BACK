@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserFcm, Transfer, Notification, TransferRequests } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserFcm, Transfer, Notification, TransferRequests, UserSettings } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -28,6 +28,10 @@ const relation = (db) => {
 
   User.hasMany(WalletTransaction, { foreignKey: "userId", as: "transactions" });
   WalletTransaction.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+  //user settings
+  User.hasMany(UserSettings, { foreignKey: "userId", as: "settings" });
+  UserSettings.belongsTo(User, { foreignKey: "userId", as: "user" });
 
   //Transfer model relations
   User.hasMany(Transfer, { foreignKey: "senderId", as: "sentTransfers" });

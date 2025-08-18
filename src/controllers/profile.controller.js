@@ -10,6 +10,7 @@ import UserService from "../services/user.service.js";
 import PushNotificationService from "../services/pushNotification.service.js";
 import NotificationService from "../services/notification.service.js";
 import WhitelistMobilesService from "../services/whitelistMobiles.service.js";
+import userSettingsService from "../services/userSettings.service.js";
 
 const { User, Op, UserKyc, UserWallet, UserFcm } = db;
 
@@ -612,7 +613,9 @@ export default class ProfileController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST"),
+                message: i18n.__(
+                  err.message || "FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST"
+                ),
                 reason: err.message,
               },
             });
@@ -635,26 +638,135 @@ export default class ProfileController {
     } = request;
 
     return new Promise((resolve) => {
-      WhitelistMobilesService.findAll({ userId: user.id }, (err, response) => {
-        if (err) {
+      WhitelistMobilesService.findAll(
+        { userId: user.id, type: payload.type ?? "" },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_FETCH_MOBILE_NUMBER_WHITELIST"
+                ),
+                reason: err.message,
+              },
+            });
+          }
           return resolve({
-            status: 400,
-            data: null,
-            error: {
-              message: i18n.__("FAILED_TO_FETCH_MOBILE_NUMBER_WHITELIST"),
-              reason: err.message,
-            },
+            status: 200,
+            data: response.data,
+            message: i18n.__("MOBILE_NUMBER_WHITELIST_FETCHED_SUCCESSFULLY"),
+            error: null,
           });
         }
-        return resolve({
-          status: 200,
-          data: response.data,
-          message: i18n.__("MOBILE_NUMBER_WHITELIST_FETCHED_SUCCESSFULLY"),
-          error: null,
-        });
-      });
+      );
     });
   }
 
-  static async deleteMobileNumberFromWhiteList(request) {}
+  static async deleteMobileNumberFromWhiteList(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      WhitelistMobilesService.destroy(
+        {
+          where: { userId: user.id, id: payload.id },
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  "FAILED_TO_DELETE_MOBILE_NUMBER_FROM_WHITELIST"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: i18n.__(
+              "MOBILE_NUMBER_DELETED_SUCCESSFULLY_FROM_WHITELIST"
+            ),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async setRequestMoneyRestriction(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      userSettingsService.updateSettings(
+        "request_contact_restriction",
+        payload.restriction,
+        user.id,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_SET_REQUEST_MONEY_RESTRICTION"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("REQUEST_MONEY_RESTRICTION_SET_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async setSendMoneyRestriction(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      userSettingsService.updateSettings(
+        "send_money_restriction",
+        payload.restriction,
+        user.id,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "FAILED_TO_SET_SEND_MONEY_RESTRICTION"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("SEND_MONEY_RESTRICTION_SET_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
 }

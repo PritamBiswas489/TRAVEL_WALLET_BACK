@@ -412,6 +412,10 @@ router.get("/get-last-pending-transfer-notification", async (req, res) => {
  *                 type: string
  *                 description: Path to the thumbnail image
  *                 example: "/images/thumbnails/johndoe.png"
+ *               type:
+ *                 type: string
+ *                 description: type of the mobile number
+ *                 example: "send"
  *     responses:
  *       200:
  *         description: Success - Mobile number added to white list
@@ -433,6 +437,13 @@ router.post("/add-mobile-number-to-white-list", async (req, res) => {
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Filter white list by type (e.g., "send", "request")
  *     responses:
  *       200:
  *         description: Success - Mobile number white list retrieved
@@ -445,7 +456,7 @@ router.get("/get-mobile-number-white-list",async (req, res) => {
 /**
  * @swagger
  * /api/auth/profile/delete-mobile-number-from-white-list:
- *   get:
+ *   delete:
  *     summary: Delete a mobile number from the user's white list
  *     tags: [Auth-Profile routes]
  *     security:
@@ -463,11 +474,69 @@ router.get("/get-mobile-number-white-list",async (req, res) => {
  *         description: Success - Mobile number deleted from white list
  */
 
-router.get("/delete-mobile-number-from-white-list", async (req, res) => {
+router.delete("/delete-mobile-number-from-white-list", async (req, res) => {
    const response = await ProfileController.deleteMobileNumberFromWhiteList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
 
+
+/**
+ * @swagger
+ * /api/auth/profile/set-request-money-restriction:
+ *   post:
+ *     summary: Set request money restriction for the user [everyone, noone, contactonly,whitelist]
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               restriction:
+ *                 type: string
+ *                 description: Restriction type for requesting money
+ *                 example: "everyone"
+ *     responses:
+ *       200:
+ *         description: Success - Request money restriction set
+ */
+router.post("/set-request-money-restriction",async (req, res) => {
+   const response = await ProfileController.setRequestMoneyRestriction({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/auth/profile/set-send-money-restriction:
+ *   post:
+ *     summary: Set send money restriction for the user [everyone, noone, contactonly, whitelist]
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               restriction:
+ *                 type: string
+ *                 description: Restriction type for requesting money
+ *                 example: "everyone"
+ *     responses:
+ *       200:
+ *         description: Success - Request money restriction set
+ */
+router.post("/set-send-money-restriction",async (req, res) => {
+   const response = await ProfileController.setSendMoneyRestriction({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
 /**
  * @swagger
  * /api/auth/profile/delete:
