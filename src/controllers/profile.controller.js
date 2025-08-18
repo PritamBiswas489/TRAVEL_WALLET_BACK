@@ -4,10 +4,12 @@ import { profileEditValidator } from "../validators/profileedit.validator.js";
 import { upload } from "./uploadProfileImage.controller.js";
 import { hashStr, compareHashedStr } from "../libraries/auth.js";
 import { updatepinValidator } from "../validators/updatepin.validator.js";
+import { verifyPinValidator } from "../validators/verifiy.validator.js";
 import * as Sentry from "@sentry/node";
 import UserService from "../services/user.service.js";
 import PushNotificationService from "../services/pushNotification.service.js";
 import NotificationService from "../services/notification.service.js";
+import WhitelistMobilesService from "../services/whitelistMobiles.service.js";
 
 const { User, Op, UserKyc, UserWallet, UserFcm } = db;
 
@@ -55,7 +57,13 @@ export default class ProfileController {
     } = request;
 
     try {
-      const updatedData = { name: payload.name, email: payload.email, address: payload.address, dob: payload.dob, language: payload.language };
+      const updatedData = {
+        name: payload.name,
+        email: payload.email,
+        address: payload.address,
+        dob: payload.dob,
+        language: payload.language,
+      };
 
       const [validationError, validatedData] = await profileEditValidator(
         updatedData,
@@ -204,6 +212,63 @@ export default class ProfileController {
     }
   }
 
+  static async verifyPin(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const [validationError, validatedData] = await verifyPinValidator(
+        {
+          pinCode: payload.pinCode,
+        },
+        i18n
+      );
+      if (validationError) return validationError;
+
+      const userDetails = await User.findOne({ where: { id: user.id } });
+
+      if (!userDetails) {
+        return {
+          status: 404,
+          data: [],
+          error: {
+            message: i18n.__("USER_NOT_FOUND_WITH_ID", { id: user.id }),
+          },
+        };
+      }
+
+      const isPinCodeValid = await compareHashedStr(
+        validatedData?.pinCode,
+        userDetails?.password
+      );
+
+      if (!isPinCodeValid) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("PIN_CODE_INVALID") },
+        };
+      }
+
+      return {
+        status: 200,
+        data: validatedData,
+        message: i18n.__("PIN_VERIFIED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+
   /**
    * Remove user account
    */
@@ -297,7 +362,7 @@ export default class ProfileController {
         payload?.body ||
         "Dummy push notification for testing purposes.Ignore it.";
       PushNotificationService.sendNotification(
-        { userId: user.id, title, body, data: { action: 'testing_message' } },
+        { userId: user.id, title, body, data: { action: "testing_message" } },
         (err, response) => {
           if (err) {
             return resolve({
@@ -329,11 +394,14 @@ export default class ProfileController {
     } = request;
 
     try {
-
       const [notifications, totalCount, totalUnread] = await Promise.all([
-        NotificationService.getNotifications(user.id, payload?.page || 1, payload?.limit || 10),
+        NotificationService.getNotifications(
+          user.id,
+          payload?.page || 1,
+          payload?.limit || 10
+        ),
         NotificationService.countNotifications(user.id),
-        NotificationService.countUnreadNotifications(user.id)
+        NotificationService.countUnreadNotifications(user.id),
       ]);
 
       return {
@@ -341,7 +409,7 @@ export default class ProfileController {
         data: {
           notifications,
           totalCount,
-          totalUnread
+          totalUnread,
         },
         message: i18n.__("USER_NOTIFICATIONS_FETCHED_SUCCESSFULLY"),
         error: {},
@@ -354,7 +422,6 @@ export default class ProfileController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
   static async markNotificationAsRead(request) {
     const {
@@ -374,7 +441,10 @@ export default class ProfileController {
         };
       }
 
-      const notification = await NotificationService.markAsRead(user.id, notificationId);
+      const notification = await NotificationService.markAsRead(
+        user.id,
+        notificationId
+      );
 
       if (!notification) {
         return {
@@ -438,7 +508,8 @@ export default class ProfileController {
     } = request;
 
     try {
-      const lastNotification = await NotificationService.getLastUnreadNotification(user.id);
+      const lastNotification =
+        await NotificationService.getLastUnreadNotification(user.id);
 
       if (!lastNotification) {
         return {
@@ -462,7 +533,6 @@ export default class ProfileController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
   static async getUnreadNotificationsCount(request) {
     const {
@@ -471,7 +541,9 @@ export default class ProfileController {
     } = request;
 
     try {
-      const unreadCount = await NotificationService.countUnreadNotifications(user.id);
+      const unreadCount = await NotificationService.countUnreadNotifications(
+        user.id
+      );
 
       return {
         status: 200,
@@ -487,7 +559,6 @@ export default class ProfileController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
   static async getLastPendingTransferNotification(request) {
     const {
@@ -496,19 +567,24 @@ export default class ProfileController {
     } = request;
 
     try {
-      const lastNotification = await NotificationService.getLastPendingTransferNotification(user.id);
+      const lastNotification =
+        await NotificationService.getLastPendingTransferNotification(user.id);
       if (!lastNotification) {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("NO_PENDING_TRANSFER_NOTIFICATIONS_FOUND") },
+          error: {
+            message: i18n.__("NO_PENDING_TRANSFER_NOTIFICATIONS_FOUND"),
+          },
         };
       }
 
       return {
         status: 200,
         data: lastNotification,
-        message: i18n.__("LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY"),
+        message: i18n.__(
+          "LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY"
+        ),
         error: {},
       };
     } catch (e) {
@@ -519,6 +595,66 @@ export default class ProfileController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
+  static async addMobileNumberToWhiteList(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      WhitelistMobilesService.create(
+        { userId: user.id, ...payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__("FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("MOBILE_NUMBER_ADDED_SUCCESSFULLY_TO_WHITELIST"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async getMobileNumberWhiteList(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      WhitelistMobilesService.findAll({ userId: user.id }, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__("FAILED_TO_FETCH_MOBILE_NUMBER_WHITELIST"),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("MOBILE_NUMBER_WHITELIST_FETCHED_SUCCESSFULLY"),
+          error: null,
+        });
+      });
+    });
+  }
+
+  static async deleteMobileNumberFromWhiteList(request) {}
 }

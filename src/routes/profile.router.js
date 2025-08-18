@@ -129,6 +129,37 @@ router.put("/update-pin", async (req, res) => {
   const response = await ProfileController.updatePin({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+/**
+ * @swagger
+ * /api/auth/profile/verify-pin:
+ *   post:
+ *     summary: Verify user pin
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pinCode:
+ *                 type: string
+ *                 description: The pin code to verify
+ *                 example: "1234"
+ *     responses:
+ *       200:
+ *         description: Success - Pin verified
+ */
+router.post("/verify-pin", async (req, res) => {
+   const response = await ProfileController.verifyPin({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
 /**
  * @swagger
  * /api/auth/profile/save-fcm-token:
@@ -344,6 +375,98 @@ router.get("/get-last-pending-transfer-notification", async (req, res) => {
    const response = await ProfileController.getLastPendingTransferNotification({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 })
+
+/**
+ * @swagger
+ * /api/auth/profile/add-mobile-number-to-white-list:
+ *   post:
+ *     summary: Add a mobile number to the user's white list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               displayName:
+ *                 type: string
+ *                 description: Display name for the mobile number
+ *                 example: "John Doe"
+ *               mobileNumber:
+ *                 type: string
+ *                 description: Mobile number to add to white list
+ *                 example: "+919830990065"
+ *               formattedNumber:
+ *                 type: string
+ *                 description: Formatted mobile number
+ *                 example: "+919830990065"
+ *               hasThumbnail:
+ *                 type: boolean
+ *                 description: Indicates if a thumbnail exists
+ *                 example: true
+ *               thumbnailPath:
+ *                 type: string
+ *                 description: Path to the thumbnail image
+ *                 example: "/images/thumbnails/johndoe.png"
+ *     responses:
+ *       200:
+ *         description: Success - Mobile number added to white list
+ */
+router.post("/add-mobile-number-to-white-list", async (req, res) => {
+   const response = await ProfileController.addMobileNumberToWhiteList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+
+
+
+/**
+ * @swagger
+ * /api/auth/profile/get-mobile-number-white-list:
+ *   get:
+ *     summary: Get the user's mobile number white list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Mobile number white list retrieved
+ */
+
+router.get("/get-mobile-number-white-list",async (req, res) => {
+   const response = await ProfileController.getMobileNumberWhiteList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+/**
+ * @swagger
+ * /api/auth/profile/delete-mobile-number-from-white-list:
+ *   get:
+ *     summary: Delete a mobile number from the user's white list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the mobile number to delete from white list
+ *     responses:
+ *       200:
+ *         description: Success - Mobile number deleted from white list
+ */
+
+router.get("/delete-mobile-number-from-white-list", async (req, res) => {
+   const response = await ProfileController.deleteMobileNumberFromWhiteList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
 
 /**
  * @swagger

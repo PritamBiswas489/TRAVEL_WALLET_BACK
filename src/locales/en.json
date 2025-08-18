@@ -183,8 +183,12 @@
 	"USER_ID_REQUIRED": "User ID is required.",
 	"NAME_MIN_LENGTH": "Name must be at least 2 characters long.",
 	"NAME_MAX_LENGTH": "Name must be at most 50 characters long.",
-	"USER_FETCHED_SUCCESSFULLY": "USER_FETCHED_SUCCESSFULLY",
-	"TRANSACTION_NOT_FOUND": "TRANSACTION_NOT_FOUND",
-	"TRANSACTION_FETCHED_SUCCESSFULLY": "TRANSACTION_FETCHED_SUCCESSFULLY",
-	"USER_DEFAULT_CARD_FETCHED": "USER_DEFAULT_CARD_FETCHED"
+	"USER_FETCHED_SUCCESSFULLY": "User fetched successfully.",
+	"TRANSACTION_NOT_FOUND": "Transaction not found.",
+	"TRANSACTION_FETCHED_SUCCESSFULLY": "Transaction fetched successfully.",
+	"USER_DEFAULT_CARD_FETCHED": "User default card fetched successfully.",
+	"MOBILE_NUMBER_ADDED_SUCCESSFULLY_TO_WHITELIST": "Mobile number added successfully to whitelist.",
+	"FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST": "Failed to add mobile number to whitelist.",
+	"PIN_VERIFIED_SUCCESSFULLY": "PIN verified successfully.",
+	"PIN_CODE_INVALID": "PIN code is invalid."
 }
