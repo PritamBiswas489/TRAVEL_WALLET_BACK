@@ -200,5 +200,12 @@
 	"FAILED_TO_SET_SEND_MONEY_RESTRICTION": "Failed to set send money restriction.",
 	"FAILED_TO_SET_REQUEST_MONEY_RESTRICTION": "Failed to set request money restriction.",
 	"TYPE_REQUIRED_SEND_REQUEST": "Type is required and must be either 'send' or 'request'.",
-	"MOBILE_NUMBER_REQUIRED": "Mobile number is required."
+	"MOBILE_NUMBER_REQUIRED": "Mobile number is required.",
+	"MOBILE_NUMBERS_REQUIRED": "Mobile numbers are required.",
+	"MOBILE_NUMBERS_ADDED_SUCCESSFULLY_TO_CONTACT_LIST": "Mobile numbers added successfully to contact list.",
+	"MOBILE_NUMBER_CHECKED_SUCCESSFULLY": "Mobile number checked successfully.",
+	"FAILED_TO_CHECK_MOBILE_NUMBER_IN_CONTACT_LIST": "Failed to check mobile number in contact list.",
+	"FAILED_TO_ADD_MOBILE_NUMBERS_TO_CONTACT_LIST": "Failed to add mobile numbers to contact list.",
+	"MOBILE_NUMBER_REMOVED_SUCCESSFULLY_FROM_CONTACT_LIST": "Mobile number removed successfully from contact list.",
+	"FAILED_TO_REMOVE_MOBILE_NUMBER_FROM_CONTACT_LIST": "Failed to remove mobile number from contact list."
 }

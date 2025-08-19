@@ -11,6 +11,7 @@ import PushNotificationService from "../services/pushNotification.service.js";
 import NotificationService from "../services/notification.service.js";
 import WhitelistMobilesService from "../services/whitelistMobiles.service.js";
 import userSettingsService from "../services/userSettings.service.js";
+import ContactListService from "../services/contactList.service.js";
 
 const { User, Op, UserKyc, UserWallet, UserFcm } = db;
 
@@ -597,6 +598,36 @@ export default class ProfileController {
       };
     }
   }
+  static async addMobileNumberToContactList(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      ContactListService.addMobileNumbers(user.id, payload, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(
+                err.message || "FAILED_TO_ADD_MOBILE_NUMBERS_TO_CONTACT_LIST"
+              ),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("MOBILE_NUMBERS_ADDED_SUCCESSFULLY_TO_CONTACT_LIST"),
+          error: null,
+        });
+      });
+    });
+  }
   static async addMobileNumberToWhiteList(request) {
     const {
       headers: { i18n },
@@ -768,5 +799,76 @@ export default class ProfileController {
         }
       );
     });
+  }
+
+  static async checkMobileNumberInContactList(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      ContactListService.checkMobileNumberInContactList(
+        user.id,
+        payload,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_CHECK_MOBILE_NUMBER_IN_CONTACT_LIST"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("MOBILE_NUMBER_CHECKED_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+
+  static async removeMobileNumberFromContactList(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      ContactListService.removeMobileNumberFromContactList(
+        user.id,
+        payload,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_REMOVE_MOBILE_NUMBER_FROM_CONTACT_LIST"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("MOBILE_NUMBER_REMOVED_SUCCESSFULLY_FROM_CONTACT_LIST"),
+            error: null,
+          });
+        }
+      );
+    });
+     
   }
 }

@@ -9,6 +9,7 @@ import { registerValidator } from "../validators/register.validator.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import { setNewPinValidator } from "../validators/setNewPin.validator.js";
 import redisClient from "../config/redis.config.js";
+import { randomSaltHex } from "../libraries/utility.js";
 
 const { User, Op } = db;
 
@@ -197,6 +198,14 @@ export default class LoginController {
           role: user.role,
         };
 
+        
+        if (!user.hexSalt) {
+          
+          user.hexSalt = randomSaltHex();
+          
+          await user.save();
+        }
+
         const accessToken = await generateToken(
           jwtPayload,
           process.env.JWT_ALGO,
@@ -234,6 +243,12 @@ export default class LoginController {
             data: [],
             error: { message: i18n.__("FAILED_TO_CREATE_NEW_USER") },
           };
+        }
+          
+         if (!newUser.hexSalt) {
+          newUser.hexSalt = randomSaltHex();
+
+          await newUser.save();
         }
 
         const jwtPayload = {

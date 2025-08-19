@@ -376,6 +376,113 @@ router.get("/get-last-pending-transfer-notification", async (req, res) => {
    res.return(response);
 })
 
+
+
+/**
+ * @swagger
+ * /api/auth/profile/add-mobile-number-in-contact-list:
+ *   post:
+ *     summary: Add multiple mobile numbers to the user's contact list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               mobileNumbers:
+ *                 type: array
+ *                 description: Array of mobile numbers to add to contact list
+ *                 items:
+ *                   type: string
+ *                 example: ["+919830990010", "+919830990011"]
+ *               type:
+ *                 type: string
+ *                 description: Type of contact (e.g., "send", "request")
+ *                 example: "send"
+ *     responses:
+ *       200:
+ *         description: Success - Mobile numbers added to contact list
+ */
+router.post("/add-mobile-number-in-contact-list", async (req, res) => {
+   const response = await ProfileController.addMobileNumberToContactList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+ 
+
+/**
+ * @swagger
+ * /api/auth/profile/check-mobile-number-in-contact-list:
+ *   post:
+ *     summary: Check if a mobile number exists in the user's contact list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               checkUserId:
+ *                 type: string
+ *                 description: The user ID to check against the contact list
+ *                 example: "1"
+ *               mobileNumber:
+ *                 type: string
+ *                 description: The mobile number to check in the contact list
+ *                 example: "+919830990010"
+ *               type:
+ *                 type: string
+ *                 default: "send"
+ *                 description: Type of contact (e.g., "send", "request")
+ *     responses:
+ *       200:
+ *         description: Success - Mobile number check result
+ */
+router.post("/check-mobile-number-in-contact-list", async (req, res) => {
+   const response = await ProfileController.checkMobileNumberInContactList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/profile/remove-mobile-number-from-contact-list:
+ *   delete:
+ *     summary: Remove a mobile number from the user's contact list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: mobileNumber
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Mobile number to remove from contact list
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Type of contact (e.g., "send", "request")
+ *     responses:
+ *       200:
+ *         description: Success - Mobile number removed from contact list
+ */
+router.delete("/remove-mobile-number-from-contact-list", async (req, res) => {
+   const response = await ProfileController.removeMobileNumberFromContactList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
 /**
  * @swagger
  * /api/auth/profile/add-mobile-number-to-white-list:

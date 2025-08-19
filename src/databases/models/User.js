@@ -52,6 +52,10 @@ export default function User(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: "he",
       },
+      hexSalt: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
     },
     {
       tableName: "users",

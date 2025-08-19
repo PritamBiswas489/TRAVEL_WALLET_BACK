@@ -2,6 +2,7 @@ import handlebars from 'handlebars';
 import fs from 'fs';
 import moment from "moment-timezone";
 import "../config/environment.js";
+import crypto from 'crypto';
 
 export const slugify = (str) =>
 	str
@@ -99,4 +100,13 @@ export const getcurrencySymbols = (Code) => {
 	THB: "฿",
   };
   return currencySymbols[Code] || "";
+}
+
+
+export function randomSaltHex(bytes = 16) {
+  return crypto.randomBytes(bytes).toString('hex'); // 32 hex chars
+}
+
+export function createHmacExecute(data, secret) {
+  return crypto.createHmac('sha256', secret).update(data).digest('hex');
 }
