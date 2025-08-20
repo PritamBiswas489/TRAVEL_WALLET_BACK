@@ -40,6 +40,34 @@ export default class WhitelistMobilesService {
     }
   }
 
+  static async checkWhitelistContact(data, callback) {
+    try {
+      if (!data?.mobileNumber) {
+        return handleCallback(new Error("MOBILE_NUMBER_REQUIRED"), null, callback);
+      }
+      if (!['send', 'request'].includes(data?.type)) {
+        return handleCallback(new Error("TYPE_REQUIRED_SEND_REQUEST"), null, callback);
+      }
+     
+      const result = await WhitelistMobiles.findOne({
+        where: {
+          [Op.or]: [
+            { mobileNumber: data?.mobileNumber },
+            { formattedNumber: data?.mobileNumber }
+          ],
+          userId: data?.userId,
+          type: data?.type
+        }
+      });
+     
+
+      return handleCallback(null, { data: { isWhitelisted: !!result } }, callback);
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return handleCallback(new Error("CATCH_ERROR"), null, callback);
+    }
+  }
+
   static async destroy(options, callback) {
     try {
       const affectedCount = await WhitelistMobiles.destroy(options);

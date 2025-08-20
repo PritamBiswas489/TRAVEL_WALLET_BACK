@@ -11,14 +11,15 @@ export default class TransferController {
       payload,
     } = request;
 
-    const mobileNumber = payload.mobile;
+    const mobileNumber = payload?.mobile;
     const userId = user?.id;
+    const type = payload?.type;
 
     //console.log("Check Receiver Status Request", userId, mobileNumber);
 
     return new Promise((resolve) => {
       TransferService.checkReceiverStatus(
-        { userId, mobileNumber },
+        { userId, mobileNumber, type },
         (err, response) => {
           if (err) {
             return resolve({

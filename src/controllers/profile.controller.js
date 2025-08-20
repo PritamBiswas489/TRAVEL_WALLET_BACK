@@ -740,6 +740,16 @@ export default class ProfileController {
     } = request;
 
     return new Promise((resolve) => {
+      if(!['everyone', 'noone', 'contactonly','whitelist'].includes(payload?.restriction)){
+        return resolve({
+          status: 400,
+          data: null,
+          error: {
+            message: i18n.__("INVALID_REQUEST_MONEY_RESTRICTION"),
+            reason: "INVALID_REQUEST_MONEY_RESTRICTION",
+          },
+        });
+      }
       userSettingsService.updateSettings(
         "request_contact_restriction",
         payload.restriction,
@@ -775,6 +785,17 @@ export default class ProfileController {
     } = request;
 
     return new Promise((resolve) => {
+      
+      if(!['everyone', 'noone', 'contactonly','whitelist'].includes(payload?.restriction)){
+        return resolve({
+          status: 400,
+          data: null,
+          error: {
+            message: i18n.__("INVALID_SEND_MONEY_RESTRICTION"),
+            reason: "INVALID_SEND_MONEY_RESTRICTION",
+          },
+        });
+      }
       userSettingsService.updateSettings(
         "send_money_restriction",
         payload.restriction,

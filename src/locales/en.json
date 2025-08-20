@@ -207,5 +207,15 @@
 	"FAILED_TO_CHECK_MOBILE_NUMBER_IN_CONTACT_LIST": "Failed to check mobile number in contact list.",
 	"FAILED_TO_ADD_MOBILE_NUMBERS_TO_CONTACT_LIST": "Failed to add mobile numbers to contact list.",
 	"MOBILE_NUMBER_REMOVED_SUCCESSFULLY_FROM_CONTACT_LIST": "Mobile number removed successfully from contact list.",
-	"FAILED_TO_REMOVE_MOBILE_NUMBER_FROM_CONTACT_LIST": "Failed to remove mobile number from contact list."
+	"FAILED_TO_REMOVE_MOBILE_NUMBER_FROM_CONTACT_LIST": "Failed to remove mobile number from contact list.",
+	"CANT_REQUEST_MONEY_FROM_SELF": "You can't request funds from yourself.",
+	"INVALID_REQUEST_MONEY_RESTRICTION": "Invalid request money restriction.",
+	"INVALID_SEND_MONEY_RESTRICTION": "Invalid send money restriction.",
+	"CANT_SEND_MONEY_TO_NO_ONE": "This user is not accepting money from others.",
+	"ACCEPT_MONEY_FROM_ONLY_FROM_CONTACTS": "This user only accepts money from contacts.",
+	"THIS_PERSON_IS_NOT_ACCEPTING_REQUEST_FROM_OTHERS": "This user is not accepting money requests.",
+	"THIS_PERSON_IS_ACCEPTING_REQUEST_FROM_CONTACTS_ONLY": "This person only accepts requests from contacts.",
+	"ACCEPT_MONEY_FROM_ONLY_WHITELISTED_CONTACTS": "This user only accepts money from whitelisted contacts.",
+	"ACCEPT_REQUEST_FROM_ONLY_WHITELISTED_CONTACTS": "This user only accepts requests from whitelisted contacts."
+
 }

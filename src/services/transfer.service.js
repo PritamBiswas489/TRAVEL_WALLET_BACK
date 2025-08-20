@@ -6,18 +6,23 @@ import UserService from "./user.service.js";
 const { Op, User, Transfer, WalletTransaction, UserWallet } = db;
 import { handleCallback } from "../libraries/utility.js";
 import NotificationService from "./notification.service.js";
+import ContactListService from "./contactList.service.js";
+import WhitelistMobilesService from "./whitelistMobiles.service.js";
 
 export default class TransferService {
-  static async checkReceiverStatus({ userId, mobileNumber }, callback) {
+  static async checkReceiverStatus({ userId, mobileNumber, type }, callback) {
     console.log("Check Receiver Status", userId, mobileNumber);
     try {
+      if (!["send", "request"].includes(type)) {
+        return callback(new Error("TYPE_REQUIRED_SEND_REQUEST"), null);
+      }
+
       const user = await User.findOne({
         where: {
           phoneNumber: mobileNumber,
         },
         attributes: ["id"],
       });
-     
 
       if (!user?.id) {
         console.log("No user found with the selected mobile number");
@@ -26,13 +31,19 @@ export default class TransferService {
           null
         );
       }
-      if(user.id === userId) {
+      if (user.id === userId) {
         return callback(
-          new Error("CANT_SEND_MONEY_TO_SELF"),
+          new Error(
+            type === "send"
+              ? "CANT_SEND_MONEY_TO_SELF"
+              : "CANT_REQUEST_MONEY_FROM_SELF"
+          ),
           null
         );
       }
       const userDetails = await UserService.getUserDetails(user.id);
+      const sendUserDetails = await UserService.getUserDetails(userId);
+      const senderPhoneNumber = sendUserDetails?.phoneNumber;
 
       if (userDetails?.kyc?.status !== "Approved") {
         return callback(
@@ -40,8 +51,109 @@ export default class TransferService {
           null
         );
       }
+      //=== Restriction checking will be here ====//
+      const getSettingValue = (settings, key, fallback) =>
+        settings?.find((setting) => setting.key === key)?.value || fallback;
+
+      if (type === "send") {
+        const restriction = getSettingValue(
+          userDetails?.settings,
+          "send_money_restriction",
+          "everyone"
+        );
+        if (restriction === "noone") {
+          return callback(new Error("CANT_SEND_MONEY_TO_NO_ONE"), null);
+        }
+        const senderPhoneNumber = sendUserDetails?.phoneNumber;
+        if (restriction === "contactonly") {
+          const contactCheck =
+            await ContactListService.checkMobileNumberInContactList(0, {
+              checkUserId: user.id,
+              mobileNumber: senderPhoneNumber,
+              type: "send",
+            });
+          if (!contactCheck?.data?.isInContactList) {
+            return callback(
+              new Error("ACCEPT_MONEY_FROM_ONLY_FROM_CONTACTS"),
+              null
+            );
+          }
+        }
+        if (restriction === "whitelist") {
+           //Implement whitelist logic here if needed
+            const whitelistResult = await new Promise((resolve, reject) => {
+              WhitelistMobilesService.checkWhitelistContact(
+                {
+                  mobileNumber: senderPhoneNumber,
+                  userId: user.id,
+                  type: "send",
+                },
+                (error, result) => {
+                  if (error) return reject(error);
+                  resolve(result);
+                }
+              );
+            });
+            if (!whitelistResult?.data?.isWhitelisted) {
+              return callback(new Error("ACCEPT_MONEY_FROM_ONLY_WHITELISTED_CONTACTS"), null);
+            }
+        }
+      }
+
+      if (type === "request") {
+        const restriction = getSettingValue(
+          userDetails?.settings,
+          "request_contact_restriction",
+          "everyone"
+        );
+        if (restriction === "noone") {
+          return callback(
+            new Error("THIS_PERSON_IS_NOT_ACCEPTING_REQUEST_FROM_OTHERS"),
+            null
+          );
+        }
+        if (restriction === "contactonly") {
+          
+          const contactCheck =
+            await ContactListService.checkMobileNumberInContactList(0, {
+              checkUserId: user.id,
+              mobileNumber: senderPhoneNumber,
+              type: "request",
+            });
+          if (!contactCheck?.data?.isInContactList) {
+            return callback(
+              new Error("THIS_PERSON_IS_ACCEPTING_REQUEST_FROM_CONTACTS_ONLY"),
+              null
+            );
+          }
+        }
+
+        if (restriction === "whitelist") {
+          console.log("Whitelist restriction applied for request");
+           //Implement whitelist logic here if needed
+            const whitelistResult = await new Promise((resolve, reject) => {
+              WhitelistMobilesService.checkWhitelistContact(
+                {
+                  mobileNumber: senderPhoneNumber,
+                  userId: user.id,
+                  type: "request",
+                },
+                (error, result) => {
+                  if (error) return reject(error);
+                  resolve(result);
+                }
+              );
+            });
+            // console.log("Whitelist Result:", whitelistResult);
+            if (!whitelistResult?.data?.isWhitelisted) {
+              return callback(new Error("ACCEPT_REQUEST_FROM_ONLY_WHITELISTED_CONTACTS"), null);
+            }
+        }
+      }
+
       return callback(null, { data: userDetails });
     } catch (error) {
+      console.log(error.message);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(new Error("FAILED_TO_CHECK_RECEIVER_STATUS"), null);
     }

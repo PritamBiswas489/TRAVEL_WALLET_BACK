@@ -14,6 +14,7 @@ export default class userSettingsService {
     }
   }
 static async updateSettings(key, value, userId, callback) {
+  console.log(key, value, userId)
     try {
         const setting = await UserSettings.findOne({
             where: { key: key, userId: userId },
@@ -22,6 +23,7 @@ static async updateSettings(key, value, userId, callback) {
             // Update existing setting
             await UserSettings.update({ value: value }, { where: { key: key, userId: userId } });
         } else {
+             
             // Create new setting
             await UserSettings.create({ key: key, value: value, userId: userId });
         }
@@ -31,6 +33,7 @@ static async updateSettings(key, value, userId, callback) {
         }
         return result;
     } catch (e) {
+      console.log(e.message);
         process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
         const errorResult = { ERROR: 1 };
         if (typeof callback === "function") {

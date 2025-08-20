@@ -27,6 +27,10 @@ const router = express.Router();
  *                 type: string
  *                 default: "+919830990065"
  *                 description: Mobile number of the receiver
+ *               type:
+ *                 type: string
+ *                 default: "send"
+ *                 description: Input type
  *     responses:
  *       200:
  *         description: Receiver status retrieved successfully
