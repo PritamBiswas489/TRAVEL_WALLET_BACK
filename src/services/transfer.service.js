@@ -281,7 +281,7 @@ export default class TransferService {
     }
   }
   static async acceptRejectTransfer(
-    { transferId, userId, status, i18n },
+    { transferId, userId, status, i18n ,autoRejected },
     callback
   ) {
     // console.log("Accept/Reject Transfer", transferId, userId, status);
@@ -349,7 +349,8 @@ export default class TransferService {
         NotificationService.updatePendingTransferNotificationStatus(transferId, "rejected");
         NotificationService.walletTransferRejectionNotification(
           transferId,
-          i18n
+          i18n,
+          autoRejected
         );
         return callback(null, {
           data: {
@@ -532,4 +533,22 @@ export default class TransferService {
       return handleCallback(error, null, callback);
     }
   }
-}
+  static async getExpiredTransfers() {
+    try {
+      const expiredTransfers = await Transfer.findAll({
+        where: {
+          status: "pending",
+          createdAt: {
+            [Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000), // Created more than 24 hours ago
+          },
+        },
+        limit: 10,
+        offset: 0,
+      });
+      return expiredTransfers;
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw new Error("FAILED_TO_GET_EXPIRED_TRANSFERS");
+    }
+  }
+  }

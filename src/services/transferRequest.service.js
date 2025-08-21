@@ -17,7 +17,11 @@ export default class TransferRequestService {
       const receiverUserDetails = await UserService.getUserDetails(receiverId);
       if (senderUserId === receiverId) {
         await tran.rollback();
-        return handleCallback(new Error("CANT_SEND_REQUEST_TO_SELF"), null, callback);
+        return handleCallback(
+          new Error("CANT_SEND_REQUEST_TO_SELF"),
+          null,
+          callback
+        );
       }
       if (!receiverUserDetails) {
         await tran.rollback();
@@ -46,7 +50,6 @@ export default class TransferRequestService {
       if (pendingTransferRequest) {
         await tran.rollback();
         return handleCallback(
-          
           new Error("PENDING_TRANSFER_REQUEST_EXISTS"),
           null,
           callback
@@ -80,11 +83,15 @@ export default class TransferRequestService {
         await tran.rollback();
       }
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return handleCallback(new Error("TRANSFER_REQUEST_FAILED"), null, callback);
+      return handleCallback(
+        new Error("TRANSFER_REQUEST_FAILED"),
+        null,
+        callback
+      );
     }
   }
   static async acceptRejectTransferRequest(
-    { transferRequestId, userId, status, i18n },
+    { transferRequestId, userId, status, i18n, autoRejected },
     callback
   ) {
     console.log(
@@ -120,7 +127,8 @@ export default class TransferRequestService {
         );
         NotificationService.transferRequestRejectionNotification(
           transferRequest.id,
-          i18n
+          i18n,
+          autoRejected
         );
 
         return callback(null, {
@@ -275,7 +283,11 @@ export default class TransferRequestService {
       }
 
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return handleCallback(new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"), null, callback);
+      return handleCallback(
+        new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"),
+        null,
+        callback
+      );
     }
   }
 
@@ -322,21 +334,28 @@ export default class TransferRequestService {
         [Op.or]: [{ senderId: userId }, { receiverId: userId }],
       };
 
-      if (filter.type && filter.type.length === 1 && filter.type.includes("incoming")) {
+      if (
+        filter.type &&
+        filter.type.length === 1 &&
+        filter.type.includes("incoming")
+      ) {
         whereClause = { receiverId: userId };
-      } else if (filter.type && filter.type.length === 1 && filter.type.includes("outgoing")) {
+      } else if (
+        filter.type &&
+        filter.type.length === 1 &&
+        filter.type.includes("outgoing")
+      ) {
         whereClause = { senderId: userId };
       } else if (
         filter.type &&
         Array.isArray(filter.type) &&
         filter.type.includes("incoming") &&
         filter.type.includes("outgoing")
-            ) {
-       
-              whereClause = {
-                [Op.or]: [{ senderId: userId }, { receiverId: userId }],
-              };
-            }
+      ) {
+        whereClause = {
+          [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+        };
+      }
       // console.log("Where Clause:", whereClause);
       if (filter.status && filter.status.length > 0) {
         whereClause.status = { [Op.in]: filter.status };
@@ -360,11 +379,30 @@ export default class TransferRequestService {
           },
         ],
       });
-       
+
       return callback(null, { data: transfers });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(error, null);
+    }
+  }
+
+  static async getExpiredTransferRequests() {
+    try {
+      const expiredTransferRequests = await TransferRequests.findAll({
+        where: {
+          status: "pending",
+          createdAt: {
+            [Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000), // Created more than 24 hours ago
+          },
+        },
+        limit: 10,
+        offset: 0,
+      });
+      return expiredTransferRequests;
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw new Error("FAILED_TO_GET_EXPIRED_TRANSFERS");
     }
   }
 }

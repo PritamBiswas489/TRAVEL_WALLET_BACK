@@ -88,7 +88,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.acceptRejectTransfer(
-        { userId: user.id, transferId, status, i18n },
+        { userId: user.id, transferId, status, i18n, autoRejected: false },
         (err, response) => {
           if (err) {
             return resolve({

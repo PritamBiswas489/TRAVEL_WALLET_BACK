@@ -57,7 +57,7 @@ export default class NotificationService {
     });
   }
 
-  static async walletTransferRejectionNotification(transferId, i18n) {
+  static async walletTransferRejectionNotification(transferId, i18n, autoRejected = false) {
     TransferService.getTransferById(transferId, async (error, result) => {
       if (error)
         return console.error("Error fetching transfer details:", error);
@@ -66,10 +66,16 @@ export default class NotificationService {
       const transferJSONB = result.data.get({ plain: true });
       const currencySymbol = getcurrencySymbols(currency) || currency;
       const messageTitle = i18n.__("TRANSFER_REJECTION_NOTIFICATION_TITLE");
-      const messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY", {
+      let messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY", {
         amount: String(amount) + currencySymbol,
         receiverPhoneNumber: receiver?.phoneNumber,
       });
+      if(autoRejected) {
+        messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_AUTO", {
+          amount: String(amount) + currencySymbol,
+          receiverPhoneNumber: receiver?.phoneNumber,
+        });
+      }
 
       const notificationData = await Notification.create({
         userId: senderId,
@@ -204,7 +210,7 @@ export default class NotificationService {
       }
     );
   }
-  static async transferRequestRejectionNotification(transferRequestId, i18n) {
+  static async transferRequestRejectionNotification(transferRequestId, i18n, autoRejected) {
     TransferRequestService.getTransferRequestById(
       transferRequestId,
       async (error, result) => {
@@ -221,13 +227,22 @@ export default class NotificationService {
         const messageTitle = i18n.__(
           "TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE"
         );
-        const messageBody = i18n.__(
+        let messageBody = i18n.__(
           "TRANSFER_REQUEST_REJECTION_NOTIFICATION_BODY",
           {
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
           }
         );
+        if (autoRejected) {
+          messageBody = i18n.__(
+            "TRANSFER_REQUEST_AUTO_REJECTION_NOTIFICATION_BODY",
+            {
+              amount: String(amount) + currencySymbol,
+              receiverPhoneNumber,
+            }
+          );
+        }
 
         const notificationData = await Notification.create({
           userId: senderId,
