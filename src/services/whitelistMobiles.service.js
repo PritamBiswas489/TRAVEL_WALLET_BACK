@@ -6,18 +6,26 @@ const { Op, WhitelistMobiles } = db;
 import { handleCallback } from "../libraries/utility.js";
 
 export default class WhitelistMobilesService {
-  static async create(data, callback) {
+  static async create( data, callback ) {
+
     try {
-      if(data?.mobileNumber === ''){
-        return handleCallback(new Error("MOBILE_NUMBER_REQUIRED"), null, callback);
+      if (!Array.isArray(data?.mobileNumbers) || data.mobileNumbers.length === 0) {
+        return handleCallback(new Error("MOBILE_NUMBERS_REQUIRED"), null, callback);
       }
       if (!['send', 'request'].includes(data.type)) {
         return handleCallback(new Error("TYPE_REQUIRED_SEND_REQUEST"), null, callback);
       }
-      const result = await WhitelistMobiles.create(data);
-      return handleCallback(null, {data:result}, callback);
+      const records = data.mobileNumbers.map(mobileNumber => ({
+        userId: data.userId,
+        ...mobileNumber,
+        type: data.type
+      }));
+     
+      const result = await WhitelistMobiles.bulkCreate(records);
+      return handleCallback(null, { data: result }, callback);
     } catch (error) {
-     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.log(error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return handleCallback(new Error("CATCH_ERROR"), null, callback);
     }
   }

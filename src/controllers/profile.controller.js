@@ -635,9 +635,10 @@ export default class ProfileController {
       payload,
     } = request;
 
+    // console.log(payload);
     return new Promise((resolve) => {
       WhitelistMobilesService.create(
-        { userId: user.id, ...payload },
+        { userId: user.id, ...payload }, 
         (err, response) => {
           if (err) {
             return resolve({

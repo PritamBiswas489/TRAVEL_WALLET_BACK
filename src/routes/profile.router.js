@@ -487,7 +487,7 @@ router.delete("/remove-mobile-number-from-contact-list", async (req, res) => {
  * @swagger
  * /api/auth/profile/add-mobile-number-to-white-list:
  *   post:
- *     summary: Add a mobile number to the user's white list
+ *     summary: Add multiple mobile numbers to the user's white list
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
@@ -499,33 +499,39 @@ router.delete("/remove-mobile-number-from-contact-list", async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               displayName:
- *                 type: string
- *                 description: Display name for the mobile number
- *                 example: "John Doe"
- *               mobileNumber:
- *                 type: string
- *                 description: Mobile number to add to white list
- *                 example: "+919830990065"
- *               formattedNumber:
- *                 type: string
- *                 description: Formatted mobile number
- *                 example: "+919830990065"
- *               hasThumbnail:
- *                 type: boolean
- *                 description: Indicates if a thumbnail exists
- *                 example: true
- *               thumbnailPath:
- *                 type: string
- *                 description: Path to the thumbnail image
- *                 example: "/images/thumbnails/johndoe.png"
  *               type:
  *                 type: string
- *                 description: type of the mobile number
+ *                 description: Type of contact (e.g., "send", "request")
  *                 example: "send"
+ *               mobileNumbers:
+ *                 type: array
+ *                 description: Array of mobile number objects to add to white list
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     displayName:
+ *                       type: string
+ *                       description: Display name for the mobile number
+ *                       example: "John Doe"
+ *                     mobileNumber:
+ *                       type: string
+ *                       description: Mobile number to add to white list
+ *                       example: "+919830990065"
+ *                     formattedNumber:
+ *                       type: string
+ *                       description: Formatted mobile number
+ *                       example: "+919830990065"
+ *                     hasThumbnail:
+ *                       type: boolean
+ *                       description: Indicates if a thumbnail exists
+ *                       example: true
+ *                     thumbnailPath:
+ *                       type: string
+ *                       description: Path to the thumbnail image
+ *                       example: "/images/thumbnails/johndoe.png"
  *     responses:
  *       200:
- *         description: Success - Mobile number added to white list
+ *         description: Success - Mobile numbers added to white list
  */
 router.post("/add-mobile-number-to-white-list", async (req, res) => {
    const response = await ProfileController.addMobileNumberToWhiteList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
