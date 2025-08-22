@@ -218,6 +218,7 @@
 	"THIS_PERSON_IS_NOT_ACCEPTING_REQUEST_FROM_OTHERS": "This user is not accepting money requests.",
 	"THIS_PERSON_IS_ACCEPTING_REQUEST_FROM_CONTACTS_ONLY": "This person only accepts requests from contacts.",
 	"ACCEPT_MONEY_FROM_ONLY_WHITELISTED_CONTACTS": "This user only accepts money from whitelisted contacts.",
-	"ACCEPT_REQUEST_FROM_ONLY_WHITELISTED_CONTACTS": "This user only accepts requests from whitelisted contacts."
+	"ACCEPT_REQUEST_FROM_ONLY_WHITELISTED_CONTACTS": "This user only accepts requests from whitelisted contacts.",
+	"NO_VALID_MOBILE_NUMBERS": "No valid mobile numbers provided."
 
 }

@@ -12,6 +12,7 @@ export default class TransferController {
     } = request;
 
     const mobileNumber = payload?.mobile;
+    
     const userId = user?.id;
     const type = payload?.type;
 
@@ -19,7 +20,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.checkReceiverStatus(
-        { userId, mobileNumber, type },
+        { userId, mobileNumber,  type },
         (err, response) => {
           if (err) {
             return resolve({

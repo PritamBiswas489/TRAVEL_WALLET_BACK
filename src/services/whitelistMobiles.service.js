@@ -2,8 +2,9 @@ import db from "../databases/models/index.js";
 
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
-const { Op, WhitelistMobiles } = db;
+const { Op, WhitelistMobiles, User } = db;
 import { handleCallback } from "../libraries/utility.js";
+import { parseSmartPhoneNumber, formatPhoneNumber } from "../libraries/utility.js";
 
 export default class WhitelistMobilesService {
   static async create( data, callback ) {
@@ -15,12 +16,39 @@ export default class WhitelistMobilesService {
       if (!['send', 'request'].includes(data.type)) {
         return handleCallback(new Error("TYPE_REQUIRED_SEND_REQUEST"), null, callback);
       }
-      const records = data.mobileNumbers.map(mobileNumber => ({
-        userId: data.userId,
-        ...mobileNumber,
-        type: data.type
-      }));
-     
+      const user = await User.findOne({
+        where: { id: data.userId },
+      });
+      const parseUserPhoneNumber = parseSmartPhoneNumber(user.phoneNumber);
+      const userPhoneCountryCode = parseUserPhoneNumber?.countryCode;
+
+      const records = data.mobileNumbers.map((dd) => {
+        const fmtNumber = formatPhoneNumber(dd.mobileNumber, userPhoneCountryCode);
+        // console.log({
+        //   userId: data.userId,
+        //   ...dd,
+        //   mobileNumber: fmtNumber?.e164,
+        //   formattedNumber: dd?.formattedNumber,
+        //   type: data.type
+        // });
+        return {
+          userId: data.userId,
+           ...dd,
+          mobileNumber: fmtNumber?.e164,
+          formattedNumber: dd?.formattedNumber,
+          type: data.type
+        };
+      });
+      //truncate previous data
+      await WhitelistMobiles.destroy({
+        where: {
+          userId: data.userId,
+          type: data.type
+        }
+      });
+      if (records.length === 0) {
+        return handleCallback(new Error("VALID_MOBILE_NUMBERS_REQUIRED"), null, callback);
+      }
       const result = await WhitelistMobiles.bulkCreate(records);
       return handleCallback(null, { data: result }, callback);
     } catch (error) {

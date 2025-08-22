@@ -10,7 +10,7 @@ import ContactListService from "./contactList.service.js";
 import WhitelistMobilesService from "./whitelistMobiles.service.js";
 
 export default class TransferService {
-  static async checkReceiverStatus({ userId, mobileNumber, type }, callback) {
+  static async checkReceiverStatus({ userId, mobileNumber,  type }, callback) {
     console.log("Check Receiver Status", userId, mobileNumber);
     try {
       if (!["send", "request"].includes(type)) {

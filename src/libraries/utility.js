@@ -3,6 +3,11 @@ import fs from 'fs';
 import moment from "moment-timezone";
 import "../config/environment.js";
 import crypto from 'crypto';
+import {
+  isValidPhoneNumber,
+  parsePhoneNumberFromString,
+   
+} from 'libphonenumber-js';
 
 export const slugify = (str) =>
 	str
@@ -101,7 +106,88 @@ export const getcurrencySymbols = (Code) => {
   };
   return currencySymbols[Code] || "";
 }
+export const parseSmartPhoneNumber = (raw) => {
+  if (!raw) return null;
 
+  const trimmed = raw.trim();
+
+  // Attempt 1: split by spaces (e.g., "+66 987654321")
+  const parts = trimmed.split(/\s+/);
+  if (parts.length > 1) {
+    const countryCode = parts[0].replace(/[^\d]/g, "");
+    const mobileNumber = parts.slice(1).join("").replace(/[^\d]/g, "");
+
+    if (countryCode && mobileNumber.length >= 5) {
+      return {
+        raw,
+        cleaned: countryCode + mobileNumber,
+        countryCode,
+        mobileNumber,
+      };
+    }
+  }
+
+  // Attempt 2: libphonenumber-js
+  const phoneNumber = parsePhoneNumberFromString(raw);
+  if (phoneNumber && phoneNumber.isValid()) {
+    return {
+      raw,
+      cleaned: phoneNumber.countryCallingCode + phoneNumber.nationalNumber,
+      countryCode: phoneNumber.countryCallingCode,
+      mobileNumber: phoneNumber.nationalNumber,
+    };
+  }
+
+  // Attempt 3: sanitize to user's calling code
+  const mobileNumber = sanitizePhoneNumber(trimmed);
+  const isValidMobileNumber = isNumericString(mobileNumber);
+  if (!isValidMobileNumber) return null;
+
+  return {
+    raw,
+    cleaned: userCallingCode + mobileNumber,
+    countryCode: userCallingCode,
+    mobileNumber: mobileNumber,
+  };
+};
+
+
+export function formatPhoneNumber(phoneNumber, countryCodeOrIso) {
+  if (!phoneNumber) return null;
+
+  // Clean unwanted chars
+  let cleaned = phoneNumber.replace(/[^\d+]/g, '');
+
+  // Normalize countryCode
+  let prefix = countryCodeOrIso;
+  if (prefix && !prefix.startsWith('+')) {
+    prefix = '+' + prefix;
+  }
+ 
+  // If number already starts with + → trust it
+  if (!cleaned.startsWith('+') && prefix) {
+    cleaned = prefix + cleaned.replace(/^0+/, ''); // remove leading zeros
+  }
+  console.log("Cleaned phone number:", cleaned);
+  try {
+    const parsed = parsePhoneNumberFromString(cleaned, 
+      prefix && prefix.length === 2 ? prefix : undefined // if "IN", pass as ISO
+    );
+
+    if (parsed && parsed.isValid()) {
+      return {
+        e164: parsed.number,      // +919830990065
+        national: parsed.formatNational(), // 09830 990065
+        international: parsed.formatInternational(), // +91 98309 90065
+        country: parsed.country   // IN
+      };
+    }
+  } catch (err) {
+    console.error('Phone parsing failed:', err.message);
+  }
+
+  return null;
+}
 
 export function randomSaltHex(bytes = 16) {
   return crypto.randomBytes(bytes).toString('hex'); // 32 hex chars
@@ -110,3 +196,4 @@ export function randomSaltHex(bytes = 16) {
 export function createHmacExecute(data, secret) {
   return crypto.createHmac('sha256', secret).update(data).digest('hex');
 }
+ 

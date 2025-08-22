@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/node";
 const { Op, User, UserContactList } = db;
 import { handleCallback } from "../libraries/utility.js";
 import { createHmacExecute, randomSaltHex } from "../libraries/utility.js";
+import { parseSmartPhoneNumber, formatPhoneNumber } from "../libraries/utility.js";
 
 export default class ContactListService {
   static async addMobileNumbers(userId, data, callback) {
@@ -30,11 +31,28 @@ export default class ContactListService {
         user.hexSalt = randomSaltHex();
         await user.save();
       }
-      const mobileHexArray = data.mobileNumbers.map((number) => {
-        return createHmacExecute(number, user.hexSalt);
-      });
+      const parseUserPhoneNumber = parseSmartPhoneNumber(user.phoneNumber);
+      const userPhoneCountryCode = parseUserPhoneNumber?.countryCode;
+      
+      const mobileHexArray = data.mobileNumbers
+        .map((number) => {
+          const fmtNumber = formatPhoneNumber(number, userPhoneCountryCode);
+          if (fmtNumber?.e164) {
+            // console.log(fmtNumber.e164);
+            return createHmacExecute(fmtNumber.e164, user.hexSalt);
+          }
+          return null;
+        })
+        .filter((hash) => hash !== null && hash !== undefined);
       //   console.log(mobileHexArray);
       // Find existing contact hashes for the user
+       if (mobileHexArray.length === 0) {
+        return handleCallback(
+          new Error("NO_VALID_MOBILE_NUMBERS"),
+          null,
+          callback
+        );
+      }
       const existingContacts = await UserContactList.findAll({
         where: {
           userId,
@@ -43,6 +61,7 @@ export default class ContactListService {
         },
         attributes: ["contactHash"],
       });
+     
       const existingHashes = existingContacts.map((c) => c.contactHash);
       // Filter out duplicates
       const newContactHashes = mobileHexArray.filter(
@@ -51,9 +70,9 @@ export default class ContactListService {
       if (newContactHashes.length > 0) {
         await UserContactList.bulkCreate(
           newContactHashes.map((contactHash) => ({
-            userId,
-            contactHash,
-            type: data.type,
+        userId,
+        contactHash,
+        type: data.type,
           }))
         );
       }
@@ -63,6 +82,7 @@ export default class ContactListService {
         callback
       );
     } catch (error) {
+      console.log(error.message)
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return handleCallback(new Error("CATCH_ERROR"), null, callback);
     }
