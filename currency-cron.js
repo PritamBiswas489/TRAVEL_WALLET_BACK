@@ -4,6 +4,7 @@ import "./src/config/environment.js";
 import cron from "node-cron";
 import * as Sentry from "@sentry/node";
 import axios from "axios";
+import CronTrackService from "./src/services/crontrack.service.js";
 
 // Your scheduled task
 export const updateCurrencyRates = async () => {
@@ -53,11 +54,14 @@ export const updateCurrencyRates = async () => {
 
 // Schedule the task to run every day at 1 AM
 
+
+
 cron.schedule(
   "0 1 * * *", // Run at 1 AM daily
   async () => {
     console.log("[Cron] ⏰ Running scheduled job at 1 AM...");
     await updateCurrencyRates();
+    await CronTrackService.addCronTrack("updateCurrencyRates");
   },
   {
     scheduled: true,

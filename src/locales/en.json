@@ -226,5 +226,6 @@
 	"DEACTIVATED_BY_SYSTEM_ADMIN": "Deactivated by system admin.",
 	"FAILED_TO_SAVE_DEVICE_ID": "FAILED_TO_SAVE_DEVICE_ID",
 	"DEVICE_ID_UPDATED": "Device ID updated successfully.",
-	"YOUR_DEVICE_ID_HAS_BEEN_UPDATED": "You have been logged out because your account was accessed from another device."
+	"YOUR_DEVICE_ID_HAS_BEEN_UPDATED": "You have been logged out because your account was accessed from another device.",
+	"CRON_TRACK_LIST_FETCHED_SUCCESSFULLY": "CRON_TRACK_LIST_FETCHED_SUCCESSFULLY"
 }

@@ -4,6 +4,7 @@ import process from 'process';
 import CurrencyService from './src/services/currency.service.js';
 import * as Sentry from '@sentry/node';
 import './src/config/environment.js';
+import CronTrackService from './src/services/crontrack.service.js';
 
 // Main logic
 async function getExchangeRate(currencyCode = "THB", amount = "10000") {
@@ -76,6 +77,7 @@ cron.schedule('0 1 * * *', async () => {
   const amount = "10000";
 
   try {
+    await CronTrackService.addCronTrack("bankhapoalimExchangeRate");
     const result = await getExchangeRate(currencyCode, amount);
 
     if (result?.success) {
@@ -94,6 +96,7 @@ cron.schedule('0 1 * * *', async () => {
       console.error("❌ Failed to fetch exchange rate:", result?.error || result);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(result?.error || result);
     }
+    
 
   } catch (err) {
     console.error("❌ Unexpected error:", err.message || err);

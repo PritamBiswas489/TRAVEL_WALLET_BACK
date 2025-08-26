@@ -556,4 +556,31 @@ router.post('/add-faq', async (req, res, next) => {
     }));
 });
 
+
+
+
+/**
+ * @swagger
+ * /api/admin/cron-track-list:
+ *   get:
+ *     summary: Get cron track list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved cron track list
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get("/cron-track-list", async (req, res, next) => {
+    res.return(await AdminController.getCronTrackList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
 export default router;

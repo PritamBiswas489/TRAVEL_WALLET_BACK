@@ -5,6 +5,7 @@ import "../config/environment.js";
 import TrackIpAddressDeviceIdService from "../services/trackIpAddressDeviceId.service.js";
 import FaqService from "../services/faq.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
+import CronTrackService from "../services/crontrack.service.js";
 import moment from "moment";
 const {
   User,
@@ -741,6 +742,30 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+  static async getCronTrackList(request){
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const cronJobs = await CronTrackService.listCronTracks();
+
+      return {
+        status: 200,
+        data: cronJobs?.data,
+        message: i18n.__("CRON_TRACK_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
   }
 
 }

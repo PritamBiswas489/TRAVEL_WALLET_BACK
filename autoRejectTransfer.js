@@ -3,6 +3,7 @@ import TransferService from "./src/services/transfer.service.js";
 import i18n from "./src/config/i18.config.js";
 import UserService from "./src/services/user.service.js";
 import cron from "node-cron";
+import CronTrackService from "./src/services/crontrack.service.js";
 const autoRejectTransfer = async () => {
   console.log("//========== start auto reject transfer =======================//")
   try{
@@ -41,6 +42,7 @@ cron.schedule(
     async () => {
         console.log("[Cron] ⏰ Running scheduled job every 20 minutes...");
         await autoRejectTransfer();
+        await CronTrackService.addCronTrack("autoRejectTransfer");
     },
     {
         scheduled: true,
