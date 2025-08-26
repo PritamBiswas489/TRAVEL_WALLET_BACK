@@ -55,6 +55,23 @@ export default class PeleCardService {
     
     return{data};
   }
+  static async calculateInstallmentPaymentAmount(args){
+    const {amount} = args;
+    const getInterestRates = await InterestRatesService.getInterestRates();
+    const data = getInterestRates?.data?.map((interestRateDt) => {
+      const interestAmount = (amount * interestRateDt.interestRate) / 100;
+      const totalAmount = amountUptotwoDecimalPlaces(amount + interestAmount);
+      return {
+      paymentNumber: interestRateDt.paymentNumber,
+      totalAmount,
+      interestAmount,
+      interestRate: interestRateDt.interestRate,
+      firstPayment: amountUptotwoDecimalPlaces(totalAmount / interestRateDt.paymentNumber),
+      };
+    }) || [];
+
+    return { data };
+  }
   static async makePayment(args) {
     const { amount, fromCurrency, userCard, nationalId, userId, number_of_payment } = args;
     const peleCardCurrencyNumber = getPeleCardCurrencyNumber();

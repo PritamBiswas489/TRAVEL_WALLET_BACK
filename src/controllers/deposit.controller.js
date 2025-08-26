@@ -502,4 +502,26 @@ export default class DepositController {
       };
     }
   }
+  static async calculateInstallmentPaymentAmount(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+    const { amount } = request.payload;
+
+    try {
+      const response = await PeleCardService.calculateInstallmentPaymentAmount({
+        amount,
+        user,
+      });
+      return response;
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  } 
 }

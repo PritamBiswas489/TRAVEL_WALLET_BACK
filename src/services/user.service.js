@@ -105,7 +105,7 @@ export default class UserService {
       // console.log(userDeviceToken);
       user.logged_device_id = deviceId;
       await user.save();
-      // Send push notification, but do not await or handle errors to avoid exception error from this process
+       
       if(userDeviceToken){
           PushNotificationService.sendNotificationByFcmToken(
           {

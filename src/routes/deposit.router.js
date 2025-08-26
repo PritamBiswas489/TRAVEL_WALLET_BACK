@@ -149,6 +149,36 @@ router.post('/calculate-payment-amount', async (req, res, next) => {
 });
 
 
+
+/**
+ * @swagger
+ * /api/auth/deposit/calculate-installment-payment-amount:
+ *   post:
+ *     summary: Calculate installment payment amount
+ *     tags:
+ *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Success - Installment payment amount calculated
+ */
+router.post('/calculate-installment-payment-amount', async (req, res, next) => {
+  const response = await depositController.calculateInstallmentPaymentAmount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
 /**
  * @swagger
  * /api/auth/deposit/pelecard-make-payment-add-to-wallet:
