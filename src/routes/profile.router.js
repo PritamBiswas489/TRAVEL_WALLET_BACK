@@ -232,6 +232,7 @@ router.post("/save-fcm-token", async (req, res) => {
  *         description: Device ID saved successfully
  */
 router.post("/save-device-id", async (req, res) => {
+   
   const response = await ProfileController.saveDeviceId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });

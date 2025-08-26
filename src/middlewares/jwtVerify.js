@@ -8,7 +8,15 @@ const { ACCESS_TOKEN_SECRET_KEY, REFRESH_TOKEN_SECRET_KEY, JWT_ALGO, ACCESS_TOKE
 export default async (req, res, next) => {
 	const i18n = req.headers.i18n;
 	const deviceID = req.headers.deviceid;
+	 const routePath = req.originalUrl;
+    //get slug of routePath
+    const routeSlug = routePath.split("/").pop();
+    let checkdeviceid= true;
+    if(routeSlug === "save-device-id"){
+      checkdeviceid = false;
+    }
 	 
+
 	try {
 		const { authorization, refreshtoken } = req.headers;
 		// console.log({ authorization, refreshtoken });
@@ -28,7 +36,7 @@ export default async (req, res, next) => {
 			if(getUserById.status!=='active'){
 				return res.send({ status: 401, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
 			}
-			if(getUserById.logged_device_id!==deviceID){
+			if(getUserById.logged_device_id!==deviceID && checkdeviceid){
 				return res.send({ status: 401, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
 			}
 			req.user = verifiedData;
@@ -63,7 +71,7 @@ export default async (req, res, next) => {
 				}
 				// console.log(getUserById.logged_device_id)
 				// console.log(deviceID)
-				if(getUserById.logged_device_id!==deviceID){
+				if(getUserById.logged_device_id!==deviceID && checkdeviceid){
 					return res.send({ status: 401, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
 				}
 
