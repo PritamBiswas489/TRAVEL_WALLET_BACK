@@ -6,7 +6,9 @@ const { InterestRates, Op, User } = db;
 export default class InterestRatesService {
   static async getInterestRates() {
     try {
-      const interestRates = await InterestRates.findAll();
+      const interestRates = await InterestRates.findAll({
+        order: [["paymentNumber", "ASC"]],
+      });
       return { SUCCESS: 1, data: interestRates };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
