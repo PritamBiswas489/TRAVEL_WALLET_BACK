@@ -51,6 +51,7 @@ export default class PeleCardService {
       interestAmount,
       interestRate: interestRate || 0,
       firstPayment,
+      processingfee: 0
     };
     
     return{data};
@@ -67,6 +68,7 @@ export default class PeleCardService {
       interestAmount,
       interestRate: interestRateDt.interestRate,
       firstPayment: amountUptotwoDecimalPlaces(totalAmount / interestRateDt.paymentNumber),
+      processingfee: 0
       };
     }) || [];
 
