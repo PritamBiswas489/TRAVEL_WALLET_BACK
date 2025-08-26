@@ -3,6 +3,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import KycService from "./kyc.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
+import PushNotificationService from "./pushNotification.service.js";
 
 const { Op, User, UserKyc, UserWallet, UserFcm, UserSettings } = db;
 
@@ -94,14 +95,34 @@ export default class UserService {
       throw error;
     }
   }
-  static async saveDeviceId(userId, deviceId, callback) {
+  static async saveDeviceId(userId, deviceId, i18n, callback) {
     try {
-      const user = await User.findOne({ where: { id: userId } });
+      const user = await this.getUserDetails(userId);
       if (!user) {
         return callback("User not found", null);
       }
+      const userDeviceToken = user?.fcm?.fcmToken;
+      // console.log(userDeviceToken);
       user.logged_device_id = deviceId;
       await user.save();
+      // Send push notification, but do not await or handle errors to avoid exception error from this process
+      if(userDeviceToken){
+          PushNotificationService.sendNotificationByFcmToken(
+          {
+            fcmToken: userDeviceToken,
+            title: i18n.__("DEVICE_ID_UPDATED"),
+            body: i18n.__("YOUR_DEVICE_ID_HAS_BEEN_UPDATED"),
+            data: {
+              deviceId: deviceId,
+              action: "NEW_DEVICE_ID",
+            },
+          },
+          () => {
+            // Notification result ignored intentionally
+          }
+        );
+      }
+     
       return callback(null, { data: user });
     } catch (error) {
       console.error("Error saving device ID:", error);
@@ -128,7 +149,7 @@ export default class UserService {
     try {
       const user = await User.findOne({
         where: { id: userId },
-        attributes: ["id", "name", "email", "phoneNumber", "role", "avatar", "dob", "address", "language","hexSalt"],
+        attributes: ["id", "name", "email", "phoneNumber", "role", "avatar", "dob", "address", "language","hexSalt","logged_device_id"],
         include: [
           {
             model: UserKyc,

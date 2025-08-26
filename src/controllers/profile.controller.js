@@ -905,7 +905,7 @@ export default class ProfileController {
     // console.log(deviceid);
 
     return new Promise((resolve) => {
-      UserService.saveDeviceId(user.id, deviceid, (err, response) => {
+      UserService.saveDeviceId(user.id, deviceid, i18n, (err, response) => {
         if (err) {
           return resolve({
             status: 400,

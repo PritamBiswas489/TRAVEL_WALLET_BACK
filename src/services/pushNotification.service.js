@@ -27,4 +27,22 @@ export default class PushNotificationService {
       return callback(error);
     }
   }
+  static async sendNotificationByFcmToken({ fcmToken, title, body, data  }, callback){
+    try {
+      const message = {
+        notification: {
+          title: title,
+          body: body,
+        },
+        token: fcmToken,
+        data,
+      };
+      const response = await admin.messaging().send(message);
+      console.log("Successfully sent message:", response);
+      return callback(null, { messageId: response, token: fcmToken });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      return callback(error);
+    }
+  }
 }
