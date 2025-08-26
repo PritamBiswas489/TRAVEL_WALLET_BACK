@@ -125,6 +125,7 @@ export default class LoginController {
       if (validationError) return validationError;
 
       let isNewUser = false;
+      let alreadyDeviceLoggedInUser = false;
 
       const user = await User.findOne({
         where: { phoneNumber: validatedData?.phoneNumber },
@@ -206,6 +207,15 @@ export default class LoginController {
           await user.save();
         }
 
+        if(!user.logged_device_id){
+            user.logged_device_id = deviceid;
+            await user.save();
+        }
+
+        if (user.logged_device_id && user.logged_device_id !== deviceid) {
+          alreadyDeviceLoggedInUser = true;
+        }
+
         const accessToken = await generateToken(
           jwtPayload,
           process.env.JWT_ALGO,
@@ -223,7 +233,7 @@ export default class LoginController {
         return {
           status: 200,
           isNewUser,
-          data: { accessToken, refreshToken },
+          data: { accessToken, refreshToken, alreadyDeviceLoggedInUser },
           message: i18n.__("SUCCESSFULLY_VERIFIED_PIN"),
           error: {},
         };
@@ -234,6 +244,7 @@ export default class LoginController {
         const newUser = await User.create({
           phoneNumber: validatedData?.phoneNumber,
           password: validatedData?.password,
+          logged_device_id: deviceid
         });
 
         if (!newUser) {
@@ -274,7 +285,7 @@ export default class LoginController {
         return {
           status: 200,
           isNewUser,
-          data: { accessToken, refreshToken },
+          data: { accessToken, refreshToken, alreadyDeviceLoggedInUser },
           message: i18n.__("SUCCESSFULLY_CREATED_NEW_USER"),
           error: {},
         };

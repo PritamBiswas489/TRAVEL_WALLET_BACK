@@ -893,4 +893,68 @@ export default class ProfileController {
     });
      
   }
+  static async saveDeviceId(request) {
+    const {
+      headers: { i18n, deviceid },
+      user,
+      payload,
+    } = request;
+
+
+    // console.log("====== Selected device id ======================");
+    // console.log(deviceid);
+
+    return new Promise((resolve) => {
+      UserService.saveDeviceId(user.id, deviceid, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(
+                err.message || "FAILED_TO_SAVE_DEVICE_ID"
+              ),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("DEVICE_ID_SAVED_SUCCESSFULLY"),
+          error: null,
+        });
+      });
+    });
+  }
+  static async clearDeviceId(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    return new Promise((resolve) => {
+      UserService.clearDeviceId(user.id, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(
+                err.message || "FAILED_TO_CLEAR_DEVICE_ID"
+              ),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("DEVICE_ID_CLEARED_SUCCESSFULLY"),
+          error: null,
+        });
+      });
+    });
+  }
 }

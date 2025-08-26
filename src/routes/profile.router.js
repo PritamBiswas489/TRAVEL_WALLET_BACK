@@ -5,6 +5,33 @@ import ProfileController from "../controllers/profile.controller.js";
 import { upload } from "../controllers/uploadProfileImage.controller.js";
  
 const router = express.Router();
+
+
+/**
+ * @swagger
+ * /api/auth/profile/auth-check:
+ *   get:
+ *     summary: Check authentication status
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Auth check successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Auth check successful
+ */
+router.get("/auth-check", async (req, res, next) => {
+   res.return({'message': 'Auth check successful'});
+});
+
 /**
  * @swagger
  * /api/auth/profile/detail:
@@ -188,6 +215,45 @@ router.post("/save-fcm-token", async (req, res) => {
   const response = await ProfileController.saveFcmToken({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
+
+
+/**
+ * @swagger
+ * /api/auth/profile/save-device-id:
+ *   post:
+ *     summary: Save device ID for user
+ *     tags: 
+ *       - Auth-Profile routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Device ID saved successfully
+ */
+router.post("/save-device-id", async (req, res) => {
+  const response = await ProfileController.saveDeviceId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+/**
+ * @swagger
+ * /api/auth/profile/clear-device-id:
+ *   post:
+ *     summary: Clear device ID for user
+ *     tags: 
+ *       - Auth-Profile routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Device ID cleared successfully
+ */
+router.post("/clear-device-id",async (req, res) => {  
+   const response = await ProfileController.clearDeviceId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
 
 /**
  * @swagger
@@ -650,6 +716,11 @@ router.post("/set-send-money-restriction",async (req, res) => {
    const response = await ProfileController.setSendMoneyRestriction({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+
+
+
 /**
  * @swagger
  * /api/auth/profile/delete:

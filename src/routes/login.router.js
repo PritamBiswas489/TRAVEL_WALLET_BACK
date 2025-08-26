@@ -82,6 +82,8 @@ router.post("/create-verify-pin-by-phone-number", async (req, res) => {
    const response = await LoginController.createOrVerifyPinByPhoneNumber({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response)
 });
+
+
 /**
  * @swagger
  * /api/front/login/update-pin-by-phone-number:

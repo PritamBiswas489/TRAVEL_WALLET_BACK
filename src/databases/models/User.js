@@ -56,6 +56,10 @@ export default function User(sequelize, DataTypes) {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
+      logged_device_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       tableName: "users",

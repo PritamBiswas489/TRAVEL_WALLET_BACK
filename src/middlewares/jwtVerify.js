@@ -1,11 +1,14 @@
 import '../config/environment.js';
 import jwt from 'jsonwebtoken';
 import { generateToken } from '../libraries/auth.js';
+import UserService from '../services/user.service.js';
 
 const { ACCESS_TOKEN_SECRET_KEY, REFRESH_TOKEN_SECRET_KEY, JWT_ALGO, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = process.env;
 
-export default (req, res, next) => {
+export default async (req, res, next) => {
 	const i18n = req.headers.i18n;
+	const deviceID = req.headers.deviceid;
+	 
 	try {
 		const { authorization, refreshtoken } = req.headers;
 		// console.log({ authorization, refreshtoken });
@@ -21,6 +24,13 @@ export default (req, res, next) => {
 		const token = authorization.split(' ')[1];
 		try {
 			const verifiedData = jwt.verify(token, ACCESS_TOKEN_SECRET_KEY);
+			const getUserById = await UserService.getUserById(verifiedData.id);	
+			if(getUserById.status!=='active'){
+				return res.send({ status: 401, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
+			}
+			if(getUserById.logged_device_id!==deviceID){
+				return res.send({ status: 401, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
+			}
 			req.user = verifiedData;
 			return next();
 		} catch (e) {
@@ -45,6 +55,17 @@ export default (req, res, next) => {
 					userName: data.userName,
 					// theme: data.theme,
 				};
+
+				const getUserById = await UserService.getUserById(data.id);
+				// console.log(getUserById.status);
+				if(getUserById.status!=='active'){
+					return res.send({ status: 401, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
+				}
+				// console.log(getUserById.logged_device_id)
+				// console.log(deviceID)
+				if(getUserById.logged_device_id!==deviceID){
+					return res.send({ status: 401, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
+				}
 
 				req.user = payload;
 				const accessToken = await generateToken(payload, JWT_ALGO, ACCESS_TOKEN_SECRET_KEY, Number(ACCESS_TOKEN_EXPIRES_IN));

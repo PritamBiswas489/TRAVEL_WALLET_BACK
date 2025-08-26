@@ -8,7 +8,7 @@ const trackIpAddressDeviceId = async (req, res, next) => {
   try {
     // console.log(req?.headers);
     const ip = req?.headers?.["x-ip-address"] || "186.102.114.93"; // Default IP for testing
-    const deviceId = req?.headers?.["x-device-id"] || "api-developer-device-id";
+    const deviceId = req?.headers?.["x-device-id"] || "api-developer-device-id"; // Default Device ID for testing
     const routePath = req.originalUrl;
 
     let ipCountry = "";

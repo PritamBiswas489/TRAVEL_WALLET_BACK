@@ -94,6 +94,36 @@ export default class UserService {
       throw error;
     }
   }
+  static async saveDeviceId(userId, deviceId, callback) {
+    try {
+      const user = await User.findOne({ where: { id: userId } });
+      if (!user) {
+        return callback("User not found", null);
+      }
+      user.logged_device_id = deviceId;
+      await user.save();
+      return callback(null, { data: user });
+    } catch (error) {
+      console.error("Error saving device ID:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return callback("Error saving device ID", null);
+    }
+  }
+  static async clearDeviceId(userId, callback) {
+    try {
+      const user = await User.findOne({ where: { id: userId } });
+      if (!user) {
+        return callback("User not found", null);
+      }
+      user.logged_device_id = null;
+      await user.save();
+      return callback(null, { data: user });
+    } catch (error) {
+      console.error("Error clearing device ID:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return callback("Error clearing device ID", null);
+    }
+  }
   static async getUserDetails(userId) {
     try {
       const user = await User.findOne({

@@ -13,8 +13,9 @@ import { default as transferRequestRouter } from './transferRequest.router.js';
 const router = express.Router();
 
 //jwtVerify is a middleware that checks if the user is authenticated
-router.use(jwtVerify);
 router.use(trackIpAddressDeviceId);
+router.use(jwtVerify);
+
 
 router.use('/profile', profileRouter);
 router.use('/deposit', depositRouter);
