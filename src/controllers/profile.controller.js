@@ -628,6 +628,35 @@ export default class ProfileController {
       });
     });
   }
+  static async clearContactList(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    return new Promise((resolve) => {
+      ContactListService.clearContactList(user.id, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(
+                err.message || "FAILED_TO_CLEAR_CONTACT_LIST"
+              ),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("CONTACT_LIST_CLEARED_SUCCESSFULLY"),
+          error: null,
+        });
+      });
+    });
+  }
   static async addMobileNumberToWhiteList(request) {
     const {
       headers: { i18n },

@@ -180,4 +180,15 @@ export default class ContactListService {
       }
 
   }
+  static async clearContactList(userId, callback) {
+    try {
+      await UserContactList.destroy({
+        where: { userId },
+      });
+      return handleCallback(null, { data: { success: true } }, callback);
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return handleCallback(new Error("CATCH_ERROR"), null, callback);
+    }
+  }
 }

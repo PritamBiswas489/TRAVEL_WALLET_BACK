@@ -478,7 +478,26 @@ router.post("/add-mobile-number-in-contact-list", async (req, res) => {
    const response = await ProfileController.addMobileNumberToContactList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
- 
+
+
+
+/**
+ * @swagger
+ * /api/auth/profile/clear-contact-list:
+ *   delete:
+ *     summary: Clear the user's contact list
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Contact list cleared
+ */
+router.delete("/clear-contact-list", async (req, res) => {
+   const response = await ProfileController.clearContactList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
 
 /**
  * @swagger
