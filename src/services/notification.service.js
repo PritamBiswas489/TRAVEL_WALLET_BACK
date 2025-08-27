@@ -50,13 +50,104 @@ export default class NotificationService {
           else console.log("Push notification sent successfully:", res);
         }
       );
+
+      //sending notification to sender
+       const messageTitleSender =  i18n.__("TRANSFER_NOTIFICATION_TITLE_SENDER");
+       const messageBodySender = i18n.__("TRANSFER_NOTIFICATION_BODY_SENDER", {
+         amount: String(amount) + currencySymbol,
+         senderPhoneNumber: sender?.phoneNumber,
+         receiverPhoneNumber: receiver?.phoneNumber,
+       });
+       const sendNotificationData = await Notification.create({
+        userId: senderId,
+        type: "SENDER_TRANSFER",
+        title: messageTitleSender,
+        message: messageBodySender,
+        metadata: transferJSONB,
+      });
+
+
+       PushNotificationService.sendNotification(
+        {
+          userId: senderId,
+          title: messageTitleSender,
+          body: messageBodySender,
+          data: {
+            transferId: String(id),
+            action: "SENDER_TRANSFER",
+            amount: String(amount) + currencySymbol,
+            senderPhoneNumber: sender?.phoneNumber,
+            receiverPhoneNumber: receiver?.phoneNumber,
+            notificationId: String(sendNotificationData?.id),
+          },
+        },
+        (err, res) => {
+          if (err) console.error("Error sending push notification:", err);
+          else console.log("Push notification sent successfully:", res);
+        }
+      );
+
+
+
       console.log(
         "Creating wallet transfer notification with data:",
         transferJSONB
       );
     });
   }
+static async walletTransferRejectionBySenderNotification(transferId, i18n, autoRejected = false) {
+    TransferService.getTransferById(transferId, async (error, result) => {
+      if (error)
+        return console.error("Error fetching transfer details:", error);
 
+      const { senderId, amount, currency, receiver } = result.data;
+      const transferJSONB = result.data.get({ plain: true });
+      const currencySymbol = getcurrencySymbols(currency) || currency;
+      const messageTitle = i18n.__("TRANSFER_REJECTION_NOTIFICATION_TITLE_BY_SENDER");
+      let messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_BY_SENDER", {
+        amount: String(amount) + currencySymbol,
+        receiverPhoneNumber: receiver?.phoneNumber,
+      });
+      if(autoRejected) {
+        messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_AUTO", {
+          amount: String(amount) + currencySymbol,
+          receiverPhoneNumber: receiver?.phoneNumber,
+        });
+      }
+
+      const notificationData = await Notification.create({
+        userId: senderId,
+        type: "TRANSFER_REJECTION_BY_SENDER",
+        title: messageTitle,
+        message: messageBody,
+        metadata: transferJSONB,
+      });
+
+      PushNotificationService.sendNotification(
+        {
+          userId: senderId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            transferId: String(result.data.id),
+            action: "TRANSFER_REJECTION_BY_SENDER",
+            amount: String(amount) + currencySymbol,
+            receiverPhoneNumber: receiver?.phoneNumber,
+            notificationId: String(notificationData?.id),
+          },
+        },
+        (err, res) => {
+          if (err)
+            console.log("Error sending push notification:", err?.message);
+          else console.log("Push notification sent successfully:", res);
+        }
+      );
+      console.log(
+        "Creating wallet transfer notification with data:",
+        transferJSONB
+      );
+    });
+  }
   static async walletTransferRejectionNotification(transferId, i18n, autoRejected = false) {
     TransferService.getTransferById(transferId, async (error, result) => {
       if (error)
@@ -110,6 +201,7 @@ export default class NotificationService {
       );
     });
   }
+  
   static async walletTransferAcceptanceNotification(transferId, i18n) {
     TransferService.getTransferById(transferId, async (error, result) => {
       if (error)
@@ -463,11 +555,26 @@ export default class NotificationService {
           },
         },
        });
-       if(notification) {
-        notification.set('metadata', { ...notification.metadata, status });
-        await notification.save();
-        return notification;
+       const senderTransferNotification = await Notification.findOne({
+         where: {
+           type: "SENDER_TRANSFER",
+           isRead: false,
+           metadata: {
+             id: transferid,
+           },
+         },
+       });
+       if (notification) {
+         notification.set("metadata", { ...notification.metadata, status });
+         await notification.save();
+         
        }
+       if (senderTransferNotification) {
+         senderTransferNotification.set("metadata", { ...senderTransferNotification.metadata, status });
+         await senderTransferNotification.save();
+         
+       }
+       return { notification, senderTransferNotification };
     } catch (error) {
       console.error("Error fetching pending transfer notifications:", error);
       return null;

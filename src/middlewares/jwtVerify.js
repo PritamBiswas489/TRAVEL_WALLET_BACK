@@ -34,10 +34,10 @@ export default async (req, res, next) => {
 			const verifiedData = jwt.verify(token, ACCESS_TOKEN_SECRET_KEY);
 			const getUserById = await UserService.getUserById(verifiedData.id);	
 			if(getUserById.status!=='active'){
-				return res.send({ status: 401, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
+				return res.send({ status: 403, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
 			}
 			if(getUserById.logged_device_id!==deviceID && checkdeviceid){
-				return res.send({ status: 401, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
+				return res.send({ status: 403, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
 			}
 			req.user = verifiedData;
 			return next();
@@ -67,12 +67,12 @@ export default async (req, res, next) => {
 				const getUserById = await UserService.getUserById(data.id);
 				// console.log(getUserById.status);
 				if(getUserById.status!=='active'){
-					return res.send({ status: 401, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
+					return res.send({ status: 403, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
 				}
 				// console.log(getUserById.logged_device_id)
 				// console.log(deviceID)
 				if(getUserById.logged_device_id!==deviceID && checkdeviceid){
-					return res.send({ status: 401, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
+					return res.send({ status: 403, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
 				}
 
 				req.user = payload;

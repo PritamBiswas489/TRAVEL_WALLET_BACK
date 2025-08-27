@@ -10,7 +10,7 @@ import ContactListService from "./contactList.service.js";
 import WhitelistMobilesService from "./whitelistMobiles.service.js";
 
 export default class TransferService {
-  static async checkReceiverStatus({ userId, mobileNumber,  type }, callback) {
+  static async checkReceiverStatus({ userId, mobileNumber, type }, callback) {
     console.log("Check Receiver Status", userId, mobileNumber);
     try {
       if (!["send", "request"].includes(type)) {
@@ -80,23 +80,26 @@ export default class TransferService {
           }
         }
         if (restriction === "whitelist") {
-           //Implement whitelist logic here if needed
-            const whitelistResult = await new Promise((resolve, reject) => {
-              WhitelistMobilesService.checkWhitelistContact(
-                {
-                  mobileNumber: senderPhoneNumber,
-                  userId: user.id,
-                  type: "send",
-                },
-                (error, result) => {
-                  if (error) return reject(error);
-                  resolve(result);
-                }
-              );
-            });
-            if (!whitelistResult?.data?.isWhitelisted) {
-              return callback(new Error("ACCEPT_MONEY_FROM_ONLY_WHITELISTED_CONTACTS"), null);
-            }
+          //Implement whitelist logic here if needed
+          const whitelistResult = await new Promise((resolve, reject) => {
+            WhitelistMobilesService.checkWhitelistContact(
+              {
+                mobileNumber: senderPhoneNumber,
+                userId: user.id,
+                type: "send",
+              },
+              (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+              }
+            );
+          });
+          if (!whitelistResult?.data?.isWhitelisted) {
+            return callback(
+              new Error("ACCEPT_MONEY_FROM_ONLY_WHITELISTED_CONTACTS"),
+              null
+            );
+          }
         }
       }
 
@@ -113,7 +116,6 @@ export default class TransferService {
           );
         }
         if (restriction === "contactonly") {
-          
           const contactCheck =
             await ContactListService.checkMobileNumberInContactList(0, {
               checkUserId: user.id,
@@ -130,24 +132,27 @@ export default class TransferService {
 
         if (restriction === "whitelist") {
           console.log("Whitelist restriction applied for request");
-           //Implement whitelist logic here if needed
-            const whitelistResult = await new Promise((resolve, reject) => {
-              WhitelistMobilesService.checkWhitelistContact(
-                {
-                  mobileNumber: senderPhoneNumber,
-                  userId: user.id,
-                  type: "request",
-                },
-                (error, result) => {
-                  if (error) return reject(error);
-                  resolve(result);
-                }
-              );
-            });
-            // console.log("Whitelist Result:", whitelistResult);
-            if (!whitelistResult?.data?.isWhitelisted) {
-              return callback(new Error("ACCEPT_REQUEST_FROM_ONLY_WHITELISTED_CONTACTS"), null);
-            }
+          //Implement whitelist logic here if needed
+          const whitelistResult = await new Promise((resolve, reject) => {
+            WhitelistMobilesService.checkWhitelistContact(
+              {
+                mobileNumber: senderPhoneNumber,
+                userId: user.id,
+                type: "request",
+              },
+              (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+              }
+            );
+          });
+          // console.log("Whitelist Result:", whitelistResult);
+          if (!whitelistResult?.data?.isWhitelisted) {
+            return callback(
+              new Error("ACCEPT_REQUEST_FROM_ONLY_WHITELISTED_CONTACTS"),
+              null
+            );
+          }
         }
       }
 
@@ -166,11 +171,12 @@ export default class TransferService {
     try {
       const senderUserDetails = await UserService.getUserDetails(senderUserId);
       const receiverUserDetails = await UserService.getUserDetails(receiverId);
-      if(senderUserId === receiverId) {
+
+      if (senderUserId === receiverId) {
         await tran.rollback();
         return callback(new Error("CANT_SEND_MONEY_TO_SELF"), null);
-
       }
+
       if (!receiverUserDetails) {
         await tran.rollback();
         return callback(
@@ -178,6 +184,7 @@ export default class TransferService {
           null
         );
       }
+
       if (receiverUserDetails?.kyc?.status !== "Approved") {
         await tran.rollback();
         return callback(
@@ -185,35 +192,52 @@ export default class TransferService {
           null
         );
       }
-      const senderWallet = senderUserDetails.wallets.find(
-        (wallet) => wallet.currency === currency
-      );
+
+      // 🔒 Lock sender wallet row
+      const senderWallet = await UserWallet.findOne({
+        where: {
+          userId: senderUserId,
+          currency: currency,
+        },
+        lock: tran.LOCK.UPDATE,
+        transaction: tran,
+      });
+
       if (!senderWallet) {
         await tran.rollback();
         return callback(new Error("SENDER_WALLET_NOT_FOUND"), null);
       }
+
       if (senderWallet.status !== "active" || senderWallet.locked === true) {
         await tran.rollback();
         return callback(new Error("SENDER_WALLET_NOT_ACTIVE_OR_LOCKED"), null);
       }
+
       if (parseFloat(senderWallet.balance) < parseFloat(amount)) {
         await tran.rollback();
         return callback(new Error("INSUFFICIENT_BALANCE"), null);
       }
+
+      // 🔒 Lock check for existing pending transfer
       const pendingTransfer = await Transfer.findOne({
         where: {
           senderId: senderUserId,
           receiverId: receiverId,
           status: "pending",
         },
+        lock: tran.LOCK.UPDATE,
+        transaction: tran,
       });
+
       if (pendingTransfer) {
         await tran.rollback();
         return callback(new Error("PENDING_TRANSFER_EXISTS"), null);
       }
+
       const senderOldBalance = parseFloat(senderWallet.balance);
       const newSenderBalance = senderOldBalance - parseFloat(amount);
 
+      // Create new transfer
       const createTransfer = await Transfer.create(
         {
           senderId: senderUserId,
@@ -225,6 +249,7 @@ export default class TransferService {
         { transaction: tran }
       );
 
+      // Create debit transaction record
       const createTransaction = await WalletTransaction.create(
         {
           userId: senderUserId,
@@ -236,33 +261,29 @@ export default class TransferService {
           newWalletBalance: newSenderBalance,
           currency: currency,
           transferId: createTransfer.id,
-          description: `Transfer to  (${receiverUserDetails.phoneNumber})`,
+          description: `Transfer to (${receiverUserDetails.phoneNumber})`,
           status: "completed",
         },
         { transaction: tran }
       );
 
-      await UserWallet.update(
-        {
-          balance: newSenderBalance,
-        },
-        {
-          where: {
-            userId: senderUserId,
-            currency: currency,
-          },
-          transaction: tran,
-        }
+      // Update sender wallet balance
+      await senderWallet.update(
+        { balance: newSenderBalance },
+        { transaction: tran }
       );
 
+      // Commit transaction
       await tran.commit();
 
+      // Fetch updated wallet after commit
       const senderWalletDetails = await UserWallet.findOne({
         where: {
           userId: senderUserId,
           currency: currency,
         },
       });
+
       NotificationService.walletTransferNotification(createTransfer.id, i18n);
 
       return callback(null, {
@@ -280,13 +301,12 @@ export default class TransferService {
       return callback(new Error("TRANSFER_FAILED"), null);
     }
   }
+
   static async acceptRejectTransfer(
-    { transferId, userId, status, i18n ,autoRejected },
+    { transferId, userId, status, i18n, autoRejected },
     callback
   ) {
     // console.log("Accept/Reject Transfer", transferId, userId, status);
-    
-
     const tran = await db.sequelize.transaction();
     try {
       const transfer = await Transfer.findOne({
@@ -295,6 +315,9 @@ export default class TransferService {
           receiverId: userId,
           status: "pending",
         },
+        lock: tran.LOCK.UPDATE, // 🔒 lock the row
+        transaction: tran, // inside this transaction
+        skipLocked: true, // optional: skip if another transaction already locked it
       });
       if (!transfer) {
         await tran.rollback();
@@ -309,6 +332,7 @@ export default class TransferService {
             userId: transfer.senderId,
             currency: transfer.currency,
           },
+          lock: tran.LOCK.UPDATE,
           transaction: tran,
         });
 
@@ -346,7 +370,10 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
-        NotificationService.updatePendingTransferNotificationStatus(transferId, "rejected");
+        NotificationService.updatePendingTransferNotificationStatus(
+          transferId,
+          "rejected"
+        );
         NotificationService.walletTransferRejectionNotification(
           transferId,
           i18n,
@@ -370,6 +397,7 @@ export default class TransferService {
             userId: transfer.receiverId,
             currency: transfer.currency,
           },
+          lock: tran.LOCK.UPDATE,
           transaction: tran,
         });
 
@@ -418,7 +446,10 @@ export default class TransferService {
             currency: transfer.currency,
           },
         });
-        NotificationService.updatePendingTransferNotificationStatus(transferId, "accepted");
+        NotificationService.updatePendingTransferNotificationStatus(
+          transferId,
+          "accepted"
+        );
         NotificationService.walletTransferAcceptanceNotification(
           transferId,
           i18n
@@ -444,6 +475,97 @@ export default class TransferService {
       return callback(new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER"), null);
     }
   }
+
+  static async rejectTransferBySender({ transferId, userId, i18n }, callback){
+     const tran = await db.sequelize.transaction();
+     try{
+        const transfer = await Transfer.findOne({
+          where: {
+            id: transferId,
+            senderId: userId,
+            status: "pending",
+          },
+          lock: tran.LOCK.UPDATE, // 🔒 lock the row
+          transaction: tran, // inside this transaction
+          skipLocked: true, // optional: skip if another transaction already locked it
+        });
+        if (!transfer) {
+          await tran.rollback();
+          return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+        }
+        // Sender can only reject a pending transfer
+        await transfer.update({ status: "rejected" }, { transaction: tran });
+        //add to sender wallet transaction
+        const senderWallet = await UserWallet.findOne({
+          where: {
+            userId: transfer.senderId,
+            currency: transfer.currency,
+          },
+          lock: tran.LOCK.UPDATE,
+          transaction: tran,
+        });
+
+        const oldBalance = parseFloat(senderWallet.balance);
+        const newBalance = oldBalance + parseFloat(transfer.amount);
+        await UserWallet.update(
+          { balance: newBalance },
+          {
+            where: {
+              id: senderWallet.id,
+            },
+            transaction: tran,
+          }
+        );
+        const walletTransaction = await WalletTransaction.create(
+          {
+            userId: transfer.senderId,
+            walletId: senderWallet.id,
+            type: "credit",
+            paymentAmt: transfer.amount,
+            paymentCurrency: transfer.currency,
+            oldWalletBalance: oldBalance,
+            newWalletBalance: newBalance,
+            transferId: transfer.id,
+            description: `Transfer rejected by sender, amount refunded to sender's wallet`,
+            status: "completed",
+          },
+          { transaction: tran }
+        );
+
+        await tran.commit();
+        const senderWalletDetails = await UserWallet.findOne({
+          where: {
+            userId: transfer.senderId,
+            currency: transfer.currency,
+          },
+        });
+        NotificationService.updatePendingTransferNotificationStatus(
+          transferId,
+          "rejected"
+        );
+        NotificationService.walletTransferRejectionBySenderNotification(
+          transferId,
+          i18n
+        );
+        return callback(null, {
+          data: {
+            walletTransaction,
+            senderWallet: senderWalletDetails,
+            transfer: { ...transfer.toJSON(), status: "rejected" },
+            message: "TRANSFER_REJECTED_SUCCESSFULLY",
+          },
+        });
+         
+
+     } catch (error) {
+        if (tran?.finished !== "commit") {
+          await tran.rollback();
+        }
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+        return callback(new Error("FAILED_TO_REJECT_TRANSFER"), null);
+    }
+
+  }
   static async getTransferHistory(
     { userId, page = 1, limit = 10, filter = {} },
     callback
@@ -453,26 +575,32 @@ export default class TransferService {
         [Op.or]: [{ senderId: userId }, { receiverId: userId }],
       };
 
-      if (filter.type && filter.type.length === 1 && filter.type.includes("incoming")) {
+      if (
+        filter.type &&
+        filter.type.length === 1 &&
+        filter.type.includes("incoming")
+      ) {
         whereClause = { receiverId: userId };
-      } else if (filter.type && filter.type.length === 1 && filter.type.includes("outgoing")) {
+      } else if (
+        filter.type &&
+        filter.type.length === 1 &&
+        filter.type.includes("outgoing")
+      ) {
         whereClause = { senderId: userId };
-            } else if (
+      } else if (
         filter.type &&
         Array.isArray(filter.type) &&
         filter.type.includes("incoming") &&
         filter.type.includes("outgoing")
-            ) {
-       
-              whereClause = {
-                [Op.or]: [{ senderId: userId }, { receiverId: userId }],
-              };
-            }
+      ) {
+        whereClause = {
+          [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+        };
+      }
       console.log("Where Clause:", whereClause);
       if (filter.status && filter.status.length > 0) {
         whereClause.status = { [Op.in]: filter.status };
       }
-      
 
       const transfers = await Transfer.findAll({
         where: whereClause,
@@ -551,4 +679,4 @@ export default class TransferService {
       throw new Error("FAILED_TO_GET_EXPIRED_TRANSFERS");
     }
   }
-  }
+}

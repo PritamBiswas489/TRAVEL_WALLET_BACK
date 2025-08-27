@@ -123,7 +123,7 @@ router.post("/execute-transfer", async (req, res, next) => {
  *   post:
  *     tags:
  *       - Auth-Transfer routes
- *     summary: Accept or reject a transfer
+ *     summary: Accept or reject a transfer by the receiver 
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
@@ -169,6 +169,55 @@ router.post("/accept-reject-transfer", async (req, res, next) => {
     const response = await TransferController.acceptRejectTransfer({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })
+
+/**
+ * @swagger
+ * /api/auth/transfer/reject-transfer-by-sender:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer routes
+ *     summary: Reject a transfer by the sender
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transferId:
+ *                 type: string
+ *                 description: Unique identifier of the transfer to reject
+ *             required:
+ *               - transferId
+ *     responses:
+ *       200:
+ *         description: Transfer rejected successfully by sender
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/reject-transfer-by-sender", async (req, res, next) => {
+    const response = await TransferController.rejectTransferBySender({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
 
 /**
  * @swagger
