@@ -13,7 +13,7 @@ import WhitelistMobilesService from "../services/whitelistMobiles.service.js";
 import userSettingsService from "../services/userSettings.service.js";
 import ContactListService from "../services/contactList.service.js";
 
-const { User, Op, UserKyc, UserWallet, UserFcm } = db;
+const { User, Op, UserKyc, UserWallet, UserFcm, UserCard, WalletPelePayment, WalletTransaction, ApiLogs, Transfer, TransferRequests, UserSettings, Notification  } = db;
 
 export default class ProfileController {
   /**
@@ -281,7 +281,7 @@ export default class ProfileController {
     } = request;
 
     try {
-      const userDetails = await User.findOne({ where: { id: user.id } });
+      const userDetails = await UserService.getUserDetails(user.id) ;
 
       if (!userDetails) {
         return {
@@ -293,8 +293,33 @@ export default class ProfileController {
         };
       }
 
-      await userDetails.destroy();
+      const wallets  = userDetails?.wallets?.find(wallet => parseFloat(wallet.balance) > 0);
+      if(wallets){
+          return {
+            status: 400,
+            data: [],
+            error: { message: i18n.__("USER_HAS_NON_ZERO_WALLET_BALANCE") },
+          };      
+      }
 
+      // Remove related data before deleting user
+      await Promise.all([
+        UserCard.destroy({ where: { userId: user.id } }),
+        WalletPelePayment.destroy({ where: { userId: user.id } }),
+        WalletTransaction.destroy({ where: { userId: user.id } }),
+        UserWallet.destroy({ where: { userId: user.id } }),
+        ApiLogs.destroy({ where: { userId: user.id } }),
+        UserKyc.destroy({ where: { userId: user.id } }),
+        UserFcm.destroy({ where: { userId: user.id } }),
+        Transfer.destroy({ where: { senderId: user.id } }),
+        Transfer.destroy({ where: { receiverId: user.id } }),
+        TransferRequests.destroy({ where: { senderId: user.id } }),
+        TransferRequests.destroy({ where: { receiverId: user.id } }),
+        UserSettings.destroy({ where: { userId: user.id } }),
+        Notification.destroy({ where: { userId: user.id } }),
+      ]);
+      await User.destroy({ where: { id: user.id } });
+     
       return {
         status: 200,
         data: [],
