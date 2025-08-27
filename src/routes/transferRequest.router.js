@@ -122,6 +122,57 @@ router.post("/accept-reject-transfer-request", async (req, res, next) => {
 })
 
 
+
+/**
+ * @swagger
+ * /api/auth/transfer-request/reject-transfer-request-by-sender:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer Requests routes
+ *     summary: Reject a transfer request by the sender
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transferRequestId:
+ *                 type: string
+ *                 description: Unique identifier of the transfer request to reject
+ *             required:
+ *               - transferRequestId
+ *     responses:
+ *       200:
+ *         description: Transfer request rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/reject-transfer-request-by-sender", async (req, res, next) => {
+    const response = await TransferRequestController.rejectTransferRequestBySender({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+})
+
+
 /**
  * @swagger
  * /api/auth/transfer-request/get-transfer-request-history:

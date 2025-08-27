@@ -15,6 +15,7 @@ export default class TransferRequestService {
     try {
       const senderUserDetails = await UserService.getUserDetails(senderUserId);
       const receiverUserDetails = await UserService.getUserDetails(receiverId);
+
       if (senderUserId === receiverId) {
         await tran.rollback();
         return handleCallback(
@@ -23,6 +24,7 @@ export default class TransferRequestService {
           callback
         );
       }
+
       if (!receiverUserDetails) {
         await tran.rollback();
         return handleCallback(
@@ -31,6 +33,7 @@ export default class TransferRequestService {
           callback
         );
       }
+
       if (receiverUserDetails?.kyc?.status !== "Approved") {
         await tran.rollback();
         return handleCallback(
@@ -39,14 +42,19 @@ export default class TransferRequestService {
           callback
         );
       }
+
+      // 🔒 Lock any existing pending request between sender and receiver
       const pendingTransferRequest = await TransferRequests.findOne({
         where: {
           senderId: senderUserId,
           receiverId: receiverId,
-
           status: "pending",
         },
+        lock: tran.LOCK.UPDATE, // ✅ lock this row
+        skipLocked: true, // ✅ avoids deadlocks if another tx is processing
+        transaction: tran,
       });
+
       if (pendingTransferRequest) {
         await tran.rollback();
         return handleCallback(
@@ -55,6 +63,7 @@ export default class TransferRequestService {
           callback
         );
       }
+
       const createTransferRequest = await TransferRequests.create(
         {
           senderId: senderUserId,
@@ -66,6 +75,7 @@ export default class TransferRequestService {
         },
         { transaction: tran }
       );
+
       await tran.commit();
 
       NotificationService.transferRequestNotification(
@@ -90,206 +100,290 @@ export default class TransferRequestService {
       );
     }
   }
-  static async acceptRejectTransferRequest(
-    { transferRequestId, userId, status, i18n, autoRejected },
-    callback
-  ) {
-    console.log(
-      "Accept/Reject Transfer Request",
-      transferRequestId,
-      userId,
-      status
-    );
-    const tran = await db.sequelize.transaction();
 
-    try {
-      const transferRequest = await TransferRequests.findOne({
-        where: {
-          id: transferRequestId,
-          receiverId: userId,
-          status: "pending",
+static async acceptRejectTransferRequest(
+  { transferRequestId, userId, status, i18n, autoRejected },
+  callback
+) {
+  console.log(
+    "Accept/Reject Transfer Request",
+    transferRequestId,
+    userId,
+    status
+  );
+  const tran = await db.sequelize.transaction();
+
+  try {
+    // 🔒 Lock the transferRequest row
+    const transferRequest = await TransferRequests.findOne({
+      where: {
+        id: transferRequestId,
+        receiverId: userId,
+        status: "pending",
+      },
+      transaction: tran,
+      lock: tran.LOCK.UPDATE, // <-- Row-level lock here
+    });
+
+    if (!transferRequest) {
+      await tran.rollback();
+      return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+    }
+
+    if (status === "rejected") {
+      await transferRequest.update(
+        { status: "rejected" },
+        { transaction: tran }
+      );
+      await tran.commit();
+
+      NotificationService.updatePendingTransferRequestNotificationStatus(
+        transferRequest.id,
+        "rejected"
+      );
+      NotificationService.transferRequestRejectionNotification(
+        transferRequest.id,
+        i18n,
+        autoRejected
+      );
+
+      return callback(null, {
+        data: {
+          transferRequest: {
+            ...transferRequest.toJSON(),
+            status: "rejected",
+          },
+          message: "TRANSFER_REQUEST_REJECTED_SUCCESSFULLY",
         },
       });
-      if (!transferRequest) {
-        await tran.rollback();
-        return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
-      }
-      // Check if the user is allowed to accept or reject the request
-      if (status === "rejected") {
-        await transferRequest.update(
-          { status: "rejected" },
-          { transaction: tran }
-        );
-        await tran.commit();
-        NotificationService.updatePendingTransferRequestNotificationStatus(
-          transferRequest.id,
-          "rejected"
-        );
-        NotificationService.transferRequestRejectionNotification(
-          transferRequest.id,
-          i18n,
-          autoRejected
-        );
-
-        return callback(null, {
-          data: {
-            transferRequest: {
-              ...transferRequest.toJSON(),
-              status: "rejected",
-            },
-            message: "TRANSFER_REQUEST_REJECTED_SUCCESSFULLY",
-          },
-        });
-      }
-      if (status === "accepted") {
-        const receiverUserDetails = await UserService.getUserDetails(
-          transferRequest.senderId
-        ); //sender will receiver money
-        const senderUserDetails = await UserService.getUserDetails(
-          transferRequest.receiverId
-        ); //request receiver will send money
-
-        const senderWallet = senderUserDetails.wallets.find(
-          (wallet) => wallet.currency === transferRequest.currency
-        );
-        if (!senderWallet) {
-          await tran.rollback();
-          return callback(
-            new Error("YOU_HAVE_NO_WALLET_FOR_REQUEST_CURRENCY"),
-            null
-          );
-        }
-        if (senderWallet.status !== "active" || senderWallet.locked === true) {
-          await tran.rollback();
-          return callback(new Error("CANT_SEND_MONEY"), null);
-        }
-        if (
-          parseFloat(senderWallet.balance) < parseFloat(transferRequest.amount)
-        ) {
-          await tran.rollback();
-          return callback(new Error("INSUFFICIENT_BALANCE"), null);
-        }
-
-        const senderOldBalance = parseFloat(senderWallet.balance);
-        const newSenderBalance =
-          senderOldBalance - parseFloat(transferRequest.amount);
-
-        let receiverWallet = receiverUserDetails.wallets.find(
-          (wallet) => wallet.currency === transferRequest.currency
-        );
-        const oldReceiverBalance = receiverWallet
-          ? parseFloat(receiverWallet.balance)
-          : 0;
-        const newReceiverBalance =
-          parseFloat(transferRequest.amount) +
-          (receiverWallet ? parseFloat(receiverWallet.balance) : 0);
-        if (!receiverWallet) {
-          receiverWallet = await UserWallet.create(
-            {
-              userId: transferRequest.senderId,
-              currency: transferRequest.currency,
-              balance: 0,
-            },
-            { transaction: tran }
-          );
-        }
-
-        await senderWallet.update(
-          { balance: newSenderBalance },
-          { transaction: tran }
-        );
-
-        await receiverWallet.update(
-          { balance: newReceiverBalance },
-          { transaction: tran }
-        );
-
-        await transferRequest.update(
-          { status: "approved" },
-          { transaction: tran }
-        );
-
-        const receiverWalletTransaction = await WalletTransaction.create(
-          {
-            userId: receiverUserDetails.id,
-            walletId: receiverWallet.id,
-            type: "credit",
-            paymentAmt: transferRequest.amount,
-            paymentCurrency: transferRequest.currency,
-            oldWalletBalance: oldReceiverBalance,
-            newWalletBalance: newReceiverBalance,
-            transferRequestId: transferRequest.id,
-            description: `Transfer request accepted, amount credited to receiver's wallet`,
-            status: "completed",
-          },
-          { transaction: tran }
-        );
-
-        const senderWalletTransaction = await WalletTransaction.create(
-          {
-            userId: senderUserDetails.id,
-            walletId: senderWallet.id,
-            type: "debit",
-            paymentAmt: transferRequest.amount,
-            paymentCurrency: transferRequest.currency,
-            oldWalletBalance: senderOldBalance,
-            newWalletBalance: newSenderBalance,
-            transferRequestId: transferRequest.id,
-            description: `Transfer request accepted, amount debited from sender's wallet`,
-            status: "completed",
-          },
-          { transaction: tran }
-        );
-
-        await tran.commit();
-        NotificationService.updatePendingTransferRequestNotificationStatus(
-          transferRequest.id,
-          "approved"
-        );
-
-        NotificationService.transferRequestApprovalNotification(
-          transferRequest.id,
-          i18n
-        );
-
-        const receiverWalletWhoGetAmt = await UserWallet.findOne({
-          where: {
-            userId: receiverUserDetails.id,
-            currency: transferRequest.currency,
-          },
-        });
-        const senderWalletWhoSendAmt = await UserWallet.findOne({
-          where: {
-            userId: senderUserDetails.id,
-            currency: transferRequest.currency,
-          },
-        });
-        return callback(null, {
-          data: {
-            receiverWalletTransaction,
-            senderWalletTransaction,
-            receiverWalletWhoGetAmt,
-            senderWalletWhoSendAmt,
-            transferRequest: {
-              ...transferRequest.toJSON(),
-              status: "approved",
-            },
-          },
-        });
-      }
-    } catch (error) {
-      if (tran?.finished !== "commit") {
-        await tran.rollback();
-      }
-
-      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return handleCallback(
-        new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"),
-        null,
-        callback
-      );
     }
+
+    if (status === "accepted") {
+      const receiverUserDetails = await UserService.getUserDetails(
+        transferRequest.senderId
+      ); // sender will receive money
+      const senderUserDetails = await UserService.getUserDetails(
+        transferRequest.receiverId
+      ); // request receiver will send money
+
+      // 🔒 Lock sender wallet row to prevent race conditions
+      let senderWallet = await UserWallet.findOne({
+        where: {
+          userId: senderUserDetails.id,
+          currency: transferRequest.currency,
+        },
+        transaction: tran,
+        lock: tran.LOCK.UPDATE,
+      });
+
+      if (!senderWallet) {
+        await tran.rollback();
+        return callback(
+          new Error("YOU_HAVE_NO_WALLET_FOR_REQUEST_CURRENCY"),
+          null
+        );
+      }
+      if (senderWallet.status !== "active" || senderWallet.locked === true) {
+        await tran.rollback();
+        return callback(new Error("CANT_SEND_MONEY"), null);
+      }
+      if (
+        parseFloat(senderWallet.balance) < parseFloat(transferRequest.amount)
+      ) {
+        await tran.rollback();
+        return callback(new Error("INSUFFICIENT_BALANCE"), null);
+      }
+
+      const senderOldBalance = parseFloat(senderWallet.balance);
+      const newSenderBalance =
+        senderOldBalance - parseFloat(transferRequest.amount);
+
+      // 🔒 Lock receiver wallet row
+      let receiverWallet = await UserWallet.findOne({
+        where: {
+          userId: receiverUserDetails.id,
+          currency: transferRequest.currency,
+        },
+        transaction: tran,
+        lock: tran.LOCK.UPDATE,
+      });
+
+      const oldReceiverBalance = receiverWallet
+        ? parseFloat(receiverWallet.balance)
+        : 0;
+      const newReceiverBalance =
+        parseFloat(transferRequest.amount) +
+        (receiverWallet ? parseFloat(receiverWallet.balance) : 0);
+
+      if (!receiverWallet) {
+        receiverWallet = await UserWallet.create(
+          {
+            userId: receiverUserDetails.id,
+            currency: transferRequest.currency,
+            balance: 0,
+          },
+          { transaction: tran }
+        );
+      }
+
+      // Update balances atomically
+      await senderWallet.update(
+        { balance: newSenderBalance },
+        { transaction: tran }
+      );
+
+      await receiverWallet.update(
+        { balance: newReceiverBalance },
+        { transaction: tran }
+      );
+
+      await transferRequest.update(
+        { status: "approved" },
+        { transaction: tran }
+      );
+
+      const receiverWalletTransaction = await WalletTransaction.create(
+        {
+          userId: receiverUserDetails.id,
+          walletId: receiverWallet.id,
+          type: "credit",
+          paymentAmt: transferRequest.amount,
+          paymentCurrency: transferRequest.currency,
+          oldWalletBalance: oldReceiverBalance,
+          newWalletBalance: newReceiverBalance,
+          transferRequestId: transferRequest.id,
+          description: `Transfer request accepted, amount credited to receiver's wallet`,
+          status: "completed",
+        },
+        { transaction: tran }
+      );
+
+      const senderWalletTransaction = await WalletTransaction.create(
+        {
+          userId: senderUserDetails.id,
+          walletId: senderWallet.id,
+          type: "debit",
+          paymentAmt: transferRequest.amount,
+          paymentCurrency: transferRequest.currency,
+          oldWalletBalance: senderOldBalance,
+          newWalletBalance: newSenderBalance,
+          transferRequestId: transferRequest.id,
+          description: `Transfer request accepted, amount debited from sender's wallet`,
+          status: "completed",
+        },
+        { transaction: tran }
+      );
+
+      await tran.commit();
+
+      NotificationService.updatePendingTransferRequestNotificationStatus(
+        transferRequest.id,
+        "approved"
+      );
+      NotificationService.transferRequestApprovalNotification(
+        transferRequest.id,
+        i18n
+      );
+
+      const receiverWalletWhoGetAmt = await UserWallet.findOne({
+        where: {
+          userId: receiverUserDetails.id,
+          currency: transferRequest.currency,
+        },
+      });
+      const senderWalletWhoSendAmt = await UserWallet.findOne({
+        where: {
+          userId: senderUserDetails.id,
+          currency: transferRequest.currency,
+        },
+      });
+
+      return callback(null, {
+        data: {
+          receiverWalletTransaction,
+          senderWalletTransaction,
+          receiverWalletWhoGetAmt,
+          senderWalletWhoSendAmt,
+          transferRequest: {
+            ...transferRequest.toJSON(),
+            status: "approved",
+          },
+        },
+      });
+    }
+  } catch (error) {
+    if (tran?.finished !== "commit") {
+      await tran.rollback();
+    }
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+    return handleCallback(
+      new Error("FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"),
+      null,
+      callback
+    );
   }
+}
+
+
+static async rejectTransferRequestBySender(  { transferRequestId, userId,   i18n },
+  callback){
+      const tran = await db.sequelize.transaction();
+
+  try {
+    const transferRequest = await TransferRequests.findOne({
+      where: {
+        id: transferRequestId,
+        senderId: userId,
+        status: "pending",
+      },
+      transaction: tran,
+      lock: tran.LOCK.UPDATE, // <-- Row-level lock here
+    });
+    if (!transferRequest) {
+      await tran.rollback();
+      return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+    }
+
+      await transferRequest.update(
+        { status: "rejected" },
+        { transaction: tran }
+      );
+      await tran.commit();
+
+      NotificationService.updatePendingTransferRequestNotificationStatus(
+        transferRequest.id,
+        "rejected"
+      );
+      NotificationService.transferRequestRejectionBySenderNotification(
+        transferRequest.id,
+        i18n
+      );
+
+      return callback(null, {
+        data: {
+          transferRequest: {
+            ...transferRequest.toJSON(),
+            status: "rejected",
+          },
+          message: "TRANSFER_REQUEST_REJECTED_SUCCESSFULLY",
+        },
+      });
+  } catch (error) {
+    if (tran?.finished !== "commit") {
+      await tran.rollback();
+    }
+    console.log(error);
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+    return handleCallback(
+      new Error("FAILED_TO_REJECT_TRANSFER_REQUEST"),
+      null,
+      callback
+    );
+  }
+
+
+}
+
 
   static async getTransferRequestById(transferRequestId, callback) {
     try {

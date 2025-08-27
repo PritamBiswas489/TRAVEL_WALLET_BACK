@@ -76,6 +76,39 @@ export default class TransferRequestController {
       );
     });
   }
+  static async rejectTransferRequestBySender(request){
+      const {
+          headers: { i18n },
+          user,
+          payload,
+      } = request;
+
+      const transferRequestId = payload.transferRequestId;
+
+      return new Promise((resolve) => {
+          TransferRequestService.rejectTransferRequestBySender(
+              { userId: user.id, transferRequestId, i18n },
+              (err, response) => {
+                  if (err) {
+                      return resolve({
+                          status: 400,
+                          data: null,
+                          error: {
+                              message: i18n.__("FAILED_TO_REJECT_TRANSFER_REQUEST"),
+                              reason: err.message,
+                          },
+                      });
+                  }
+                  return resolve({
+                      status: 200,
+                      data: response.data,
+                      message: i18n.__("TRANSFER_REQUEST_REJECTED_SUCCESSFULLY"),
+                      error: null,
+                  });
+              }
+          );
+      });
+  }
   static async getTransferRequestHistory(request) {
     const {
       headers: { i18n },

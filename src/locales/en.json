@@ -142,8 +142,12 @@
 	"TRANSFER_REQUEST_EXECUTED_SUCCESSFULLY": "Transfer request executed successfully.",
 	"TRANSFER_REQUEST_NOTIFICATION_TITLE": "Transfer Request Received",
 	"TRANSFER_REQUEST_NOTIFICATION_BODY": "{{amount}} has been requested from you by {{senderPhoneNumber}}.",
+	"TRANSFER_REQUEST_NOTIFICATION_TITLE_SENDER": "Transfer Request Sent",
+	"TRANSFER_REQUEST_NOTIFICATION_BODY_SENDER": "{{amount}} has been requested from {{receiverPhoneNumber}} by you.",
 	"TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE": "Transfer Request Rejected",
 	"TRANSFER_REQUEST_REJECTION_NOTIFICATION_BODY": "Your transfer request of {{amount}} to {{receiverPhoneNumber}} was rejected.",
+	"SENDER_TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE": "Transfer Request Rejected",
+	"SENDER_TRANSFER_REQUEST_REJECTION_NOTIFICATION_BODY": "Your transfer request of {{amount}} to {{receiverPhoneNumber}} was rejected by you.",
 	"TRANSFER_REQUEST_AUTO_REJECTION_NOTIFICATION_BODY": "Your transfer request of {{amount}} to {{receiverPhoneNumber}} was automatically rejected due to no response from the receiver within 24 hours.",
 	"TRANSFER_REQUEST_REJECTED_SUCCESSFULLY": "Transfer request rejected successfully.",
 	"TRANSFER_APPROVED_SUCCESSFULLY": "Transfer request approved successfully.",
@@ -232,5 +236,7 @@
 	"DEVICE_ID_UPDATED": "Device ID updated successfully.",
 	"YOUR_DEVICE_ID_HAS_BEEN_UPDATED": "You have been logged out because your account was accessed from another device.",
 	"CRON_TRACK_LIST_FETCHED_SUCCESSFULLY": "CRON_TRACK_LIST_FETCHED_SUCCESSFULLY",
-	"CONTACT_LIST_CLEARED_SUCCESSFULLY": "CONTACT_LIST_CLEARED_SUCCESSFULLY"
+	"CONTACT_LIST_CLEARED_SUCCESSFULLY": "CONTACT_LIST_CLEARED_SUCCESSFULLY",
+	"FAILED_TO_REJECT_TRANSFER_REQUEST": "Failed to reject transfer request.",
+	"FAILED_TO_REJECT_TRANSFER": "Failed to reject transfer."	
 }
