@@ -421,13 +421,12 @@ export default class ProfileController {
     } = request;
 
     try {
-      const [notifications, totalCount, totalUnread] = await Promise.all([
+      const [notifications, totalCount] = await Promise.all([
         NotificationService.getNotifications(
           user.id,
           payload?.page || 1,
           payload?.limit || 10
         ),
-        NotificationService.countNotifications(user.id),
         NotificationService.countUnreadNotifications(user.id),
       ]);
 
@@ -436,7 +435,6 @@ export default class ProfileController {
         data: {
           notifications,
           totalCount,
-          totalUnread,
         },
         message: i18n.__("USER_NOTIFICATIONS_FETCHED_SUCCESSFULLY"),
         error: {},

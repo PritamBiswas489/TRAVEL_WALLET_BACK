@@ -343,34 +343,7 @@ router.post("/get-notifications", async (req, res) => {
 });
 
 
-/**
- * @swagger
- * /api/auth/profile/mark-notification-as-read:
- *   post:
- *     summary: Mark a notification as read
- *     tags: [Auth-Profile routes]
- *     security:
- *       - bearerAuth: []
- *       - refreshToken: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               notificationId:
- *                 type: string
- *                 description: The ID of the notification to mark as read
- *                 example: "1"
- *     responses:
- *       200:
- *         description: Success - Notification marked as read
- */
-router.post("/mark-notification-as-read", async (req, res) => {
-   const response = await ProfileController.markNotificationAsRead({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-   res.return(response);
-});
+
 /**
  * @swagger
  * /api/auth/profile/mark-all-notifications-as-read:
