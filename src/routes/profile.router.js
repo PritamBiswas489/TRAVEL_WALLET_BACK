@@ -381,6 +381,24 @@ router.get("/get-unread-notifications-count", async (req, res) => {
 })
 /**
  * @swagger
+ * /api/auth/profile/notification-bell-icon-color:
+ *   get:
+ *     summary: Get the color of the notification bell icon for the user
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Notification bell icon color retrieved
+ */
+router.get("/notification-bell-icon-color", async (req, res) => {
+   const response = await ProfileController.getNotificationBellIconColor({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+/**
+ * @swagger
  * /api/auth/profile/get-last-unread-notification:
  *   get:
  *     summary: Get the last unread notification for the user

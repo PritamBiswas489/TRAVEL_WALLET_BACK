@@ -585,6 +585,30 @@ export default class ProfileController {
       };
     }
   }
+  static async getNotificationBellIconColor(request){
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const color = await NotificationService.getNotificationBellIconColor(user.id);
+
+      return {
+        status: 200,
+        data: { color },
+        message: i18n.__("NOTIFICATION_BELL_ICON_COLOR_FETCHED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
   static async getLastPendingTransferNotification(request) {
     const {
       headers: { i18n },

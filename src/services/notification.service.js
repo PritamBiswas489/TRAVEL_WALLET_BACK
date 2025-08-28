@@ -624,6 +624,17 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       return 0;
     }
   }
+  static async getNotificationBellIconColor(userId) {
+    try {
+      const hasUnreadNotifications = await Notification.count({
+        where: { userId, metadata: { status: { [Op.eq]: 'pending' } } },
+      });
+      return hasUnreadNotifications > 0 ? "green" : "red";
+    } catch (error) {
+      console.error("Error fetching notification bell icon color:", error);
+      return "red";
+    }
+  } 
   static async getLastPendingTransferNotification(userId) {
     // console.log(
     //   "Fetching last pending transfer notification for user:",
