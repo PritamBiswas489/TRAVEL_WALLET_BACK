@@ -273,7 +273,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         if (error)
           return console.error("Error fetching transfer details:", error);
 
-        const { senderId, receiverId, amount, currency } = result.data;
+        const { senderId, receiverId, amount, currency , createdAt } = result.data;
         const transferJSONB = result.data.get({ plain: true });
         const senderPhoneNumber = result?.data?.sender?.phoneNumber;
         const receiverPhoneNumber = result?.data?.receiver?.phoneNumber;
@@ -285,7 +285,11 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           receiverPhoneNumber,
         });
 
-        if(message) {
+        const createAtTimeMoment = moment.parseZone(createdAt);
+        const expiredTime = createAtTimeMoment.add(24, "hours");
+        transferJSONB.expiredTime = expiredTime.format("YYYY-MM-DD HH:mm:ss.SSSZ");
+
+        if (message) {
           messageBody += `\n\n${message}`;  
         }
 
