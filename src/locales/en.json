@@ -239,5 +239,6 @@
 	"CONTACT_LIST_CLEARED_SUCCESSFULLY": "Contact list cleared successfully.",
 	"FAILED_TO_REJECT_TRANSFER_REQUEST": "Failed to reject transfer request.",
 	"FAILED_TO_REJECT_TRANSFER": "Failed to reject transfer.",
-	"USER_HAS_NON_ZERO_WALLET_BALANCE": "You have a non-zero wallet balance."
+	"USER_HAS_NON_ZERO_WALLET_BALANCE": "You have a non-zero wallet balance.",
+	"UNAUTHORIZED_ACCESS": "UNAUTHORIZED_ACCESS"
 }

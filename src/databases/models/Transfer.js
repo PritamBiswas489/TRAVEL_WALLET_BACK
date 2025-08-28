@@ -27,6 +27,10 @@ export default function Transfer(sequelize, DataTypes) {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      message: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       tableName: "transfer",

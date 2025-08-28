@@ -52,10 +52,11 @@ export default class TransferController {
     const receiverId = payload.receiverId;
     const currency = payload.currency;
     const amount = payload.amount;
+    const message = payload?.message || ""  ;
 
     return new Promise((resolve) => {
       TransferService.executeTransfer(
-        { senderUserId: user.id, receiverId, currency, amount, i18n },
+        { senderUserId: user.id, receiverId, currency, amount, message, i18n },
         (err, response) => {
           if (err) {
             return resolve({

@@ -80,7 +80,8 @@ export default class TransferRequestService {
 
       NotificationService.transferRequestNotification(
         createTransferRequest.id,
-        i18n
+        i18n,
+        message
       );
 
       return handleCallback(
@@ -118,7 +119,6 @@ static async acceptRejectTransferRequest(
     const transferRequest = await TransferRequests.findOne({
       where: {
         id: transferRequestId,
-        receiverId: userId,
         status: "pending",
       },
       transaction: tran,
@@ -128,6 +128,11 @@ static async acceptRejectTransferRequest(
     if (!transferRequest) {
       await tran.rollback();
       return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+    }
+
+    if (transferRequest.receiverId !== userId) {
+      await tran.rollback();
+      return callback(new Error("UNAUTHORIZED_ACCESS"), null);
     }
 
     if (status === "rejected") {
@@ -333,7 +338,6 @@ static async rejectTransferRequestBySender(  { transferRequestId, userId,   i18n
     const transferRequest = await TransferRequests.findOne({
       where: {
         id: transferRequestId,
-        senderId: userId,
         status: "pending",
       },
       transaction: tran,
@@ -342,6 +346,11 @@ static async rejectTransferRequestBySender(  { transferRequestId, userId,   i18n
     if (!transferRequest) {
       await tran.rollback();
       return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+    }
+
+    if (transferRequest.senderId !== userId) {
+      await tran.rollback();
+      return callback(new Error("UNAUTHORIZED_ACCESS"), null);
     }
 
       await transferRequest.update(

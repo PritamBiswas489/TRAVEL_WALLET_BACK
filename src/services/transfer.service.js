@@ -164,7 +164,7 @@ export default class TransferService {
     }
   }
   static async executeTransfer(
-    { senderUserId, receiverId, currency, amount, i18n },
+    { senderUserId, receiverId, currency, amount, message, i18n },
     callback
   ) {
     const tran = await db.sequelize.transaction();
@@ -245,6 +245,7 @@ export default class TransferService {
           currency: currency,
           amount: amount,
           status: "pending",
+          message: message,   
         },
         { transaction: tran }
       );
@@ -312,7 +313,6 @@ export default class TransferService {
       const transfer = await Transfer.findOne({
         where: {
           id: transferId,
-          receiverId: userId,
           status: "pending",
         },
         lock: tran.LOCK.UPDATE, // 🔒 lock the row
@@ -322,6 +322,10 @@ export default class TransferService {
       if (!transfer) {
         await tran.rollback();
         return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+      }
+      if (transfer.receiverId !== userId) {
+        await tran.rollback();
+        return callback(new Error("UNAUTHORIZED_ACCESS"), null);
       }
       // Check if receiver rejected the transfer
       if (status === "rejected") {
@@ -482,7 +486,6 @@ export default class TransferService {
         const transfer = await Transfer.findOne({
           where: {
             id: transferId,
-            senderId: userId,
             status: "pending",
           },
           lock: tran.LOCK.UPDATE, // 🔒 lock the row
@@ -492,6 +495,10 @@ export default class TransferService {
         if (!transfer) {
           await tran.rollback();
           return callback(new Error("TRANSFER_NOT_FOUND_OR_NOT_PENDING"), null);
+        }
+        if (transfer.senderId !== userId) {
+          await tran.rollback();
+          return callback(new Error("UNAUTHORIZED_ACCESS"), null);
         }
         // Sender can only reject a pending transfer
         await transfer.update({ status: "rejected" }, { transaction: tran });

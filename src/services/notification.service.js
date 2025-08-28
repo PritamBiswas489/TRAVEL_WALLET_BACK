@@ -13,16 +13,20 @@ export default class NotificationService {
       if (error)
         return console.error("Error fetching transfer details:", error);
 
-      const { senderId, receiverId, amount, currency, sender, receiver, id } =
+      const { senderId, receiverId, amount, currency, sender, receiver, id, message } =
         result.data;
       const transferJSONB = result.data.get({ plain: true });
       const currencySymbol = getcurrencySymbols(currency) || currency;
       const messageTitle = i18n.__("TRANSFER_NOTIFICATION_TITLE");
-      const messageBody = i18n.__("TRANSFER_NOTIFICATION_BODY", {
+      let messageBody = i18n.__("TRANSFER_NOTIFICATION_BODY", {
         amount: String(amount) + currencySymbol,
         senderPhoneNumber: sender?.phoneNumber,
         receiverPhoneNumber: receiver?.phoneNumber,
       });
+      
+      if(message) {
+        messageBody += `\n\n${message}`;
+      }
 
       const notificationData = await Notification.create({
         userId: receiverId,
@@ -249,7 +253,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       );
     });
   }
-  static async transferRequestNotification(transferRequestId, i18n) {
+  static async transferRequestNotification(transferRequestId, i18n, message) {
     TransferRequestService.getTransferRequestById(
       transferRequestId,
       async (error, result) => {
@@ -262,11 +266,15 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         const receiverPhoneNumber = result?.data?.receiver?.phoneNumber;
         const currencySymbol = getcurrencySymbols(currency) || currency;
         const messageTitle = i18n.__("TRANSFER_REQUEST_NOTIFICATION_TITLE");
-        const messageBody = i18n.__("TRANSFER_REQUEST_NOTIFICATION_BODY", {
+        let messageBody = i18n.__("TRANSFER_REQUEST_NOTIFICATION_BODY", {
           amount: String(amount) + currencySymbol,
           senderPhoneNumber,
           receiverPhoneNumber,
         });
+
+        if(message) {
+          messageBody += `\n\n${message}`;  
+        }
 
         const notificationData = await Notification.create({
           userId: receiverId,

@@ -84,6 +84,9 @@ router.post('/check-receiver-status', async (req, res, next) => {
  *               amount:
  *                 type: number
  *                 description: Amount to transfer
+ *               message:
+ *                 type: string
+ *                 description: Optional message for the transfer
  *             required:
  *               - receiverId
  *               - currency
