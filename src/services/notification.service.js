@@ -6,6 +6,7 @@ import PushNotificationService from "./pushNotification.service.js";
 import TransferService from "./transfer.service.js";
 import { getcurrencySymbols } from "../libraries/utility.js";
 import TransferRequestService from "./transferRequest.service.js";
+import moment from "moment";
 
 export default class NotificationService {
   static async walletTransferNotification(transferId, i18n) {
@@ -13,8 +14,10 @@ export default class NotificationService {
       if (error)
         return console.error("Error fetching transfer details:", error);
 
-      const { senderId, receiverId, amount, currency, sender, receiver, id, message } =
+      const { senderId, receiverId, amount, currency, sender, receiver, id, message, createdAt } =
         result.data;
+
+        
       const transferJSONB = result.data.get({ plain: true });
       const currencySymbol = getcurrencySymbols(currency) || currency;
       const messageTitle = i18n.__("TRANSFER_NOTIFICATION_TITLE");
@@ -23,7 +26,17 @@ export default class NotificationService {
         senderPhoneNumber: sender?.phoneNumber,
         receiverPhoneNumber: receiver?.phoneNumber,
       });
-      
+
+      const createAtTimeMoment = moment.parseZone(createdAt);
+      const expiredTime = createAtTimeMoment.add(24, "hours");
+      transferJSONB.expiredTime = expiredTime.format("YYYY-MM-DD HH:mm:ss.SSSZ");
+     
+      // const transferCreatedTime = DateTime.fromISO(createdAt, { zone: "utc" });
+      // const expiredTime = transferCreatedTime.plus({ hours: 24 });
+
+      // console.log("transferCreatedTime", transferCreatedTime);
+      // console.log("Expired Time", expiredTime.toFormat("yyyy-MM-dd HH:mm:ss.SSSZZ"));
+
       if(message) {
         messageBody += `\n\n${message}`;
       }
@@ -539,12 +552,42 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
   static async getNotifications(userId, page, limit) {
     try {
       const notifications = await Notification.findAll({
-        where: { userId , isRead: false },
+        where: { userId, isRead: false },
         order: [["createdAt", "DESC"]],
         limit,
         offset: (page - 1) * limit,
       });
-      return notifications;
+
+      // Add remainingTime calculation for notifications with expiredTime
+      const now = moment();
+      const notificationsWithRemainingTime = notifications.map(notification => {
+        const meta = notification.metadata;
+        let remainingTime = null;
+        if (meta && meta.expiredTime) {
+          const expiredMoment = moment(meta.expiredTime, "YYYY-MM-DD HH:mm:ss.SSSZ");
+          const diffSeconds = expiredMoment.diff(now, "seconds");
+          if (diffSeconds > 0) {
+            const duration = moment.duration(diffSeconds, "seconds");
+            if (duration.asDays() >= 1) {
+              remainingTime = `${Math.floor(duration.asDays())} day(s)`;
+            } else if (duration.asHours() >= 1) {
+              remainingTime = `${Math.floor(duration.asHours())} hour(s)`;
+            } else if (duration.asMinutes() >= 1) {
+              remainingTime = `${Math.floor(duration.asMinutes())} min(s)`;
+            } else {
+              remainingTime = `${Math.floor(duration.asSeconds())} sec(s)`;
+            }
+          } else {
+            remainingTime = "Expired";
+          }
+        }
+        return {
+          ...notification.toJSON(),
+          remainingTime,
+        };
+      });
+
+      return notificationsWithRemainingTime;
     } catch (error) {
       console.error("Error fetching notifications:", error);
       return [];

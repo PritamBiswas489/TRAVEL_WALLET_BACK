@@ -1,3 +1,5 @@
+import moment from "moment-timezone";
+import "../../config/environment.js";
 export default function Transfer(sequelize, DataTypes) {
   const Transfer = sequelize.define(
     "Transfer",
@@ -37,5 +39,18 @@ export default function Transfer(sequelize, DataTypes) {
       timestamps: true,
     }
   );
+  Transfer.prototype.toJSON = function () {
+    const values = { ...this.dataValues };
+
+    if (values.createdAt) {
+      values.createdAt = moment.utc(values.createdAt).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+    }
+
+    if (values.updatedAt) {
+      values.updatedAt = moment.utc(values.updatedAt).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+    }
+
+    return values;
+  };
   return Transfer;
 }
