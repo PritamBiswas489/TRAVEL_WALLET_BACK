@@ -539,7 +539,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
   static async getNotifications(userId, page, limit) {
     try {
       const notifications = await Notification.findAll({
-        where: { userId },
+        where: { userId , isRead: false },
         order: [["createdAt", "DESC"]],
         limit,
         offset: (page - 1) * limit,
@@ -586,7 +586,14 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       const [updatedCount] = await Notification.update(
         { isRead: true },
         {
-          where: { userId, isRead: false },
+          where: {
+        userId,
+        isRead: false,
+        [Op.or]: [
+          { metadata: null }, 
+          { metadata: { status: { [Op.ne]: 'pending' } } }
+        ],
+          },
         }
       );
       return updatedCount > 0;
@@ -709,13 +716,14 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
        if(notification) {
         notification.set('metadata', { ...notification.metadata, status });
         await notification.save();
-        return notification;
+        
        }
        if(senderNotification) {
          senderNotification.set('metadata', { ...senderNotification.metadata, status });
          await senderNotification.save();
-         return senderNotification;
+         
        }
+       return { notification, senderNotification };
     } catch (error) {
       console.error("Error fetching pending transfer notifications:", error);
       return null;
