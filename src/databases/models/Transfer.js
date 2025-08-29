@@ -33,6 +33,10 @@ export default function Transfer(sequelize, DataTypes) {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      expireAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: "transfer",
@@ -43,11 +47,84 @@ export default function Transfer(sequelize, DataTypes) {
     const values = { ...this.dataValues };
 
     if (values.createdAt) {
-      values.createdAt = moment.utc(values.createdAt).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+      values.createdAt = moment
+        .utc(values.createdAt)
+        .tz(process.env.TIMEZONE)
+        .format("YYYY-MM-DD HH:mm:ss");
     }
 
     if (values.updatedAt) {
-      values.updatedAt = moment.utc(values.updatedAt).tz(process.env.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+      values.updatedAt = moment
+        .utc(values.updatedAt)
+        .tz(process.env.TIMEZONE)
+        .format("YYYY-MM-DD HH:mm:ss");
+    }
+
+    if (values.expireAt) {
+      const now = moment();
+      const expiredMoment = moment(values.expireAt);
+      const diffSeconds = expiredMoment.diff(now, "seconds");
+      let remainingTime = null;
+      if (diffSeconds > 0) {
+        const duration = moment.duration(diffSeconds, "seconds");
+        if (duration.asDays() >= 1) {
+          remainingTime = `${Math.floor(duration.asDays())} day(s)`;
+        } else if (duration.asHours() >= 1) {
+          remainingTime = `${Math.floor(duration.asHours())} hour(s)`;
+        } else if (duration.asMinutes() >= 1) {
+          remainingTime = `${Math.floor(duration.asMinutes())} min(s)`;
+        } else {
+          remainingTime = `${Math.floor(duration.asSeconds())} sec(s)`;
+        }
+      } else {
+        remainingTime = "Expired";
+      }
+      values.remainingTime = remainingTime;
+    } else {
+      values.remainingTime = null;
+    }
+
+    return values;
+  };
+  Transfer.prototype.formatResponse = function () {
+    const values = { ...this.get({ plain: true }) };
+
+    if (values.createdAt) {
+      values.createdAt = moment
+        .utc(values.createdAt)
+        .tz(process.env.TIMEZONE)
+        .format("YYYY-MM-DD HH:mm:ss");
+    }
+
+    if (values.updatedAt) {
+      values.updatedAt = moment
+        .utc(values.updatedAt)
+        .tz(process.env.TIMEZONE)
+        .format("YYYY-MM-DD HH:mm:ss");
+    }
+
+    if (values.expireAt) {
+      const now = moment();
+      const expiredMoment = moment(values.expireAt);
+      const diffSeconds = expiredMoment.diff(now, "seconds");
+      let remainingTime = null;
+      if (diffSeconds > 0) {
+        const duration = moment.duration(diffSeconds, "seconds");
+        if (duration.asDays() >= 1) {
+          remainingTime = `${Math.floor(duration.asDays())} day(s)`;
+        } else if (duration.asHours() >= 1) {
+          remainingTime = `${Math.floor(duration.asHours())} hour(s)`;
+        } else if (duration.asMinutes() >= 1) {
+          remainingTime = `${Math.floor(duration.asMinutes())} min(s)`;
+        } else {
+          remainingTime = `${Math.floor(duration.asSeconds())} sec(s)`;
+        }
+      } else {
+        remainingTime = "Expired";
+      }
+      values.remainingTime = remainingTime;
+    } else {
+      values.remainingTime = null;
     }
 
     return values;

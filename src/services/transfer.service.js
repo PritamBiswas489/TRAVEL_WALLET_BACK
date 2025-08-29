@@ -8,6 +8,7 @@ import { handleCallback } from "../libraries/utility.js";
 import NotificationService from "./notification.service.js";
 import ContactListService from "./contactList.service.js";
 import WhitelistMobilesService from "./whitelistMobiles.service.js";
+import moment from "moment";
 
 export default class TransferService {
   static async checkReceiverStatus({ userId, mobileNumber, type }, callback) {
@@ -249,6 +250,12 @@ export default class TransferService {
         },
         { transaction: tran }
       );
+
+
+      const createAtTimeMoment = moment.parseZone(createTransfer.createdAt);
+      const expiredTime = createAtTimeMoment.add(24, "hours");
+      createTransfer.expireAt =  expiredTime.format("YYYY-MM-DD HH:mm:ss.SSSZ");
+      await createTransfer.save({ transaction: tran });
 
       // Create debit transaction record
       const createTransaction = await WalletTransaction.create(

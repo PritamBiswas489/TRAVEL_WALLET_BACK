@@ -5,6 +5,7 @@ import UserService from "./user.service.js";
 const { Op, User, TransferRequests, WalletTransaction, UserWallet } = db;
 import { handleCallback } from "../libraries/utility.js";
 import NotificationService from "./notification.service.js";
+import moment from "moment";
 
 export default class TransferRequestService {
   static async executeTransferRequest(
@@ -75,6 +76,10 @@ export default class TransferRequestService {
         },
         { transaction: tran }
       );
+       const createAtTimeMoment = moment.parseZone(createTransferRequest.createdAt);
+       const expiredTime = createAtTimeMoment.add(24, "hours");
+       createTransferRequest.expireAt = expiredTime.format("YYYY-MM-DD HH:mm:ss.SSSZ");
+       await createTransferRequest.save({ transaction: tran });
 
       await tran.commit();
 
