@@ -180,10 +180,17 @@ export default class ContactListService {
       }
 
   }
-  static async clearContactList(userId, callback) {
+  static async clearContactList(userId, type, callback) {
     try {
+       if (!["send", "request"].includes(type)) {
+            return handleCallback(
+            new Error("TYPE_REQUIRED_SEND_REQUEST"),
+            null,
+            callback
+            );
+        }
       await UserContactList.destroy({
-        where: { userId },
+        where: { userId, type },
       });
       return handleCallback(null, { data: { success: true } }, callback);
     } catch (error) {

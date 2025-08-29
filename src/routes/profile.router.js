@@ -482,6 +482,13 @@ router.post("/add-mobile-number-in-contact-list", async (req, res) => {
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Type of contact list to clear (e.g., "send", "request")
  *     responses:
  *       200:
  *         description: Success - Contact list cleared

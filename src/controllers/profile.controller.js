@@ -681,8 +681,10 @@ export default class ProfileController {
       user,
     } = request;
 
+    const type = request?.payload?.type || 'all'; // all or whitelist
+
     return new Promise((resolve) => {
-      ContactListService.clearContactList(user.id, (err, response) => {
+      ContactListService.clearContactList(user.id, type, (err, response) => {
         if (err) {
           return resolve({
             status: 400,
