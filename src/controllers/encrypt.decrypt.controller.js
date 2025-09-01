@@ -1,6 +1,7 @@
 import "../config/environment.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
 import { buildEncryptedRequest } from "../services/crypto.client.service.js";
+import * as Sentry from "@sentry/node";
 
 export default class EncryptDecryptController {
   static async encryptRequest(request) {
