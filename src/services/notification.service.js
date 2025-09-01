@@ -24,7 +24,9 @@ export default class NotificationService {
       let messageBody = i18n.__("TRANSFER_NOTIFICATION_BODY", {
         amount: String(amount) + currencySymbol,
         senderPhoneNumber: sender?.phoneNumber,
+        senderName: sender?.name || "",
         receiverPhoneNumber: receiver?.phoneNumber,
+        receiverName: receiver?.name || "",
       });
 
       const createAtTimeMoment = moment.parseZone(createdAt);
@@ -72,7 +74,9 @@ export default class NotificationService {
        const messageTitleSender =  i18n.__("TRANSFER_NOTIFICATION_TITLE_SENDER");
        const messageBodySender = i18n.__("TRANSFER_NOTIFICATION_BODY_SENDER", {
          amount: String(amount) + currencySymbol,
+         senderName: sender?.name || "",
          senderPhoneNumber: sender?.phoneNumber,
+         receiverName: receiver?.name || "",
          receiverPhoneNumber: receiver?.phoneNumber,
        });
        const sendNotificationData = await Notification.create({
@@ -124,11 +128,13 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       let messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_BY_SENDER", {
         amount: String(amount) + currencySymbol,
         receiverPhoneNumber: receiver?.phoneNumber,
+        receiverName: receiver?.name || "",
       });
       if(autoRejected) {
         messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_AUTO", {
           amount: String(amount) + currencySymbol,
           receiverPhoneNumber: receiver?.phoneNumber,
+          receiverName: receiver?.name || "",
         });
       }
 
@@ -177,11 +183,13 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       let messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY", {
         amount: String(amount) + currencySymbol,
         receiverPhoneNumber: receiver?.phoneNumber,
+        receiverName: receiver?.name || "",
       });
       if(autoRejected) {
         messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_AUTO", {
           amount: String(amount) + currencySymbol,
           receiverPhoneNumber: receiver?.phoneNumber,
+          receiverName: receiver?.name || "",
         });
       }
 
@@ -231,6 +239,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       const messageBody = i18n.__("TRANSFER_ACCEPTED_NOTIFICATION_BODY", {
         amount: String(amount) + currencySymbol,
         receiverPhoneNumber: receiver?.phoneNumber,
+        receiverName: receiver?.name || "",
       });
 
       const notificationData = await Notification.create({
@@ -283,6 +292,8 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           amount: String(amount) + currencySymbol,
           senderPhoneNumber,
           receiverPhoneNumber,
+          senderName: result?.data?.sender?.name || "",
+          receiverName: result?.data?.receiver?.name || "",
         });
 
         const createAtTimeMoment = moment.parseZone(createdAt);
@@ -325,6 +336,8 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           amount: String(amount) + currencySymbol,
           senderPhoneNumber,
           receiverPhoneNumber,
+          senderName: result?.data?.sender?.name || "",
+          receiverName: result?.data?.receiver?.name || "",
         });
         const senderNotificationData = await Notification.create({
           userId: senderId,
@@ -383,6 +396,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           {
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
+            receiverName: receiver?.name || "",
           }
         );
         if (autoRejected) {
@@ -391,6 +405,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             {
               amount: String(amount) + currencySymbol,
               receiverPhoneNumber,
+              receiverName: receiver?.name || "",
             }
           );
         }
@@ -452,6 +467,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           {
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
+            receiverName: receiver?.name || "",
           }
         );
         
@@ -515,6 +531,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           {
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
+            receiverName: receiver?.name || "",
           }
         );
 
