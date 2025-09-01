@@ -36,6 +36,7 @@ const options = {
         description: "KYC webhook endpoints",
       },
       { name: "Currency routes", description: "Currency management endpoints" },
+      { name: "Encrypt-Decrypt routes", description: "Encryption and decryption request endpoints" },
       {
         name: "Auth-Deposit routes",
         description: "Pelecard deposit endpoints",

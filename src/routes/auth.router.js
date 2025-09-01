@@ -8,6 +8,7 @@ import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
 import { default as kycRouter } from './kyc.router.js';
 import { default as transferRouter } from './transfer.router.js';
 import { default as transferRequestRouter } from './transferRequest.router.js';
+import { default as encryptionRouter } from './encryption.router.js';
 
  
 const router = express.Router();
@@ -23,5 +24,6 @@ router.use('/wallet', walletRouter);
 router.use('/kyc', kycRouter);
 router.use('/transfer', transferRouter);
 router.use('/transfer-request', transferRequestRouter);
+router.use('/crypto', encryptionRouter);
 
 export default router;
