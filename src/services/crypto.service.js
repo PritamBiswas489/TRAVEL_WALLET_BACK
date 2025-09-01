@@ -7,12 +7,11 @@ import {
   randomBytes,
   sign,
   verify,
-  diffieHellman 
+  diffieHellman,
 } from "crypto";
 
-export default class CryptoService {
-  static async deriveAesKey({ privPem, pubPem, salt }) {
-    const privKey = createPrivateKey(privPem);
+export function deriveAesKey({ privPem, pubPem, salt }) {
+  const privKey = createPrivateKey(privPem);
   const pubKey = createPublicKey(pubPem);
 
   // Derive raw shared secret (X25519)
@@ -26,9 +25,9 @@ export default class CryptoService {
     Buffer.from("wallet-transfer-v1"),
     32
   );
-  }
+}
 
-static async encryptJson(aesKey, obj) {
+export function encryptJson(aesKey, obj) {
   const iv = randomBytes(12); // 96-bit IV for GCM
   const cipher = createCipheriv("aes-256-gcm", aesKey, iv);
   const pt = Buffer.from(JSON.stringify(obj), "utf8");
@@ -43,33 +42,31 @@ static async encryptJson(aesKey, obj) {
   };
 }
 
+export function decryptJson(aesKey, { iv, ct, tag }) {
+  const decipher = createDecipheriv(
+    "aes-256-gcm",
+    aesKey,
+    Buffer.from(iv, "base64")
+  );
+  decipher.setAuthTag(Buffer.from(tag, "base64"));
+  const pt = Buffer.concat([
+    decipher.update(Buffer.from(ct, "base64")),
+    decipher.final(),
+  ]);
+  return JSON.parse(pt.toString("utf8"));
+}
 
-  static async decryptJson(aesKey, { iv, ct, tag }) {
-    const decipher = createDecipheriv(
-      "aes-256-gcm",
-      aesKey,
-      Buffer.from(iv, "base64")
-    );
-    decipher.setAuthTag(Buffer.from(tag, "base64"));
-    const pt = Buffer.concat([
-      decipher.update(Buffer.from(ct, "base64")),
-      decipher.final(),
-    ]);
-    return JSON.parse(pt.toString("utf8"));
-  }
+export function signEnvelope(privPem, obj) {
+  const data = Buffer.from(JSON.stringify(obj));
+  return sign(null, data, createPrivateKey(privPem)).toString("base64");
+}
 
-  static async signEnvelope(privPem, obj) {
-    const data = Buffer.from(JSON.stringify(obj));
-    return sign(null, data, createPrivateKey(privPem)).toString("base64");
-  }
-
-  static async verifyEnvelope(pubPem, obj, sig) {
-    const data = Buffer.from(JSON.stringify(obj));
-    return verify(
-      null,
-      data,
-      createPublicKey(pubPem),
-      Buffer.from(sig, "base64")
-    );
-  }
+export function verifyEnvelope(pubPem, obj, sig) {
+  const data = Buffer.from(JSON.stringify(obj));
+  return verify(
+    null,
+    data,
+    createPublicKey(pubPem),
+    Buffer.from(sig, "base64")
+  );
 }
