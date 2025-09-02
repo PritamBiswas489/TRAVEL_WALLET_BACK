@@ -70,6 +70,62 @@ router.post('/send-request', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/transfer-request/crypto/send-request:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer Requests routes
+ *     summary: Send a crypto transfer request
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Envelope containing crypto transfer details
+ *               sig:
+ *                 type: string
+ *                 description: Signature string
+ *             required:
+ *               - envelope
+ *               - sig
+ *     responses:
+ *       200:
+ *         description: Crypto transfer request sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transactionId:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/crypto/send-request", async (req, res, next) => {
+    const response = await TransferRequestController.sendCryptoRequest({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+/**
+ * @swagger
  * /api/auth/transfer-request/accept-reject-transfer-request:
  *   post:
  *     tags:
@@ -125,6 +181,65 @@ router.post("/accept-reject-transfer-request", async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/transfer-request/crypto/accept-reject-transfer-request:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer Requests routes
+ *     summary: Accept or reject a crypto transfer request
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Envelope containing crypto transfer details
+ *               sig:
+ *                 type: string
+ *                 description: Signature string
+ *             required:
+ *               - envelope
+ *               - sig
+ *           example:
+ *             envelope: {}
+ *             sig: "string"
+ *     responses:
+ *       200:
+ *         description: Crypto transfer request accept/reject processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/crypto/accept-reject-transfer-request", async (req, res, next) => {
+    const response = await TransferRequestController.acceptRejectCryptoTransferRequest({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+})
+
+
+
+
+/**
+ * @swagger
  * /api/auth/transfer-request/reject-transfer-request-by-sender:
  *   post:
  *     tags:
@@ -172,6 +287,63 @@ router.post("/reject-transfer-request-by-sender", async (req, res, next) => {
     res.return(response);
 })
 
+
+
+/**
+ * @swagger
+ * /api/auth/transfer-request/crypto/reject-transfer-request-by-sender:
+ *   post:
+ *     tags:
+ *       - Auth-Transfer Requests routes
+ *     summary: Reject a crypto transfer request by the sender
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Envelope containing crypto transfer details
+ *               sig:
+ *                 type: string
+ *                 description: Signature string
+ *             required:
+ *               - envelope
+ *               - sig
+ *           example:
+ *             envelope: {}
+ *             sig: "string"
+ *     responses:
+ *       200:
+ *         description: Crypto transfer request rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post("/crypto/reject-transfer-request-by-sender", async (req, res, next) => {
+    const response = await TransferRequestController.rejectCryptoTransferRequestBySender({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+})
 
 /**
  * @swagger

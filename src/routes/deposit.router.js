@@ -45,6 +45,43 @@ router.post('/pelecard-payment-add-card-and-card-token', async (req, res, next) 
   const response = await depositController.peleCardPaymentConvertToToken({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/crypto/pelecard-payment-add-card-and-card-token:
+ *   post:
+ *     summary: Add new Card In pelecard payment gateway (Crypto envelope)
+ *     tags: [Auth-Deposit routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - envelope
+ *               - sig
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 default: {}
+ *               sig:
+ *                 type: string
+ *                 default: "string"
+ *     responses:
+ *       200:
+ *         description: Success - Card added successfully
+ */
+router.post('/crypto/pelecard-payment-add-card-and-card-token', async (req, res, next) => {
+  const response = await depositController.cryptoPeleCardPaymentConvertToToken({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+
 /**
  * @swagger
  * /api/auth/deposit/set-default-card:
@@ -216,6 +253,44 @@ router.post('/pelecard-make-payment-add-to-wallet', async (req, res, next) => {
   const response = await depositController.makePaymentAddToWallet({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/crypto/pelecard-make-payment-add-to-wallet:
+ *   post:
+ *     summary: Make crypto payment and add to wallet using Pelecard
+ *     tags:
+ *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - envelope
+ *               - sig
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 default: {}
+ *               sig:
+ *                 type: string
+ *                 default: "string"
+ *     responses:
+ *       200:
+ *         description: Success - Crypto payment made and added to wallet
+ */
+router.post('/crypto/pelecard-make-payment-add-to-wallet', async (req, res, next) => {
+  const response = await depositController.makeCryptoPaymentAddToWallet({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
 
  
 

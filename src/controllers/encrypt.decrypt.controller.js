@@ -11,7 +11,7 @@ export default class EncryptDecryptController {
       user,
     } = request;
     try {
-      const response = await buildEncryptedRequest({ ...payload, loggedInUser: user });
+      const response = await buildEncryptedRequest(payload);
       return {
         status: 200,
         data: response,

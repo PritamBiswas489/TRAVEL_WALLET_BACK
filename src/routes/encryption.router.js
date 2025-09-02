@@ -57,8 +57,15 @@ router.post("/encrypt", async (req, res, next) => {
  *           schema:
  *             type: object
  *             description: Data to decrypt
- *             example:
- *               key: "value"
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Encrypted envelope object
+ *                 example: {}
+ *               sig:
+ *                 type: string
+ *                 description: Signature string
+ *                 example: "string"
  *     responses:
  *       200:
  *         description: Decrypted result

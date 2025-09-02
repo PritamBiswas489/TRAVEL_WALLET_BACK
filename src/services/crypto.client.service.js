@@ -16,7 +16,6 @@ export async function buildEncryptedRequest(payload) {
 
   const enc = encryptJson(aesKey, {
     ...payload,
-    ts: Date.now(),
   });
 
   const envelope = {
