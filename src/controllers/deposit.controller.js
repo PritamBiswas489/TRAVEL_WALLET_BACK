@@ -360,6 +360,48 @@ export default class DepositController {
       };
     }
   }
+  static async getPeleCryptoCardUserCardList(request){
+      const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const userWithCards = await User.findOne({
+        where: { id: user.id },
+        include: [
+          {
+            model: UserCard,
+            as: "cards",
+            separate: true, // Important: allows independent sorting
+            order: [["createdAt", "DESC"]],
+          },
+        ],
+      });
+      if (!userWithCards) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
+        };
+      }
+      return {
+        status: 200,
+        data: buildAes256GcmEncryptRequest(userWithCards?.cards || []),
+        message: i18n.__("PELECARD_USER_CARD_LIST_FETCHED"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+  }
   static async removeUserCard(request) {
     const {
       payload,

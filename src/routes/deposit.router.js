@@ -152,6 +152,26 @@ router.get('/pelecard-user-card-list', async (req, res, next) => {
   res.return(response);
 });
 
+
+/**
+ * @swagger
+ * /api/auth/deposit/crypto/pelecard-user-card-list:
+ *   get:
+ *     summary: Get list of user cards in Pelecard payment gateway
+ *     tags:
+ *       - Auth-Deposit routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - User card list retrieved
+ */
+router.get('/crypto/pelecard-user-card-list', async (req, res, next) => {
+  const response = await depositController.getPeleCryptoCardUserCardList({ headers: req.headers, user: req.user });
+  res.return(response);
+});
+
 /**
  * @swagger
  * /api/auth/deposit/calculate-payment-amount:
