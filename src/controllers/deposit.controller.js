@@ -11,6 +11,7 @@ import { peleAddToWalletValidator } from "../validators/peleAddToWallet.validato
 import PaymentService from "../services/payment.service.js";
 import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
+import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
 const { User, UserCard, Currency, Op } = db;
 
 export default class DepositController {
@@ -189,7 +190,7 @@ export default class DepositController {
           }
           return {
             status: 200,
-            data: resSaveCardDetails,
+            data: buildAes256GcmEncryptRequest(resSaveCardDetails),
             message: i18n.__("CARD_DETAILS_SAVED_SUCCESSFULLY"),
             error: {},
           };
@@ -700,7 +701,7 @@ export default class DepositController {
 
         return {
           status: 200,
-          data: {
+          data: buildAes256GcmEncryptRequest({
             actualAmount: amount,
             paidAmount: paidAmount,
             interestRate: paymentResult?.interestRate || 0,
@@ -723,7 +724,7 @@ export default class DepositController {
             userWallet: updatedWallet?.userWallet || {},
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
-          },
+          }),
           message: i18n.__("PELECARD_PAYMENT_SUCCESS"),
           error: {},
         };

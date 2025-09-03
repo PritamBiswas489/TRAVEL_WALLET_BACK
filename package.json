@@ -15,6 +15,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@noble/ciphers": "^2.0.0",
     "@sentry/node": "^9.30.0",
     "@sentry/profiling-node": "^9.30.0",
     "@sentry/tracing": "^7.120.3",

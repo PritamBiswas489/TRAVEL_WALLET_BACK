@@ -3,6 +3,7 @@ import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import TransferRequestService from "../services/transferRequest.service.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
+import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
 
 export default class TransferRequestController {
   static async sendRequest(request) {
@@ -89,7 +90,7 @@ export default class TransferRequestController {
           }
           return resolve({
             status: 200,
-            data: response.data,
+            data: buildAes256GcmEncryptRequest(response.data),
             message: i18n.__("TRANSFER_REQUEST_EXECUTED_SUCCESSFULLY"),
             error: null,
           });
@@ -189,7 +190,7 @@ export default class TransferRequestController {
           }
           return resolve({
             status: 200,
-            data: response.data,
+            data: buildAes256GcmEncryptRequest(response.data),
             message: i18n.__(
               response.data.message || "TRANSFER_APPROVED_SUCCESSFULLY"
             ),
@@ -273,7 +274,7 @@ export default class TransferRequestController {
           }
           return resolve({
             status: 200,
-            data: response.data,
+            data: buildAes256GcmEncryptRequest(response.data),
             message: i18n.__("TRANSFER_REQUEST_REJECTED_SUCCESSFULLY"),
             error: null,
           });

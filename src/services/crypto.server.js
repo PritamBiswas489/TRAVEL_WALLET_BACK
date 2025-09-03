@@ -11,7 +11,7 @@ const CLIENT_ED25519_PUB_PEM = process.env.CLIENT_ED25519_PUB_PEM;
 export async function buildDecryptRequest(payload) {
 
     const { envelope, sig } = payload;
-    if (!await verifyEnvelope(CLIENT_ED25519_PUB_PEM, envelope, sig)) {
+    if (!verifyEnvelope(CLIENT_ED25519_PUB_PEM, envelope, sig)) {
       return { error: "Invalid signature" };
     }
 

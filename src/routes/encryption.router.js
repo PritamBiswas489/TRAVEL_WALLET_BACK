@@ -85,4 +85,89 @@ router.post("/decrypt", async (req, res, next) => {
 
 
 
+
+/**
+ * @swagger
+ * /api/auth/crypto/aes-256-gcm/encrypt:
+ *   post:
+ *     tags:
+ *       - Encrypt-Decrypt routes
+ *     summary: AES-256-GCM Encrypt data
+ *     description: Encrypts the provided payload using AES-256-GCM.
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Any JSON data to encrypt
+ *             additionalProperties: true
+ *             example:
+ *               key: "value"
+ *               anotherKey: 123
+ *     responses:
+ *       200:
+ *         description: AES-256-GCM Encrypted result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.post("/aes-256-gcm/encrypt", async (req, res, next) => {
+    const result = await EncryptDecryptController.aes256GcmEncrypt({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user
+    });
+    res.return(result);
+});
+
+/**
+ * @swagger
+ * /api/auth/crypto/aes-256-gcm/decrypt:
+ *   post:
+ *     tags:
+ *       - Encrypt-Decrypt routes
+ *     summary: AES-256-GCM Decrypt data
+ *     description: Decrypts the provided payload using AES-256-GCM.
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: AES-256-GCM encrypted data
+ *             properties:
+ *               iv:
+ *                 type: string
+ *                 description: Initialization vector
+ *                 example: "string"
+ *               ct:
+ *                 type: string
+ *                 description: Ciphertext
+ *                 example: "string"
+ *     responses:
+ *       200:
+ *         description: AES-256-GCM Decrypted result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.post("/aes-256-gcm/decrypt", async (req, res, next) => {
+    const result = await EncryptDecryptController.aes256GcmDecrypts({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user
+    });
+    res.return(result);
+});
+
+
 export default router;
