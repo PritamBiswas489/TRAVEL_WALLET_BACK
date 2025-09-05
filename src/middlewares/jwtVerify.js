@@ -36,7 +36,8 @@ export default async (req, res, next) => {
 			if(getUserById.status!=='active'){
 				return res.send({ status: 403, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
 			}
-			if(getUserById.logged_device_id!==deviceID && checkdeviceid){
+			const checkDeviceIdExistance = await UserService.checkDeviceIdExistance(verifiedData.id, deviceID);
+			if(!checkDeviceIdExistance && checkdeviceid){
 				return res.send({ status: 403, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
 			}
 			req.user = verifiedData;
@@ -65,13 +66,12 @@ export default async (req, res, next) => {
 				};
 
 				const getUserById = await UserService.getUserById(data.id);
-				// console.log(getUserById.status);
+				 
 				if(getUserById.status!=='active'){
 					return res.send({ status: 403, data: [], error: { message: i18n.__("DEACTIVATED_BY_SYSTEM_ADMIN") } });
 				}
-				// console.log(getUserById.logged_device_id)
-				// console.log(deviceID)
-				if(getUserById.logged_device_id!==deviceID && checkdeviceid){
+				const checkDeviceIdExistance = await UserService.checkDeviceIdExistance(data.id, deviceID);
+				if(!checkDeviceIdExistance && checkdeviceid){
 					return res.send({ status: 403, data: [], error: { message: i18n.__("DEVICE_ID_MISMATCH") } });
 				}
 

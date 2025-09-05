@@ -217,25 +217,7 @@ router.post("/save-fcm-token", async (req, res) => {
 });
 
 
-/**
- * @swagger
- * /api/auth/profile/save-device-id:
- *   post:
- *     summary: Save device ID for user
- *     tags: 
- *       - Auth-Profile routes
- *     security:
- *       - bearerAuth: []
- *       - refreshToken: []
- *     responses:
- *       200:
- *         description: Device ID saved successfully
- */
-router.post("/save-device-id", async (req, res) => {
-   
-  const response = await ProfileController.saveDeviceId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-  res.return(response);
-});
+ 
 /**
  * @swagger
  * /api/auth/profile/clear-device-id:
@@ -254,6 +236,37 @@ router.post("/clear-device-id",async (req, res) => {
    const response = await ProfileController.clearDeviceId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+/**
+ * @swagger
+ * /api/auth/profile/delete-device-id:
+ *   post:
+ *     summary: Delete a specific device ID for the user
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               deviceId:
+ *                 type: string
+ *                 description: The device ID to delete
+ *                 example: "device_id_123"
+ *     responses:
+ *       200:
+ *         description: Device ID deleted successfully
+ */
+router.post("/delete-device-id", async (req, res) => {  
+   const response = await ProfileController.deleteDeviceId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
 
 
 /**

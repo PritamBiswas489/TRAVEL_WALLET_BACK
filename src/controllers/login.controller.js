@@ -11,7 +11,7 @@ import { setNewPinValidator } from "../validators/setNewPin.validator.js";
 import redisClient from "../config/redis.config.js";
 import { randomSaltHex } from "../libraries/utility.js";
 
-const { User, Op } = db;
+const { User, UserDevices, Op } = db;
 
 export default class LoginController {
   /**
@@ -105,7 +105,7 @@ export default class LoginController {
   static async createOrVerifyPinByPhoneNumber(request) {
     const {
       payload,
-      headers: { i18n, deviceid },
+      headers: { i18n, deviceid, deviceName },
     } = request;
     const redisKey = `login:fail:${deviceid}`;
     const MAX_ATTEMPTS = 5;
@@ -201,9 +201,7 @@ export default class LoginController {
 
         
         if (!user.hexSalt) {
-          
           user.hexSalt = randomSaltHex();
-          
           await user.save();
         }
 
@@ -212,9 +210,25 @@ export default class LoginController {
             await user.save();
         }
 
-        if (user.logged_device_id && user.logged_device_id !== deviceid) {
-          alreadyDeviceLoggedInUser = true;
+        
+        const loggedInDevice = await UserDevices.count({
+          where: { userId: user.id, deviceID: { [Op.ne]: deviceid } },
+        });
+
+        if (loggedInDevice === 5) {
+          return {
+            status: 500,
+            data: [],
+            error: { message: i18n.__("LIMIT_REACHED_UPTO_5_DEVICES"), reason: 'Device limit reached' },
+          };
         }
+
+
+        //insert device UserDevices table if not exists
+         UserDevices.findOrCreate({
+          where: { userId: user.id, deviceID: deviceid },
+          defaults: { deviceName: deviceName, deviceID: deviceid, userId: user.id },
+        });
 
         const accessToken = await generateToken(
           jwtPayload,
@@ -261,6 +275,12 @@ export default class LoginController {
 
           await newUser.save();
         }
+
+         //insert device UserDevices table if not exists
+         UserDevices.findOrCreate({
+            where: { userId: newUser.id, deviceID: deviceid },
+            defaults: { deviceName: deviceName, deviceID: deviceid, userId: newUser.id },
+        });
 
         const jwtPayload = {
           id: newUser.id,

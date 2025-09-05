@@ -247,6 +247,11 @@
 	"TRANSFER_TO": "Transfer to {{ name  }} ({{phoneNumber}})",
 	"TRANSFER_REJECTED": "Transfer rejected, amount refunded to sender's wallet {{ senderName }} ({{senderPhoneNumber}}).",
 	"TRANSFER_REQUEST_ACCEPTED_DEBITED": "Transfer request accepted, amount {{amount}}{{currency}} debited from sender's wallet {{ senderName }} ({{senderPhoneNumber}}) to receiver's wallet {{ receiverName }} ({{receiverPhoneNumber}}).",
-	"TRANSFER_REQUEST_ACCEPTED_CREDITED": "Transfer request accepted, amount {{amount}}{{currency}} credited to receiver's wallet {{ receiverName }} ({{receiverPhoneNumber}}) from sender's wallet {{ senderName }} ({{senderPhoneNumber}})."
-
+	"TRANSFER_REQUEST_ACCEPTED_CREDITED": "Transfer request accepted, amount {{amount}}{{currency}} credited to receiver's wallet {{ receiverName }} ({{receiverPhoneNumber}}) from sender's wallet {{ senderName }} ({{senderPhoneNumber}}).",
+	"LIMIT_REACHED_UPTO_5_DEVICES": "Limit reached. You can only log in on up to 5 devices. Please log out from another device to proceed.",
+	"CANNOT_DELETE_CURRENTLY_USED_DEVICE_ID": "Cannot delete the device ID currently in use.",
+	"DEVICE_ID_DELETED_SUCCESSFULLY": "Device ID deleted successfully.",
+	"DEVICE_LOGGED_OUT": "Logged out: device {{ deviceName }} removed.",
+	"YOUR_DEVICE_HAS_BEEN_LOGGED_OUT": "You have been logged out from device {{ deviceName }}.",
+	"FAILED_TO_DELETE_DEVICE_ID": "Failed to delete device ID."
 }

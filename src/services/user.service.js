@@ -5,7 +5,7 @@ import KycService from "./kyc.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import PushNotificationService from "./pushNotification.service.js";
 
-const { Op, User, UserKyc, UserWallet, UserFcm, UserSettings } = db;
+const { Op, User, UserKyc, UserWallet, UserDevices, UserFcm, UserSettings } = db;
 
 export default class UserService {
   static async getUserById(userId) {
@@ -95,26 +95,38 @@ export default class UserService {
       throw error;
     }
   }
-  static async saveDeviceId(userId, deviceId, i18n, callback) {
+
+  static async clearDeviceId(userId, deviceid, sendNotification, i18n, callback) {
     try {
-      const user = await this.getUserDetails(userId);
-      if (!user) {
+      const userdevice = await UserDevices.findOne({ where: { userId: userId, deviceID: deviceid } });
+      const userFcm = await UserFcm.findOne({ where: { userId: userId, deviceID: deviceid } });
+      let fcmToken = "";
+      let deviceName = '';
+      if(userFcm){
+        fcmToken = userFcm.fcmToken;
+      }
+      if(userdevice){
+        deviceName = userdevice.deviceName;
+      }
+      
+      if (!userdevice) {
         return callback("User not found", null);
       }
-      const userDeviceToken = user?.fcm?.fcmToken;
-      // console.log(userDeviceToken);
-      user.logged_device_id = deviceId;
-      await user.save();
-       
-      if(userDeviceToken){
-          PushNotificationService.sendNotificationByFcmToken(
+      await userdevice.destroy();
+      if(userFcm){
+        await userFcm.destroy();
+      }
+      const allDevice = await UserDevices.findAll({ where: { userId: userId } });
+      if(sendNotification && fcmToken){
+        console.log("Sending device logged out notification to FCM token:", fcmToken);
+        PushNotificationService.sendNotificationByFcmToken(
           {
-            fcmToken: userDeviceToken,
-            title: i18n.__("DEVICE_ID_UPDATED"),
-            body: i18n.__("YOUR_DEVICE_ID_HAS_BEEN_UPDATED"),
+            fcmToken: fcmToken,
+            title: i18n.__("DEVICE_LOGGED_OUT",{ deviceName: deviceName || deviceid  }),
+            body: i18n.__("YOUR_DEVICE_HAS_BEEN_LOGGED_OUT",{ deviceName: deviceName || deviceid }),
             data: {
-              deviceId: deviceId,
-              action: "NEW_DEVICE_ID",
+              deviceId: deviceid,
+              action: "DEVICE_LOGGED_OUT",
             },
           },
           () => {
@@ -122,23 +134,7 @@ export default class UserService {
           }
         );
       }
-     
-      return callback(null, { data: user });
-    } catch (error) {
-      console.error("Error saving device ID:", error);
-      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      return callback("Error saving device ID", null);
-    }
-  }
-  static async clearDeviceId(userId, callback) {
-    try {
-      const user = await User.findOne({ where: { id: userId } });
-      if (!user) {
-        return callback("User not found", null);
-      }
-      user.logged_device_id = null;
-      await user.save();
-      return callback(null, { data: user });
+      return callback(null, { data:  allDevice });
     } catch (error) {
       console.error("Error clearing device ID:", error);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
@@ -151,6 +147,11 @@ export default class UserService {
         where: { id: userId },
         attributes: ["id", "name", "email", "phoneNumber", "role", "avatar", "dob", "address", "language","hexSalt","logged_device_id"],
         include: [
+          {
+            model: UserDevices,
+            as: "devices",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
           {
             model: UserKyc,
             as: "kyc",
@@ -179,6 +180,16 @@ export default class UserService {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       throw error;
     }
+  }
+  static async checkDeviceIdExistance(userId, deviceID) {
+    try {
+      const user = await UserDevices.findOne({ where: { userId,  deviceID } });
+      return !!user;
+    } catch (error) {
+      console.error("Error checking device ID existence:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw error;
+    } 
   }
   static async createDefaultAdminUser() {
 

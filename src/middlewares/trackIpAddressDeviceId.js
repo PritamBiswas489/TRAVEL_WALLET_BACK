@@ -8,7 +8,8 @@ const trackIpAddressDeviceId = async (req, res, next) => {
   try {
     // console.log(req?.headers);
     const ip = req?.headers?.["x-ip-address"] || "186.102.114.93"; // Default IP for testing
-    const deviceId = req?.headers?.["x-device-id"] || "api-developer-device-id-123"; // Default Device ID for testing
+    const deviceId = req?.headers?.["x-device-id"] || "api-developer-device-id-6666"; // Default Device ID for testing
+    const deviceName = req?.headers?.["x-device-name"] || "api-developer-device-name-12310"; // Default Device Name for testing
     const routePath = req.originalUrl;
 
     let ipCountry = "";
@@ -73,6 +74,7 @@ const trackIpAddressDeviceId = async (req, res, next) => {
       ipTimezone,
     });
      req.headers['deviceid'] = deviceId;
+     req.headers['deviceName'] = deviceName;  
   } catch (e) {
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
     console.error("Error tracking IP address and device ID:", e.message);

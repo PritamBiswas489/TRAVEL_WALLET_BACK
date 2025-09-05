@@ -12,6 +12,10 @@ export default function UserFcm(sequelize, DataTypes) {
         type: DataTypes.BIGINT,
         allowNull: false,
       },
+      deviceID: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
 
       fcmToken: {
         type: DataTypes.STRING,
