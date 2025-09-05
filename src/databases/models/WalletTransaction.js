@@ -42,6 +42,10 @@ export default function WalletTransaction(sequelize, DataTypes) {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      description_he: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       status: {
         type: DataTypes.STRING(20),
         allowNull: false,

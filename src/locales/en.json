@@ -242,5 +242,11 @@
 	"USER_HAS_NON_ZERO_WALLET_BALANCE": "You have a non-zero wallet balance.",
 	"UNAUTHORIZED_ACCESS": "Unauthorized access.",
 	"NOTIFICATION_BELL_ICON_COLOR_FETCHED_SUCCESSFULLY": "Notification bell icon color fetched successfully.",
-	"DECRYPTION_ERROR": "Decryption error."
+	"DECRYPTION_ERROR": "Decryption error.",
+	"TRANSFER_ACCEPTED": "Transfer accepted, amount {{amount}}{{currency}} credited to receiver's wallet {{ receiverName }} ({{receiverPhoneNumber}}).",
+	"TRANSFER_TO": "Transfer to {{ name  }} ({{phoneNumber}})",
+	"TRANSFER_REJECTED": "Transfer rejected, amount refunded to sender's wallet {{ senderName }} ({{senderPhoneNumber}}).",
+	"TRANSFER_REQUEST_ACCEPTED_DEBITED": "Transfer request accepted, amount {{amount}}{{currency}} debited from sender's wallet {{ senderName }} ({{senderPhoneNumber}}) to receiver's wallet {{ receiverName }} ({{receiverPhoneNumber}}).",
+	"TRANSFER_REQUEST_ACCEPTED_CREDITED": "Transfer request accepted, amount {{amount}}{{currency}} credited to receiver's wallet {{ receiverName }} ({{receiverPhoneNumber}}) from sender's wallet {{ senderName }} ({{senderPhoneNumber}})."
+
 }

@@ -262,7 +262,8 @@ static async acceptRejectTransferRequest(
           oldWalletBalance: oldReceiverBalance,
           newWalletBalance: newReceiverBalance,
           transferRequestId: transferRequest.id,
-          description: `Transfer request accepted, amount credited to receiver's wallet`,
+          description: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_CREDITED", locale: "en" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
+          description_he: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_CREDITED", locale: "he" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
           status: "completed",
         },
         { transaction: tran }
@@ -278,7 +279,8 @@ static async acceptRejectTransferRequest(
           oldWalletBalance: senderOldBalance,
           newWalletBalance: newSenderBalance,
           transferRequestId: transferRequest.id,
-          description: `Transfer request accepted, amount debited from sender's wallet`,
+          description: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_DEBITED", locale: "en" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
+          description_he: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_DEBITED", locale: "he" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
           status: "completed",
         },
         { transaction: tran }

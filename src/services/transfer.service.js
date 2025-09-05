@@ -269,7 +269,8 @@ export default class TransferService {
           newWalletBalance: newSenderBalance,
           currency: currency,
           transferId: createTransfer.id,
-          description: `Transfer to (${receiverUserDetails.phoneNumber})`,
+          description: i18n.__({ phrase: "TRANSFER_TO", locale: "en" }, { name: receiverUserDetails.name, phoneNumber: receiverUserDetails.phoneNumber }),
+          description_he: i18n.__({ phrase: "TRANSFER_TO", locale: "he" }, { name: receiverUserDetails.name, phoneNumber: receiverUserDetails.phoneNumber }),
           status: "completed",
         },
         { transaction: tran }
@@ -302,6 +303,7 @@ export default class TransferService {
         },
       });
     } catch (error) {
+      console.log(error.message); 
       if (tran?.finished !== "commit") {
         await tran.rollback();
       }
@@ -334,6 +336,8 @@ export default class TransferService {
         await tran.rollback();
         return callback(new Error("UNAUTHORIZED_ACCESS"), null);
       }
+      const senderUserDetails = await UserService.getUserDetails(transfer.senderId);
+      const receiverUserDetails = await UserService.getUserDetails(transfer.receiverId);
       // Check if receiver rejected the transfer
       if (status === "rejected") {
         await transfer.update({ status: "rejected" }, { transaction: tran });
@@ -368,7 +372,8 @@ export default class TransferService {
             oldWalletBalance: oldBalance,
             newWalletBalance: newBalance,
             transferId: transfer.id,
-            description: `Transfer rejected, amount refunded to sender's wallet`,
+            description: i18n.__({ phrase: "TRANSFER_REJECTED", locale: "en" }, { senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
+            description_he: i18n.__({ phrase: "TRANSFER_REJECTED", locale: "he" }, { senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
             status: "completed",
           },
           { transaction: tran }
@@ -443,7 +448,8 @@ export default class TransferService {
             oldWalletBalance: oldBalance,
             newWalletBalance: newBalance,
             transferId: transfer.id,
-            description: `Transfer accepted, amount credited to receiver's wallet`,
+            description: i18n.__({ phrase: "TRANSFER_ACCEPTED", locale: "en" }, { amount: transfer.amount, currency: transfer.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber }),
+            description_he: i18n.__({ phrase: "TRANSFER_ACCEPTED", locale: "he" }, { amount: transfer.amount, currency: transfer.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber }),
             status: "completed",
           },
           { transaction: tran }
@@ -507,6 +513,7 @@ export default class TransferService {
           await tran.rollback();
           return callback(new Error("UNAUTHORIZED_ACCESS"), null);
         }
+        const senderUserDetails = await UserService.getUserDetails(transfer.senderId);
         // Sender can only reject a pending transfer
         await transfer.update({ status: "rejected" }, { transaction: tran });
         //add to sender wallet transaction
@@ -540,7 +547,8 @@ export default class TransferService {
             oldWalletBalance: oldBalance,
             newWalletBalance: newBalance,
             transferId: transfer.id,
-            description: `Transfer rejected by sender, amount refunded to sender's wallet`,
+            description: i18n.__({ phrase: "TRANSFER_REJECTED", locale: "en" }, { senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
+            description_he: i18n.__({ phrase: "TRANSFER_REJECTED", locale: "he" }, { senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
             status: "completed",
           },
           { transaction: tran }

@@ -56,6 +56,7 @@ export default class WalletService {
               newWalletBalance: newWalletBalance,
               type: "credit",
               description: `Add ${walletAmount} ${paidCurrency}. ${paymentData.StatusCode === "000" ? "completed" : "failed"} payment`,
+              description_he: `הוספת ${walletAmount} ${paidCurrency}. תשלום ${paymentData.StatusCode === "000" ? "הושלם" : "נכשל"}`,
               status: paymentData.StatusCode === "000" ? "completed" : "failed",
               paymentId: paymentData?.id,
         });
