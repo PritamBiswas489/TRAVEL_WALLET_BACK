@@ -105,7 +105,7 @@ export default class LoginController {
   static async createOrVerifyPinByPhoneNumber(request) {
     const {
       payload,
-      headers: { i18n, deviceid, deviceName },
+      headers: { i18n, deviceid, deviceName, deviceType, deviceLocation },
     } = request;
     const redisKey = `login:fail:${deviceid}`;
     const MAX_ATTEMPTS = 5;
@@ -224,11 +224,27 @@ export default class LoginController {
         }
 
 
-        //insert device UserDevices table if not exists
-         UserDevices.findOrCreate({
+        // Ensure device record exists and update login info
+        const [deviceRecord, created] = await UserDevices.findOrCreate({
           where: { userId: user.id, deviceID: deviceid },
-          defaults: { deviceName: deviceName, deviceID: deviceid, userId: user.id },
+          defaults: {
+            userId: user.id,
+            deviceID: deviceid,
+            deviceName: deviceName,
+            deviceType: deviceType,
+            firstLoggedIn: new Date(),
+            lastLoggedIn: new Date(),
+            lastLoggedInLocation: deviceLocation,
+          },
         });
+
+        if (!created) {
+          deviceRecord.lastLoggedIn = new Date();
+          deviceRecord.lastLoggedInLocation = deviceLocation;
+          await deviceRecord.save();
+        }
+
+         
 
         const accessToken = await generateToken(
           jwtPayload,
@@ -276,11 +292,25 @@ export default class LoginController {
           await newUser.save();
         }
 
-         //insert device UserDevices table if not exists
-         UserDevices.findOrCreate({
-            where: { userId: newUser.id, deviceID: deviceid },
-            defaults: { deviceName: deviceName, deviceID: deviceid, userId: newUser.id },
+          // Ensure device record exists and update login info
+        const [deviceRecord, created] = await UserDevices.findOrCreate({
+          where: { userId: user.id, deviceID: deviceid },
+          defaults: {
+            userId: user.id,
+            deviceID: deviceid,
+            deviceName: deviceName,
+            deviceType: deviceType,
+            firstLoggedIn: new Date(),
+            lastLoggedIn: new Date(),
+            lastLoggedInLocation: deviceLocation,
+          },
         });
+
+        if (!created) {
+          deviceRecord.lastLoggedIn = new Date();
+          deviceRecord.lastLoggedInLocation = deviceLocation;
+          await deviceRecord.save();
+        }
 
         const jwtPayload = {
           id: newUser.id,

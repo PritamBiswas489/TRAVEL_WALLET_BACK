@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import KycService from "./kyc.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import PushNotificationService from "./pushNotification.service.js";
+import moment from "moment-timezone";
 
 const { Op, User, UserKyc, UserWallet, UserDevices, UserFcm, UserSettings } = db;
 
@@ -145,7 +146,19 @@ export default class UserService {
     try {
       const user = await User.findOne({
         where: { id: userId },
-        attributes: ["id", "name", "email", "phoneNumber", "role", "avatar", "dob", "address", "language","hexSalt","logged_device_id"],
+        attributes: [
+          "id",
+          "name",
+          "email",
+          "phoneNumber",
+          "role",
+          "avatar",
+          "dob",
+          "address",
+          "language",
+          "hexSalt",
+          "logged_device_id",
+        ],
         include: [
           {
             model: UserDevices,
@@ -171,10 +184,32 @@ export default class UserService {
             model: UserSettings,
             as: "settings",
             attributes: { exclude: ["createdAt", "updatedAt"] },
-          }
+          },
         ],
       });
-      return user;
+    if (user && user.devices && Array.isArray(user.devices)) {
+        const plainUser = typeof user.toJSON === "function" ? user.toJSON() : user;
+        const devicesArray = Array.isArray(plainUser.devices)
+          ? plainUser.devices.map((d) => (typeof d.toJSON === "function" ? d.toJSON() : d))
+          : [];
+
+        plainUser.devices = devicesArray.map((device) => {
+          if (device.firstLoggedIn)
+            device.firstLoggedIn = moment
+              .utc(device.firstLoggedIn)
+              .tz(process.env.TIMEZONE)
+              .format("YYYY-MM-DD HH:mm:ss");
+          if (device.lastLoggedIn)
+            device.lastLoggedIn = moment
+              .utc(device.lastLoggedIn)
+              .tz(process.env.TIMEZONE)
+              .format("YYYY-MM-DD HH:mm:ss");
+          return device;
+      });
+      return plainUser;
+    }
+
+    return user;
     } catch (error) {
       console.error("Error fetching user details:", error);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);

@@ -1,3 +1,5 @@
+import moment from "moment-timezone";
+import "../../config/environment.js";
 export default function UserDevices(sequelize, DataTypes) {
   const UserDevices = sequelize.define(
     "UserDevices",
@@ -19,11 +21,32 @@ export default function UserDevices(sequelize, DataTypes) {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
+      deviceType: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      lastLoggedInLocation: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      firstLoggedIn: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW,
+      },
+      lastLoggedIn: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       tableName: "user_devices",
       timestamps: true,
     }
   );
+
+ 
+
   return UserDevices;
 }
