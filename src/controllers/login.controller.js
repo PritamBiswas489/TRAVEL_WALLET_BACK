@@ -225,12 +225,14 @@ export default class LoginController {
 
 
         const getlatlng = deviceLocation.split(',');
-        const latitude = parseFloat(getlatlng[0]) || null;
-        const longitude = parseFloat(getlatlng[1]) || null;
+        const latitude = getlatlng?.[0] ? parseFloat(getlatlng[0]) : null;
+        const longitude = getlatlng?.[1] ? parseFloat(getlatlng[1]) : null;
+
+        // console.log("Device location:", { latitude, longitude });
 
         let location = await getAddress(latitude, longitude);
 
-       
+      //  console.log("Location address:", location);
 
 
         // Ensure device record exists and update login info
@@ -243,7 +245,7 @@ export default class LoginController {
             deviceType: deviceType,
             firstLoggedIn: new Date(),
             lastLoggedIn: new Date(),
-            lastLoggedInLocation:  location.address || 'Unknown location',
+            lastLoggedInLocation:  location?.address || 'Unknown location',
             latitude: latitude ? latitude.toString() : null,
             longitude: longitude ? longitude.toString() : null,
           },
@@ -306,8 +308,8 @@ export default class LoginController {
         }
 
         const getlatlng = deviceLocation.split(',');
-        const latitude = parseFloat(getlatlng[0]) || null;
-        const longitude = parseFloat(getlatlng[1]) || null;
+        const latitude = getlatlng?.[0] ? parseFloat(getlatlng[0]) : null;
+        const longitude = getlatlng?.[1] ? parseFloat(getlatlng[1]) : null;
 
         let location = await getAddress(latitude, longitude);
         
@@ -321,7 +323,7 @@ export default class LoginController {
             deviceType: deviceType,
             firstLoggedIn: new Date(),
             lastLoggedIn: new Date(),
-            lastLoggedInLocation: location.address || 'Unknown location',
+            lastLoggedInLocation: location?.address || 'Unknown location',
             latitude: latitude ? latitude.toString() : null,
             longitude: longitude ? longitude.toString() : null,
           },
