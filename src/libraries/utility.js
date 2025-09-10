@@ -8,6 +8,7 @@ import {
   parsePhoneNumberFromString,
    
 } from 'libphonenumber-js';
+import axios from 'axios';
 
 export const slugify = (str) =>
 	str
@@ -197,3 +198,19 @@ export function createHmacExecute(data, secret) {
   return crypto.createHmac('sha256', secret).update(data).digest('hex');
 }
  
+
+export async function getAddress(lat, lng) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+
+  try {
+    const response = await axios.get(url);
+    if (response.data.results.length > 0) {
+      return {address: response.data.results[0].formatted_address};
+    } else {
+      return {'ERROR': 1};
+    }
+  } catch (error) {
+    return {'ERROR': 1};
+  }
+}

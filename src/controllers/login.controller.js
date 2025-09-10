@@ -1,5 +1,5 @@
 import db from "../databases/models/index.js";
-import { generateOtp } from "../libraries/utility.js";
+import { generateOtp, getAddress } from "../libraries/utility.js";
 import * as Sentry from "@sentry/node";
 import {
   otpWhatsappService,
@@ -224,6 +224,15 @@ export default class LoginController {
         }
 
 
+        const getlatlng = deviceLocation.split(',');
+        const latitude = parseFloat(getlatlng[0]) || null;
+        const longitude = parseFloat(getlatlng[1]) || null;
+
+        let location = await getAddress(latitude, longitude);
+
+       
+
+
         // Ensure device record exists and update login info
         const [deviceRecord, created] = await UserDevices.findOrCreate({
           where: { userId: user.id, deviceID: deviceid },
@@ -234,14 +243,18 @@ export default class LoginController {
             deviceType: deviceType,
             firstLoggedIn: new Date(),
             lastLoggedIn: new Date(),
-            lastLoggedInLocation: deviceLocation,
+            lastLoggedInLocation:  location.address || 'Unknown location',
+            latitude: latitude ? latitude.toString() : null,
+            longitude: longitude ? longitude.toString() : null,
           },
         });
 
         if (!created) {
-          deviceRecord.lastLoggedIn = new Date();
-          deviceRecord.lastLoggedInLocation = deviceLocation;
-          await deviceRecord.save();
+            deviceRecord.lastLoggedIn = new Date();
+            deviceRecord.lastLoggedInLocation = location.address || 'Unknown location';
+            deviceRecord.latitude = latitude ? latitude.toString() : null;
+            deviceRecord.longitude = longitude ? longitude.toString() : null;
+            await deviceRecord.save();
         }
 
          
@@ -292,7 +305,13 @@ export default class LoginController {
           await newUser.save();
         }
 
-          // Ensure device record exists and update login info
+        const getlatlng = deviceLocation.split(',');
+        const latitude = parseFloat(getlatlng[0]) || null;
+        const longitude = parseFloat(getlatlng[1]) || null;
+
+        let location = await getAddress(latitude, longitude);
+        
+        // Ensure device record exists and update login info
         const [deviceRecord, created] = await UserDevices.findOrCreate({
           where: { userId: user.id, deviceID: deviceid },
           defaults: {
@@ -302,13 +321,17 @@ export default class LoginController {
             deviceType: deviceType,
             firstLoggedIn: new Date(),
             lastLoggedIn: new Date(),
-            lastLoggedInLocation: deviceLocation,
+            lastLoggedInLocation: location.address || 'Unknown location',
+            latitude: latitude ? latitude.toString() : null,
+            longitude: longitude ? longitude.toString() : null,
           },
         });
 
         if (!created) {
           deviceRecord.lastLoggedIn = new Date();
-          deviceRecord.lastLoggedInLocation = deviceLocation;
+          deviceRecord.lastLoggedInLocation = location.address || 'Unknown location';
+          deviceRecord.latitude = latitude ? latitude.toString() : null;
+          deviceRecord.longitude = longitude ? longitude.toString() : null;
           await deviceRecord.save();
         }
 

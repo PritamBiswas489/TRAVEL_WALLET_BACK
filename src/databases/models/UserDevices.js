@@ -39,6 +39,14 @@ export default function UserDevices(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: DataTypes.NOW,
       },
+      latitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      longitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       tableName: "user_devices",
