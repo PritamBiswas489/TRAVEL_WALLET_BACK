@@ -200,6 +200,7 @@ export function createHmacExecute(data, secret) {
  
 
 export async function getAddress(lat, lng) {
+  if (!lat || !lng) return {'ERROR': 1};
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
 
