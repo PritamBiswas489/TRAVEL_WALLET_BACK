@@ -11,18 +11,7 @@ const { Currency, Op, BankhapoalimExchangeRate } = db;
 export default class CurrencyService {
   static async insertOrUpdateCurrency(data) {
     try {
-      const codes = [
-        "ILS_TO_THB",
-        "THB_TO_ILS",
-        "EUR_TO_ILS",
-        "EUR_TO_THB",
-        "USD_TO_ILS",
-        "USD_TO_THB",
-        "THB_TO_USD",
-        "ILS_TO_USD",
-        "EUR_TO_USD",
-        "THB_TO_EUR"
-      ];
+      const codes = Object.keys(data);
 
       const existingCurrencies = await Currency.findAll({
         where: { code: { [Op.in]: codes } },
@@ -158,6 +147,87 @@ export default class CurrencyService {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: 1 };
     }
+  }
+
+  static async currencyConverterWalletCurToPaymentCur(fromCurrency, toCurrency, amount, callback) {
+    try {
+      const currency = await Currency.findOne({
+      where: { code: `${fromCurrency}_TO_${toCurrency}` },
+      });
+
+      if (!currency) {
+      return callback({ ERROR: 1 }, null);
+      }
+      const setting = await SettingsService.getSetting("delta_percentage");
+      const rate = currency.value;
+      const deltaCutPercentage = parseFloat(setting.data.value) || 0;
+      const cutValue = (rate * deltaCutPercentage) / 100;
+      const finalRateValue = rate - cutValue;
+
+      const converted_amount_with_delta_percentage =
+      amountUptotwoDecimalPlaces(amount * finalRateValue);
+      const converted_amount_without_delta_percentage =
+      amountUptotwoDecimalPlaces(amount * rate);
+
+      return callback(null, {
+      data: {
+        fromCurrency: fromCurrency,
+        toCurrency: toCurrency,
+        amount,
+        converted_amount_with_delta_percentage,
+        converted_amount_without_delta_percentage,
+        rate,
+        deltaCutPercentage,
+        cutValue,
+        finalRateValue,
+        updatedTime: formatDateToTimezone(currency.updatedAt),
+      },
+      });
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return callback({ ERROR: 1 }, null);
+    }
+
+  }
+  static async currencyConverterPaymentCurToWalletCur(fromCurrency, toCurrency, amount, callback) {
+
+    try {
+      const currency = await Currency.findOne({
+      where: { code: `${toCurrency}_TO_${fromCurrency}` },
+      });
+
+      if (!currency) {
+      return callback({ ERROR: 1 }, null);
+      }
+      const setting = await SettingsService.getSetting("delta_percentage");
+      const rate = currency.value;
+      const deltaCutPercentage = parseFloat(setting.data.value) || 0;
+      const cutValue = (rate * deltaCutPercentage) / 100;
+      const finalRateValue = rate - cutValue;
+
+      const converted_amount_with_delta_percentage =
+      amountUptotwoDecimalPlaces(amount * (1 / finalRateValue));
+      const converted_amount_without_delta_percentage =
+      amountUptotwoDecimalPlaces(amount * (1 / rate));
+      return callback(null, {
+      data: {
+        fromCurrency: fromCurrency,
+        toCurrency: toCurrency,
+        amount,
+        converted_amount_with_delta_percentage,
+        converted_amount_without_delta_percentage,
+        rate: 1 / rate,
+        deltaCutPercentage,
+        cutValue,
+        finalRateValue: 1 / finalRateValue,
+        updatedTime: formatDateToTimezone(currency.updatedAt),
+      },
+      });
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return callback({ ERROR: 1 }, null);
+    }
+
   }
 
 

@@ -165,6 +165,98 @@ router.post("/amount-from-thb-to-another", async (req, res, next) => {
   }
 });
 
+
+/**
+ * @swagger
+ * /api/currency/converter-wallet-cur-to-payment-cur:
+ *   post:
+ *     summary: Convert currency from one to another
+ *     tags:
+ *       - Currency routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fromCurrency:
+ *                 type: string
+ *                 example: "USD"
+ *               toCurrency:
+ *                 type: string
+ *                 example: "THB"
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Success - Currency converted
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post("/converter-wallet-cur-to-payment-cur", async (req, res, next) => {
+  try {
+    const result = await CurrencyController.currencyConverterWalletCurToPaymentCur({
+      payload: { ...req.params, ...req.query, ...req.body },
+      headers: req.headers,
+    });
+    res.return(result);
+  } catch (e) {
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+    res.return({
+      status: 500,
+      data: [],
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+    });
+  }
+});
+/**
+ * @swagger
+ * /api/currency/converter-payment-cur-to-wallet-cur:
+ *   post:
+ *     summary: Convert currency from one to another
+ *     tags:
+ *       - Currency routes
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fromCurrency:
+ *                 type: string
+ *                 example: "THB"
+ *               toCurrency:
+ *                 type: string
+ *                 example: "USD"
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Success - Currency converted
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post("/converter-payment-cur-to-wallet-cur", async (req, res, next) => {
+  try {
+    const result = await CurrencyController.currencyConverterPaymentCurToWalletCur({
+      payload: { ...req.params, ...req.query, ...req.body },
+      headers: req.headers,
+    });
+    res.return(result);
+  } catch (e) {
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+    res.return({
+      status: 500,
+      data: [],
+      error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+    });
+  }
+});
+
 /**
  * @swagger
  * /api/currency/get-bankhapoalim-exchange-rate:

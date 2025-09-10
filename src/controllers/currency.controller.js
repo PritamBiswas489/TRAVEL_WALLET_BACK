@@ -3,7 +3,8 @@ import "../config/environment.js";
 import axios from "axios";
 import CurrencyService from "../services/currency.service.js";
 import * as Sentry from "@sentry/node";
- 
+import { paymentCurrencies } from "../config/paymentCurrencies.js";
+import { walletCurrencies } from "../config/walletCurrencies.js";
 
 export default class CurrencyController {
   static async fixerExchangeRates(request) {
@@ -19,75 +20,36 @@ export default class CurrencyController {
       const response = await axios.get("http://data.fixer.io/api/latest", {
         params: {
           access_key: apiKey,
-          symbols: "ILS,THB,USD",
+          symbols: [...Object.keys(paymentCurrencies), ...Object.keys(walletCurrencies)].join(","),
         },
       });
 
       const rates = response.data.rates;
 
-      if (rates && rates.ILS && rates.THB && rates.USD) {
-        // console.log("Exchange rates fetched successfully:", rates);
+      const currencies = [...Object.keys(paymentCurrencies), ...Object.keys(walletCurrencies)];
+      const result = {};
 
-        const rate_ils_to_thb = rates.THB / rates.ILS;
-        const rate_thb_to_ils = rates.ILS / rates.THB;
-        const rate_usd_to_ils = rates.ILS / rates.USD;
-        const rate_usd_to_thb = rates.THB / rates.USD;
-        const rate_thb_to_usd = rates.USD / rates.THB;
-        const rate_ils_to_usd = rates.USD / rates.ILS;
-        const rate_thb_to_eur = 1 / rates.THB;
+      // EUR to each currency
+      currencies.forEach((cur) => {
+        result[`EUR_TO_${cur}`] = rates[cur];
+        result[`${cur}_TO_EUR`] = 1 / rates[cur];
+      });
 
-        const insertOrUpdateCurrencyResult =
-          await CurrencyService.insertOrUpdateCurrency({
-            ILS_TO_THB: rate_ils_to_thb,
-            THB_TO_ILS: rate_thb_to_ils,
-            EUR_TO_ILS: rates.ILS,
-            EUR_TO_THB: rates.THB,
-            USD_TO_ILS: rate_usd_to_ils,
-            USD_TO_THB: rate_usd_to_thb,
-            THB_TO_USD: rate_thb_to_usd,
-            ILS_TO_USD: rate_ils_to_usd,
-            EUR_TO_USD: rates.USD,
-            THB_TO_EUR: rate_thb_to_eur,
-          });
+      // Each pair conversion
+      currencies.forEach((from) => {
+        currencies.forEach((to) => {
+          if (from !== to) {
+            result[`${from}_TO_${to}`] = rates[to] / rates[from];
+          }
+        });
+      });
 
-        if (insertOrUpdateCurrencyResult?.ERROR) {
-          return {
-            status: 500,
-            data: [],
-            error: {
-              message: i18n.__("CURRENCY_UPDATE_FAILED"),
-              reason: insertOrUpdateCurrencyResult.ERROR,
-            },
-          };
-        }
-
-        return {
-          status: 200,
-          data: {
-            ILS_TO_THB: rate_ils_to_thb,
-            THB_TO_ILS: rate_thb_to_ils,
-            EUR_TO_ILS: rates.ILS,
-            EUR_TO_THB: rates.THB,
-            USD_TO_ILS: rate_usd_to_ils,
-            USD_TO_THB: rate_usd_to_thb,
-            THB_TO_USD: rate_thb_to_usd,
-            ILS_TO_USD: rate_ils_to_usd,
-            EUR_TO_USD: rates.USD,
-            THB_TO_EUR: rate_thb_to_eur,
-          },
-          message: i18n.__("CURRENCY_UPDATED_SUCCESSFULLY"),
-          error: {},
-        };
-      } else {
-        return {
-          status: 500,
-          data: [],
-          error: {
-            message: i18n.__("RATES_NOT_AVAILABLE"),
-            reason: "Invalid response from Fixer API",
-          },
-        };
-      }
+      const insertOrUpdateCurrencyResult =
+        await CurrencyService.insertOrUpdateCurrency(result);
+      return {
+        status: 200,
+        data: result,
+      };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return {
@@ -166,7 +128,7 @@ export default class CurrencyController {
         };
       }
 
-      const supportedCurrencies = ["USD", "ILS", "EUR"];
+      const supportedCurrencies = Object.keys(walletCurrencies);
       const unsupported = toCurrency.filter(
         (cur) => !supportedCurrencies.includes(cur)
       );
@@ -227,7 +189,7 @@ export default class CurrencyController {
         };
       }
 
-      const supportedCurrencies = ["USD", "ILS", "EUR"];
+      const supportedCurrencies = Object.keys(walletCurrencies);
       const unsupported = fromCurrency.filter(
         (cur) => !supportedCurrencies.includes(cur)
       );
@@ -269,6 +231,136 @@ export default class CurrencyController {
       };
     }
   }
+  static async currencyConverterWalletCurToPaymentCur(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    const { fromCurrency, toCurrency, amount } = payload;
+    const supportedFromCurrencies = Object.keys(walletCurrencies);
+    const supportedToCurrencies = Object.keys(paymentCurrencies);
+
+    if (!supportedFromCurrencies.includes(fromCurrency)) {
+      return {
+        status: 400,
+        data: [],
+        error: {
+          message: i18n.__("INVALID_FROM_CURRENCY_CODE"),
+          reason: i18n.__("INVALID_FROM_CURRENCY_CODE", {
+            currency: fromCurrency,
+          }),
+        },
+      };
+    }
+    if (!supportedToCurrencies.includes(toCurrency)) {
+      return {
+        status: 400,
+        data: [],
+        error: {
+          message: i18n.__("INVALID_TO_CURRENCY_CODE"),
+          reason: i18n.__("INVALID_TO_CURRENCY_CODE", {
+            currency: toCurrency,
+          }),
+        },
+      };
+    }
+
+    return new Promise((resolve) => {
+      CurrencyService.currencyConverterWalletCurToPaymentCur(
+        fromCurrency,
+        toCurrency,
+        amount,
+        (err, result) => {
+          if (err || result?.ERROR) {
+            process.env.SENTRY_ENABLED === "true" &&
+              Sentry.captureException(err || result.ERROR);
+            resolve({
+              status: 500,
+              data: [],
+              error: {
+                message: i18n.__("CURRENCY_CONVERSION_FAILED"),
+                reason: err ? err.message : result.ERROR,
+              },
+            });
+          } else {
+            resolve({
+              status: 200,
+              data: result.data || [],
+              message: i18n.__("CURRENCY_CONVERSION_SUCCESSFUL"),
+              error: {},
+            });
+          }
+        }
+      );
+    });
+    
+  }
+  static async currencyConverterPaymentCurToWalletCur(request) {
+      const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    const { fromCurrency, toCurrency, amount } = payload;
+    const supportedToCurrencies = Object.keys(walletCurrencies);
+    const supportedFromCurrencies = Object.keys(paymentCurrencies);
+
+    if (!supportedFromCurrencies.includes(fromCurrency)) {
+      return {
+        status: 400,
+        data: [],
+        error: {
+          message: i18n.__("INVALID_FROM_CURRENCY_CODE"),
+          reason: i18n.__("INVALID_FROM_CURRENCY_CODE", {
+            currency: fromCurrency,
+          }),
+        },
+      };
+    }
+    if (!supportedToCurrencies.includes(toCurrency)) {
+      return {
+        status: 400,
+        data: [],
+        error: {
+          message: i18n.__("INVALID_TO_CURRENCY_CODE"),
+          reason: i18n.__("INVALID_TO_CURRENCY_CODE", {
+            currency: toCurrency,
+          }),
+        },
+      };
+    }
+
+    return new Promise((resolve) => {
+      CurrencyService.currencyConverterPaymentCurToWalletCur(
+        fromCurrency,
+        toCurrency,
+        amount,
+        (err, result) => {
+          if (err || result?.ERROR) {
+            process.env.SENTRY_ENABLED === "true" &&
+              Sentry.captureException(err || result.ERROR);
+            resolve({
+              status: 500,
+              data: [],
+              error: {
+                message: i18n.__("CURRENCY_CONVERSION_FAILED"),
+                reason: err ? err.message : result.ERROR,
+              },
+            });
+          } else {
+            resolve({
+              status: 200,
+              data: result.data || [],
+              message: i18n.__("CURRENCY_CONVERSION_SUCCESSFUL"),
+              error: {},
+            });
+          }
+        }
+      );
+    });
+
+  }
   static async getBankHapoalimExchangeRate(request) {
     const {
       payload,
@@ -301,6 +393,5 @@ export default class CurrencyController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
 }

@@ -5,6 +5,8 @@ import cron from "node-cron";
 import * as Sentry from "@sentry/node";
 import axios from "axios";
 import CronTrackService from "./src/services/crontrack.service.js";
+import { paymentCurrencies } from "./src/config/paymentCurrencies.js";
+import { walletCurrencies } from "./src/config/walletCurrencies.js";
 
 // Your scheduled task
 export const updateCurrencyRates = async () => {
@@ -14,37 +16,36 @@ export const updateCurrencyRates = async () => {
     const response = await axios.get("http://data.fixer.io/api/latest", {
       params: {
         access_key: apiKey,
-        symbols: "ILS,THB,USD",
+        symbols: [...Object.keys(paymentCurrencies), ...Object.keys(walletCurrencies)].join(","),
       },
     });
 
     const rates = response.data.rates;
 
-    if (rates && rates.ILS && rates.THB && rates.USD) {
-      // console.log("Exchange rates fetched successfully:", rates);
+    const currencies = [...Object.keys(paymentCurrencies), ...Object.keys(walletCurrencies)];
+    const result = {};
 
-      const rate_ils_to_thb = rates.THB / rates.ILS;
-      const rate_thb_to_ils = rates.ILS / rates.THB;
-      const rate_usd_to_ils = rates.ILS / rates.USD;
-      const rate_usd_to_thb = rates.THB / rates.USD;
-      const rate_thb_to_usd = rates.USD / rates.THB;
-      const rate_ils_to_usd = rates.USD / rates.ILS;
-      const rate_thb_to_eur = 1 / rates.THB;
+    // EUR to each currency
+    currencies.forEach((cur) => {
+      result[`EUR_TO_${cur}`] = rates[cur];
+      result[`${cur}_TO_EUR`] = 1 / rates[cur];
+    });
 
-      const insertOrUpdateCurrencyResult =
-        await CurrencyService.insertOrUpdateCurrency({
-          ILS_TO_THB: rate_ils_to_thb,
-          THB_TO_ILS: rate_thb_to_ils,
-          EUR_TO_ILS: rates.ILS,
-          EUR_TO_THB: rates.THB,
-          USD_TO_ILS: rate_usd_to_ils,
-          USD_TO_THB: rate_usd_to_thb,
-          THB_TO_USD: rate_thb_to_usd,
-          ILS_TO_USD: rate_ils_to_usd,
-          EUR_TO_USD: rates.USD,
-          THB_TO_EUR: rate_thb_to_eur,
-        });
-    }
+    // Each pair conversion
+    currencies.forEach((from) => {
+      currencies.forEach((to) => {
+      if (from !== to) {
+        result[`${from}_TO_${to}`] = rates[to] / rates[from];
+      }
+      });
+    });
+
+    
+
+    const insertOrUpdateCurrencyResult =
+      await CurrencyService.insertOrUpdateCurrency(result);
+
+      console.log("Currency rates update result:", insertOrUpdateCurrencyResult);
   } catch (error) {
     if (process.env.SENTRY_ENABLED === "true") {
       Sentry.captureException(error);
@@ -54,7 +55,7 @@ export const updateCurrencyRates = async () => {
 
 // Schedule the task to run every day at 1 AM
 
-
+//  await updateCurrencyRates();
 
 cron.schedule(
   "0 1 * * *", // Run at 1 AM daily
