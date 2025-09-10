@@ -11,7 +11,7 @@ const trackIpAddressDeviceId = async (req, res, next) => {
     const deviceId = req?.headers?.["x-device-id"] || "api-developer-device-id-6666"; // Default Device ID for testing
     const deviceName = req?.headers?.["x-device-name"] || "api-developer-device-name-12310"; // Default Device Name for testing
     const deviceType = req?.headers?.["x-device-type"] || "Android"; // Default Device Type for testing
-    const deviceLocation = req?.headers?.["x-device-location"] || "22.5726, 88.3639"; // Default Device Location for testing
+    const deviceLocation = req?.headers?.["x-device-location"] || ""; // Default Device Location for testing
     const routePath = req.originalUrl;
 
     let ipCountry = "";
