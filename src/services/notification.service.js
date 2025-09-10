@@ -88,25 +88,25 @@ export default class NotificationService {
       });
 
 
-       PushNotificationService.sendNotification(
-        {
-          userId: senderId,
-          title: messageTitleSender,
-          body: messageBodySender,
-          data: {
-            transferId: String(id),
-            action: "SENDER_TRANSFER",
-            amount: String(amount) + currencySymbol,
-            senderPhoneNumber: sender?.phoneNumber,
-            receiverPhoneNumber: receiver?.phoneNumber,
-            notificationId: String(sendNotificationData?.id),
-          },
-        },
-        (err, res) => {
-          if (err) console.error("Error sending push notification:", err);
-          else console.log("Push notification sent successfully:", res);
-        }
-      );
+      //  PushNotificationService.sendNotification(
+      //   {
+      //     userId: senderId,
+      //     title: messageTitleSender,
+      //     body: messageBodySender,
+      //     data: {
+      //       transferId: String(id),
+      //       action: "SENDER_TRANSFER",
+      //       amount: String(amount) + currencySymbol,
+      //       senderPhoneNumber: sender?.phoneNumber,
+      //       receiverPhoneNumber: receiver?.phoneNumber,
+      //       notificationId: String(sendNotificationData?.id),
+      //     },
+      //   },
+      //   (err, res) => {
+      //     if (err) console.error("Error sending push notification:", err);
+      //     else console.log("Push notification sent successfully:", res);
+      //   }
+      // );
 
 
 
@@ -347,25 +347,25 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        PushNotificationService.sendNotification(
-          {
-            userId: senderId,
-            title: messageTitleSender,
-            body: messageBodySender,
-            data: {
-              transferId: String(result.data.id),
-              action: "SENDER_TRANSFER_REQUEST",
-              amount: String(amount) + currencySymbol,
-              receiverPhoneNumber,
-              senderPhoneNumber,
-              notificationId: String(senderNotificationData.id),
-            },
-          },
-          (err, res) => {
-            if (err) console.error("Error sending push notification:", err);
-            else console.log("Push notification sent successfully:", res);
-          }
-        );
+        // PushNotificationService.sendNotification(
+        //   {
+        //     userId: senderId,
+        //     title: messageTitleSender,
+        //     body: messageBodySender,
+        //     data: {
+        //       transferId: String(result.data.id),
+        //       action: "SENDER_TRANSFER_REQUEST",
+        //       amount: String(amount) + currencySymbol,
+        //       receiverPhoneNumber,
+        //       senderPhoneNumber,
+        //       notificationId: String(senderNotificationData.id),
+        //     },
+        //   },
+        //   (err, res) => {
+        //     if (err) console.error("Error sending push notification:", err);
+        //     else console.log("Push notification sent successfully:", res);
+        //   }
+        // );
 
         console.log(
           "Creating wallet transfer notification with data:",
