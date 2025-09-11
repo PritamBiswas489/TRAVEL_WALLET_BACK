@@ -1,11 +1,10 @@
 import db from "../databases/models/index.js";
-import * as Sentry from "@sentry/node";
 const { ContactUs, Op } = db;
 
 import { addContactValidator } from "../validators/contact.validator.js";
 import * as Sentry from "@sentry/node";
 
-export default class ContactUsController {
+export default class ContactUsController { 
   
   /**
    * Save contact us content
