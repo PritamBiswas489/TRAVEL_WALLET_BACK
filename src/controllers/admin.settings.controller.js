@@ -1,4 +1,5 @@
 import SettingsService from "../services/settings.service.js";
+import * as Sentry from "@sentry/node";
 export default class AdminSettingsController {
      static async getAllSettings(request) {
         const { payload, headers: { i18n }, user } = request;

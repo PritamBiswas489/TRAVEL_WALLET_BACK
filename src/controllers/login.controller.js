@@ -315,9 +315,9 @@ export default class LoginController {
         
         // Ensure device record exists and update login info
         const [deviceRecord, created] = await UserDevices.findOrCreate({
-          where: { userId: user.id, deviceID: deviceid },
+          where: { userId: newUser.id, deviceID: deviceid },
           defaults: {
-            userId: user.id,
+            userId: newUser.id,
             deviceID: deviceid,
             deviceName: deviceName,
             deviceType: deviceType,

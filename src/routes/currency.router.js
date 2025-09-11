@@ -3,6 +3,7 @@ import express from "express";
 const router = express.Router();
 import CurrencyController from "../controllers/currency.controller.js";
 import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
+import * as Sentry from "@sentry/node";
 router.use(trackIpAddressDeviceId);
 /**
  * @swagger
