@@ -4,6 +4,7 @@ const router = express.Router();
 import CurrencyController from "../controllers/currency.controller.js";
 import trackIpAddressDeviceId from '../middlewares/trackIpAddressDeviceId.js';
 import * as Sentry from "@sentry/node";
+import { paymentCurrencies } from "../config/paymentCurrencies.js";
 router.use(trackIpAddressDeviceId);
 /**
  * @swagger
@@ -256,6 +257,20 @@ router.post("/converter-payment-cur-to-wallet-cur", async (req, res, next) => {
       error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
     });
   }
+});
+/**
+ * @swagger
+ * /api/currency/get-payment-currencies:
+ *   get:
+ *     summary: Get supported payment currencies
+ *     tags:
+ *       - Currency routes
+ *     responses:
+ *       200:
+ *         description: Success - Payment currencies retrieved
+ */
+router.get("/get-payment-currencies", async (req, res, next) => {
+  res.return(paymentCurrencies);
 });
 
 /**
