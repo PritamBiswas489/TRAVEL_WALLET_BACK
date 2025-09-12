@@ -7,6 +7,7 @@ const router = express.Router();
 import ContactUsController from '../controllers/contactus.controller.js';
 import KycController from '../controllers/kyc.controller.js';
 import ContentController from '../controllers/content.controller.js';
+import ExpensesController from '../controllers/expenses.controller.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -122,6 +123,23 @@ router.get('/terms-and-conditions', async (req, res, next) => {
  */
 router.get('/privacy-policy', async (req, res, next) => {
    const response = await ContentController.getPrivacyPolicy({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+/**
+ * @swagger
+ * /api/front/expenses:
+ *   get:
+ *     summary: Get expenses content
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Expenses retrieved successfully
+ */
+router.get('/expenses', async (req, res, next) => {
+   const response = await ExpensesController.listExpenses({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });
 

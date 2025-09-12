@@ -2,6 +2,7 @@
 import { updateCurrencyRates } from "./currency-cron.js";
 import SettingsService from "./src/services/settings.service.js";
 import UserService from "./src/services/user.service.js";
+import ExpensesService from "./src/services/expenses.service.js";
 const seedCurrencyData = async () => {
   console.log("Seeding Currency Data...");
   await updateCurrencyRates();
@@ -44,3 +45,72 @@ const seedAdminUser = async () => {
     console.log("Admin User Seeding Completed.");
 }
 seedAdminUser();
+
+
+//create default expenses seeder
+const seedDefaultExpenses = async () => {
+    console.log("Seeding Default Expenses...");
+    await ExpensesService.clearExpenseTable(); // Clear existing entries before seeding
+    const defaultExpenses = [
+      {
+        icon: "Ionicons",
+        name: "chatbox-ellipses-outline",
+        title: "General",
+        color: "#F57C00",
+      },
+      {
+        icon: "Ionicons",
+        name: "bed-outline",
+        title: "Accommodation",
+        color: "#B71C1C",
+      },
+      {
+        icon: "Ionicons",
+        name: "bus-outline",
+        title: "Transportation",
+        color: "#FF6F00",
+      },
+      {
+        icon: "Ionicons",
+        name: "map-outline",
+        title: "Sightseeing & Tours",
+        color: "#43A047",
+      },
+      {
+        icon: "Ionicons",
+        name: "restaurant-outline",
+        title: "Food & Drinks",
+        color: "#00897B",
+      },
+      {
+        icon: "Ionicons",
+        name: "bag-handle-outline",
+        title: "Shopping",
+        color: "#388E3C",
+      },
+      {
+        icon: "Ionicons",
+        name: "flower-outline",
+        title: "Spa & Wellness",
+        color: "#E91E63",
+      },
+      {
+        icon: "Ionicons",
+        name: "film-outline",
+        title: "Entertainment",
+        color: "#E53935",
+      },
+      {
+        icon: "Ionicons",
+        name: "gift-outline",
+        title: "Gifts",
+        color: "#8E24AA",
+      },
+    ];
+    for (const expense of defaultExpenses) {
+        await ExpensesService.createExpense(expense);
+    }
+    console.log("Default Expenses Seeding Completed.");
+}
+
+seedDefaultExpenses();
