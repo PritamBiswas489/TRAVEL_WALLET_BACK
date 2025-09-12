@@ -1,14 +1,14 @@
 import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
-import ExpensesService from "../services/expenses.service.js";
+import ExpensesCategoriesService from "../services/expenses.categories.service.js";
 
 
-export default class ExpensesController {
+export default class ExpensesCategoriesController {
      static async listExpenses(req, res) {
         try {
-            const expenses = await ExpensesService.getAllExpenses();
-            return { status: 200, data: expenses, message: "",  error: {}, };
+            const expensesCategories = await ExpensesCategoriesService.getAllExpenses();
+            return { status: 200, data: expensesCategories, message: "",  error: {}, };
         } catch (e) {
             if (process.env.SENTRY_ENABLED === "true") {
                 Sentry.captureException(e);

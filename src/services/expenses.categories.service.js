@@ -1,12 +1,12 @@
 import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
-const { Expenses } = db;
+const { ExpensesCategories } = db;
 
-export default class ExpensesService {
+export default class ExpensesCategoriesService {
   static async createExpense(data) {
     try {
-        const createdExpense = await Expenses.create(data);
+        const createdExpense = await ExpensesCategories.create(data);
         return createdExpense;
     } catch (e) {
       if (process.env.SENTRY_ENABLED === "true") {
@@ -17,7 +17,7 @@ export default class ExpensesService {
   }
   static async clearExpenseTable() {
     try {
-      await Expenses.destroy({ where: {}, truncate: true });
+      await ExpensesCategories.destroy({ where: {}, truncate: true });
       return { message: "All expenses cleared successfully." };
     } catch (e) {
       if (process.env.SENTRY_ENABLED === "true") {
@@ -28,7 +28,7 @@ export default class ExpensesService {
   }
   static async getAllExpenses() {
     try {
-      const expenses = await Expenses.findAll();
+      const expenses = await ExpensesCategories.findAll();
       return expenses;
     } catch (e) {
       if (process.env.SENTRY_ENABLED === "true") {

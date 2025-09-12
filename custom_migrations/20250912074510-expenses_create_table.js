@@ -1,6 +1,6 @@
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable(
-    "expenses",
+    "expensesCategories",
     {
       id: {
         type: Sequelize.BIGINT,
@@ -41,7 +41,7 @@ export async function up(queryInterface, Sequelize) {
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable("expenses", {
+  await queryInterface.dropTable("expensesCategories", {
     supportsSearchPath: false,
   });
 }

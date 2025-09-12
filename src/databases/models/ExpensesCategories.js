@@ -1,6 +1,6 @@
-export default function Expenses(sequelize, DataTypes) {
-  const Expenses = sequelize.define(
-    "Expenses",
+export default function ExpensesCategories(sequelize, DataTypes) {
+  const ExpensesCategories = sequelize.define(
+    "expensesCategories",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -25,9 +25,9 @@ export default function Expenses(sequelize, DataTypes) {
       },
     },
     {
-      tableName: "expenses",
+      tableName: "expensesCategories",
       timestamps: true,
     }
   );
-  return Expenses;
+  return ExpensesCategories;
 }

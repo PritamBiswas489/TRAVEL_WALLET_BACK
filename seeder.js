@@ -2,7 +2,7 @@
 import { updateCurrencyRates } from "./currency-cron.js";
 import SettingsService from "./src/services/settings.service.js";
 import UserService from "./src/services/user.service.js";
-import ExpensesService from "./src/services/expenses.service.js";
+import ExpensesCategoriesService from "./src/services/expenses.categories.service.js";
 const seedCurrencyData = async () => {
   console.log("Seeding Currency Data...");
   await updateCurrencyRates();
@@ -50,8 +50,8 @@ seedAdminUser();
 //create default expenses seeder
 const seedDefaultExpenses = async () => {
     console.log("Seeding Default Expenses...");
-    await ExpensesService.clearExpenseTable(); // Clear existing entries before seeding
-    const defaultExpenses = [
+    await ExpensesCategoriesService.clearExpenseTable(); // Clear existing entries before seeding
+    const defaultExpensesCategories = [
       {
         icon: "Ionicons",
         name: "chatbox-ellipses-outline",
@@ -107,8 +107,8 @@ const seedDefaultExpenses = async () => {
         color: "#8E24AA",
       },
     ];
-    for (const expense of defaultExpenses) {
-        await ExpensesService.createExpense(expense);
+    for (const expense of defaultExpensesCategories) {
+        await ExpensesCategoriesService.createExpense(expense);
     }
     console.log("Default Expenses Seeding Completed.");
 }
