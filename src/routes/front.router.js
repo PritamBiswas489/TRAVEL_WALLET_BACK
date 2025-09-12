@@ -10,6 +10,7 @@ import ContentController from '../controllers/content.controller.js';
 import ExpensesCategoriesController from '../controllers/expenses.categories.controller.js';
 import fs from 'fs';
 import path from 'path';
+import PhilippinesPaymentController from '../controllers/philippinesPayment.controller.js';
 
 router.use(trackIpAddressDeviceId);
 
@@ -185,7 +186,31 @@ router.post('/sumsub-kyc-webhook', async (req, res) => {
 
 
 });
+/**
+ * @swagger
+ * /api/front/pisopay-callback:
+ *   post:
+ *     summary: Handle PisoPay callback events
+ *     tags: [Philippines Payment Callback]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description:  Payload sent by PisoPay callback
+ *     responses:
+ *       200:
+ *         description: Callback received successfully
+ */
 
+router.post("/pisopay-callback", async (req, res) => {
+   const response = await PhilippinesPaymentController.callbackTransaction({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
 
 router.use('/login',loginRouter)
 router.use('/notification', notificationRouter);

@@ -53,6 +53,14 @@ const options = {
         name: "Auth-Transfer Requests routes",
         description: "Transfer requests management endpoints",
       },
+      {
+        name: "Philippines Payment",
+        description: "PisoPay Payment management endpoints",
+      },
+      {
+        name: "Philippines Payment Callback",
+        description: "PisoPay Payment management  callback endpoints",
+      },
       { name: "Admin routes", description: "Admin management endpoints" },
       {
         name: "Notification routes - Testing purposes",
