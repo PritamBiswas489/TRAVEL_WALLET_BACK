@@ -6,6 +6,14 @@ import PisoPayApiService from "../services/pisoPayApi.service.js";
 export default class PhilippinesPaymentController {
 
 
+    static async getToken(){
+       const responseToken =  await PisoPayApiService.login();
+       if(responseToken?.token){
+         return { status: 200, data: responseToken, message: "",  error: {}, };
+       }else{
+        return { status: 500, error: "Unable to retrieve token" , data:{}, message: "" };
+       }
+    }
     static async validatePisoPayTransaction(request) {
         await PisoPayApiService.login();
         console.log("Request received in controller:", request);

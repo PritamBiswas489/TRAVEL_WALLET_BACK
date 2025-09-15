@@ -23,13 +23,9 @@ export default class PisoPayApiService {
     console.log("PisoPay login config:", config);
     try {
         console.log("Attempting to log in to PisoPay API...");  
-    const response = await fetch(config.url, {
-      method: config.method,
-      headers: config.headers,
-      body: config.data,
-    });
-    const responseData = await response.json();
-      console.log("PisoPay login response:", responseData);
+    const response = await axios(config);
+    const responseData = response.data;
+    return responseData?.token ? { token: responseData.token } : null;
     } catch (e) {
         console.log("PisoPay login error:", e.message);
       if (process.env.SENTRY_ENABLED === "true") {

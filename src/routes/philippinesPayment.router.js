@@ -4,7 +4,32 @@ import PhilippinesPaymentController from '../controllers/philippinesPayment.cont
 const router = express.Router();
 
 
-
+/**
+ * @swagger
+ *  /api/auth/pisopay/token:
+ *   get:
+ *     summary: Get PisoPay API token
+ *     tags:
+ *       - Philippines Payment
+ *     responses:
+ *       200:
+ *         description: Token retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid request
+ */
+router.get('/token', async (req, res, next) => {
+    const response = await PhilippinesPaymentController.getToken();
+    res.return(response);
+});
 /**
  * @swagger
  *  /api/auth/pisopay/remittance-validate-transaction:
