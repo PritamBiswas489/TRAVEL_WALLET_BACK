@@ -215,3 +215,14 @@ export async function getAddress(lat, lng) {
     return {'ERROR': 1};
   }
 }
+
+export   function getCalculateP2MOrP2PFromQRCode(qrCode) {
+  const lowerQR = qrCode.toLowerCase();
+  if (lowerQR.includes("p2m")) {
+    return "P2M"; // Person-to-Merchant
+  } else if (lowerQR.includes("p2p")) {
+    return "P2P"; // Person-to-Person
+  } else {
+    return null; // fallback
+  }
+}

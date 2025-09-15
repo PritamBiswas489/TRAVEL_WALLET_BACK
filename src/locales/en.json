@@ -253,5 +253,16 @@
 	"DEVICE_ID_DELETED_SUCCESSFULLY": "Device ID deleted successfully.",
 	"DEVICE_LOGGED_OUT": "Logged out: device {{ deviceName }} removed.",
 	"YOUR_DEVICE_HAS_BEEN_LOGGED_OUT": "You have been logged out from device {{ deviceName }}.",
-	"FAILED_TO_DELETE_DEVICE_ID": "Failed to delete device ID."
+	"FAILED_TO_DELETE_DEVICE_ID": "Failed to delete device ID.",
+	"Request failed with status code 400": "Request failed with status code 400",
+	"VALIDATION_FAILED": "Validation failed.",
+	"ERR-RVT:QR Code Invalid": "ERR-RVT:QR Code Invalid",
+	"VALIDATION_SUCCESSFUL": "Validation successful.",
+	"PAYMENT_VALIDATION_FAILED": "Qr code validation failed.",
+	"PAYMENT_VALIDATION_SUCCESSFUL": "Qr code validation successful.",
+	"MISSING_QR_CODE": "Missing qr code.",
+	"MISSING_AMOUNT": "Missing amount.",
+	"PAYMENT_INITIATION_FAILED": "Payment initiation failed.",
+	"PAYMENT_INITIATION_SUCCESSFUL": "Payment initiation successful.",
+	"TOKEN_RETRIEVAL_FAILED": "Token retrieval failed."
 }
