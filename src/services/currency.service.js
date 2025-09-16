@@ -190,6 +190,7 @@ export default class CurrencyService {
 
   }
   static async currencyConverterPaymentCurToWalletCur(fromCurrency, toCurrency, amount, callback) {
+      
 
     try {
       const currency = await Currency.findOne({

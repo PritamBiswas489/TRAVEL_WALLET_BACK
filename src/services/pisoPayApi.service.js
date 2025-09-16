@@ -36,7 +36,7 @@ export default class PisoPayApiService {
     }
   }
   // Validate a transaction
-  static async validateTransaction({ qrCode, i18n, purpose = "VALIDATION" }, callback) {
+  static async validateTransaction({ token, qrCode, i18n, purpose = "VALIDATION", dt = {} }, callback) {
        try{
         if(!qrCode){
           throw new Error("MISSING_QR_CODE");
@@ -48,10 +48,7 @@ export default class PisoPayApiService {
         //Remittance method code based on QR type
         const remittanceMethodCode = qrIType === "P2M" ? "RMCQRPHREADP2M" : "RMCQRPHREADP2P";
 
-        const tokenResponse = await this.login();
-        if(!tokenResponse?.token){
-          throw new Error("TOKEN_RETRIEVAL_FAILED");
-        }
+       
 
         // console.log("PisoPay token acquired, validating transaction...",tokenResponse?.token);
 
@@ -59,7 +56,7 @@ export default class PisoPayApiService {
            "remittance_method_code": remittanceMethodCode,
             "qr_code": qrCode,
             "purpose": purpose,
-            "amount": 1.00,
+            "amount": dt?.amount || 1.00,
         });
          
         var config = {
@@ -69,7 +66,7 @@ export default class PisoPayApiService {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `${tokenResponse?.token}`,
+            Authorization: `${token}`,
           },
           data: data,
         };
@@ -81,7 +78,7 @@ export default class PisoPayApiService {
             return callback(null, {
               data: {
                 qrIType,
-                amount: qrIType === "P2M" ?  (responseData?.data?.amount) : null,
+                amount: qrIType === "P2M" ?  (responseData?.data?.amount) : (dt?.amount ? responseData?.data?.amount : null),
                 merchantName: responseData?.data?.merchant_name, 
                 merchantCity: responseData?.data?.merchant_city,
               },
@@ -103,7 +100,7 @@ export default class PisoPayApiService {
        }
   }
   // Initiate a transaction
-  static async initiateTransaction({ qrCode, amount, i18n, purpose = "INITIATION" }, callback) {
+  static async initiateTransaction({ token, qrCode, amount, i18n, purpose = "INITIATION" }, callback) {
     console.log("Initiating PisoPay transaction with QR code:", qrCode, "and amount:", amount);
     try {
       if (!qrCode) {
@@ -111,11 +108,7 @@ export default class PisoPayApiService {
       }
       const qrIType = getCalculateP2MOrP2PFromQRCode(qrCode);
       const remittanceMethodCode = qrIType === "P2M" ? "RMCQRPHREADP2M" : "RMCQRPHREADP2P";
-      const tokenResponse = await this.login();
-      if (!tokenResponse?.token) {
-        throw new Error("TOKEN_RETRIEVAL_FAILED");
-      }
-
+      
       let paymentData = {
         remittance_method_code: remittanceMethodCode,
         qr_code: qrCode,
@@ -137,7 +130,7 @@ export default class PisoPayApiService {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `${tokenResponse?.token}`,
+          Authorization: `${token}`,
         },
         data: JSON.stringify(paymentData),
       };

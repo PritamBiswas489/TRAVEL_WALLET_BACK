@@ -89,6 +89,26 @@ export default function PisoPayTransactionInfos(sequelize, DataTypes) {
         allowNull: false,
         defaultValue: "Pending",
       },
+      userId: {
+        type: DataTypes.BIGINT,
+        allowNull: true,  
+      },
+      expenseCatId: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+      memo: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      walletCurrency: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      amountInUserWalletCurrency: {
+        type: DataTypes.DECIMAL(15, 2),
+        allowNull: true,
+      },
     },
     {
       tableName: "pisopy_transaction_infos",

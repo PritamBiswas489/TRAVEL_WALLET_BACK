@@ -264,5 +264,17 @@
 	"MISSING_AMOUNT": "Missing amount.",
 	"PAYMENT_INITIATION_FAILED": "Payment initiation failed.",
 	"PAYMENT_INITIATION_SUCCESSFUL": "Payment initiation successful.",
-	"TOKEN_RETRIEVAL_FAILED": "Token retrieval failed."
+	"TOKEN_RETRIEVAL_FAILED": "Token retrieval failed.",
+	"INVALID_WALLET_CURRENCY": "Invalid wallet currency.",
+	"BUY_EXPENSE_FAILED": "Buy expense failed.",
+	"BUY_EXPENSE_SUCCESSFUL": "Buy expense successful.",
+	"GET_EXPENSE_TRANSACTION_DETAILS_SUCCESSFUL": "Get expense transaction details successful.",
+	"INVALID_AMOUNT": "Invalid amount.",
+	"USER_WALLET_NOT_FOUND": "User wallet not found.",
+	"USER_WALLET_NOT_FOUND_FOR_SELECTED_CURRENCY": "User wallet not found for selected currency.",
+	"INSUFFICIENT_WALLET_BALANCE": "Insufficient wallet balance.",
+	"EXPENSE_TRANSACTION_NOT_FOUND": "Expense transaction not found."
+	
+	
+
 }
