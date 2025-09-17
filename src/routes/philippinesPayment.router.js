@@ -146,11 +146,21 @@ router.post('/remittance-initiate-transaction', async (req, res, next) => {
  *                 type: string
  *                 example: "Making Payment in General"
  *                 description: Memo for the expense
+ *               merchantName:
+ *                 type: string
+ *                 example: "ABC Store"
+ *                 description: Name of the merchant
+ *               merchantCity:
+ *                 type: string
+ *                 example: "Manila"
+ *                 description: City of the merchant
  *             required:
  *               - walletCurrency
  *               - amount
  *               - expenseCatId
  *               - memo
+ *               - merchantName
+ *               - merchantCity
  *     responses:
  *       200:
  *         description: Expense bought successfully

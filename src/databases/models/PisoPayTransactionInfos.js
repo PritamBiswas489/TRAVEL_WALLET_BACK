@@ -109,6 +109,19 @@ export default function PisoPayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.DECIMAL(15, 2),
         allowNull: true,
       },
+      merchantName:{
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      merchantCity:{
+        type: DataTypes.STRING,
+        allowNull: true,  
+
+      },
+      qrCodeType:{
+        type: DataTypes.STRING,
+        allowNull: true,  
+      },
     },
     {
       tableName: "pisopy_transaction_infos",

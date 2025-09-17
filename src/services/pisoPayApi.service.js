@@ -41,12 +41,12 @@ export default class PisoPayApiService {
         if(!qrCode){
           throw new Error("MISSING_QR_CODE");
         }
-        const qrIType =   getCalculateP2MOrP2PFromQRCode(qrCode);
-        if(!qrIType){
+        const qrCodeType =   getCalculateP2MOrP2PFromQRCode(qrCode);
+        if(!qrCodeType){
           throw new Error("UNSUPPORTED_QR_CODE_TYPE");
         }
         //Remittance method code based on QR type
-        const remittanceMethodCode = qrIType === "P2M" ? "RMCQRPHREADP2M" : "RMCQRPHREADP2P";
+        const remittanceMethodCode = qrCodeType === "P2M" ? "RMCQRPHREADP2M" : "RMCQRPHREADP2P";
 
        
 
@@ -77,8 +77,8 @@ export default class PisoPayApiService {
           if(responseData?.status === 200){
             return callback(null, {
               data: {
-                qrIType,
-                amount: qrIType === "P2M" ?  (responseData?.data?.amount) : (dt?.amount ? responseData?.data?.amount : null),
+                qrCodeType,
+                amount: qrCodeType === "P2M" ?  (responseData?.data?.amount) : (dt?.amount ? responseData?.data?.amount : null),
                 merchantName: responseData?.data?.merchant_name, 
                 merchantCity: responseData?.data?.merchant_city,
               },
@@ -87,7 +87,7 @@ export default class PisoPayApiService {
             throw new Error("PAYMENT_VALIDATION_FAILED");
           }
         } catch (error) {
-          console.log("PisoPay transaction error:", error);
+          // console.log("PisoPay transaction error:", error);
           console.log("PisoPay transaction exception:", (error?.response?.data?.message));
           console.log("PisoPay transaction validation error:", (error?.response?.data?.errors));
           if (process.env.SENTRY_ENABLED === "true") {
@@ -106,8 +106,8 @@ export default class PisoPayApiService {
       if (!qrCode) {
         throw new Error("MISSING_QR_CODE");
       }
-      const qrIType = getCalculateP2MOrP2PFromQRCode(qrCode);
-      const remittanceMethodCode = qrIType === "P2M" ? "RMCQRPHREADP2M" : "RMCQRPHREADP2P";
+      const qrCodeType = getCalculateP2MOrP2PFromQRCode(qrCode);
+      const remittanceMethodCode = qrCodeType === "P2M" ? "RMCQRPHREADP2M" : "RMCQRPHREADP2P";
       
       let paymentData = {
         remittance_method_code: remittanceMethodCode,
@@ -119,7 +119,7 @@ export default class PisoPayApiService {
           last_name: process.env.PISOPAY_DEFAULT_LASTNAME || "Cruz",
         },
       };
-      if (qrIType === "P2P") {
+      if (qrCodeType === "P2P") {
         paymentData.amount = parseFloat(amount);
       }
       paymentData.callback_url = process.env.PISOPAY_CALLBACK_URL;

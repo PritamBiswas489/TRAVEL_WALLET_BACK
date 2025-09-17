@@ -253,5 +253,7 @@
 	"DEVICE_ID_DELETED_SUCCESSFULLY": "Device ID deleted successfully.",
 	"DEVICE_LOGGED_OUT": "Logged out: device {{ deviceName }} removed.",
 	"YOUR_DEVICE_HAS_BEEN_LOGGED_OUT": "You have been logged out from device {{ deviceName }}.",
-	"FAILED_TO_DELETE_DEVICE_ID": "Failed to delete device ID."
+	"FAILED_TO_DELETE_DEVICE_ID": "Failed to delete device ID.",
+	"EXPENSE_PAYMENT_TRANSACTION": "EXPENSE_PAYMENT_TRANSACTION",
+	"EXPENSE_PAYMENT_TRANSACTION_FAILED": "EXPENSE_PAYMENT_TRANSACTION_FAILED"
 }

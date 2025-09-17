@@ -18,6 +18,7 @@ export default class PhilippinesPaymentController {
       };
     }
   }
+  //Validate PisoPay Transaction
   static async validatePisoPayTransaction(request) {
     const {
       headers: { i18n },
@@ -62,7 +63,7 @@ export default class PhilippinesPaymentController {
       );
     });
   }
-
+  //Initiate PisoPay Transaction
   static async initiatePisoPayTransaction(request) {
     const {
       headers: { i18n },
@@ -96,7 +97,7 @@ export default class PhilippinesPaymentController {
               },
             });
           }
-          PhilippinesPaymentService.trackTransaction(response.data);
+          // PhilippinesPaymentService.trackTransaction(response.data);
           return resolve({
             status: 200,
             data: (response.data),
@@ -107,7 +108,7 @@ export default class PhilippinesPaymentController {
       );
     });
   }
-
+  //Buy Expense using PisoPay
   static async buyExpense(request){
      const {
       headers: { i18n },
@@ -143,7 +144,7 @@ export default class PhilippinesPaymentController {
     });
 
   }
-
+  //Get Expense Transaction Details
   static async getExpenseTransactionDetails(request){
       const { headers: { i18n }, user, payload } = request;
 
@@ -176,7 +177,7 @@ export default class PhilippinesPaymentController {
           );
       });
   }
-
+  //Callback to update transaction status
   static async callbackTransaction(request) {
     const {
       headers: { i18n },
@@ -185,7 +186,7 @@ export default class PhilippinesPaymentController {
     } = request;
 
     if(payload?.transaction_info_code){
-        await PhilippinesPaymentService.updateTransactionStatus(payload);
+        await PhilippinesPaymentService.updateTransactionStatus(payload, i18n);
     }
   }
 }

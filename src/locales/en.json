@@ -273,8 +273,8 @@
 	"USER_WALLET_NOT_FOUND": "User wallet not found.",
 	"USER_WALLET_NOT_FOUND_FOR_SELECTED_CURRENCY": "User wallet not found for selected currency.",
 	"INSUFFICIENT_WALLET_BALANCE": "Insufficient wallet balance.",
-	"EXPENSE_TRANSACTION_NOT_FOUND": "Expense transaction not found."
-	
-	
-
+	"EXPENSE_TRANSACTION_NOT_FOUND": "Expense transaction not found.",
+	"EXPENSE_PAYMENT_TRANSACTION": "Spent {{amount}}{{currency}} at {{merchantName}} in {{merchantCity}} for {{expenseCatName}}.",
+	"EXPENSE_PAYMENT_TRANSACTION_FAILED": "Failed to spend {{amount}}{{currency}} at {{merchantName}} in {{merchantCity}} for {{expenseCatName}}.",
+	"actualPaymentAmount is not defined": "actualPaymentAmount is not defined"
 }
