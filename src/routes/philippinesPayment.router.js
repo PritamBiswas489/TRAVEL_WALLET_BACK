@@ -11,6 +11,9 @@ const router = express.Router();
  *     summary: Get PisoPay API token
  *     tags:
  *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     responses:
  *       200:
  *         description: Token retrieved successfully
@@ -37,6 +40,9 @@ router.get('/token', async (req, res, next) => {
  *     summary: Validate PisoPay transaction via QR code
  *     tags:
  *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -75,6 +81,9 @@ router.post('/remittance-validate-transaction', async (req, res, next) => {
  *     summary: Initiate PisoPay transaction
  *     tags:
  *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -118,6 +127,9 @@ router.post('/remittance-initiate-transaction', async (req, res, next) => {
  *     summary: Buy expense using PisoPay
  *     tags:
  *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -187,6 +199,9 @@ router.post('/buy-expense', async (req, res, next) => {
  *     summary: Get details of an expense transaction
  *     tags:
  *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
