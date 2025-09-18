@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import PisoPayApiService from "../services/pisoPayApi.service.js";
 import PhilippinesPaymentService from "../services/philippinesPayment.service.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
+import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
 
 export default class PhilippinesPaymentController {
   static async getToken() {
@@ -108,7 +109,7 @@ export default class PhilippinesPaymentController {
           }
           return resolve({
             status: 200,
-            data: response.data,
+            data: buildAes256GcmEncryptRequest(response.data),
             message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
             error: null,
           });
@@ -213,7 +214,7 @@ export default class PhilippinesPaymentController {
 
           return resolve({
             status: 200,
-            data: response.data,
+            data: buildAes256GcmEncryptRequest(response.data),
             message: i18n.__("BUY_EXPENSE_SUCCESSFUL"),
             error: null,
           });
