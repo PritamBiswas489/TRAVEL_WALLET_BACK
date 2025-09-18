@@ -48,6 +48,8 @@ export default class PhilippinesPaymentService {
           merchantName: paymentData.merchantName,
           merchantCity: paymentData.merchantCity,
           qrCodeType: paymentData.qrCodeType,
+          latitude: paymentData.latitude,
+          longitude: paymentData.longitude
         },
         { transaction }
       );
@@ -90,7 +92,7 @@ export default class PhilippinesPaymentService {
           const expenseDet = await ExpensesCategories.findOne({
             where: { id: record.expenseCatId },
           });
-          const expenseCatName = expenseDet?.name || "General Expense";
+          const expenseCatName = expenseDet?.title || "General Expense";
 
           const userWallet = await UserWallet.findOne({
             where: {
@@ -264,7 +266,7 @@ export default class PhilippinesPaymentService {
         const expenseDet = await ExpensesCategories.findOne({
           where: { id: expenseCatId },
         });
-        const expenseCatName = expenseDet ? expenseDet.name : "General Expense";
+        const expenseCatName = expenseDet ? expenseDet.title : "General Expense";
 
         console.log(
           "Proceeding with expense payment. Actual payment amount in PHP:",
@@ -306,6 +308,8 @@ export default class PhilippinesPaymentService {
         dt.merchantName = merchantName;
         dt.merchantCity = merchantCity;
         dt.qrCodeType = qrCodeType;
+        dt.latitude = payload?.latitude || null;
+        dt.longitude = payload?.longitude || null;
         //track transaction
         const trackedTransaction = await this.trackTransaction(dt, tran);
         const pisoPayTransactionId = trackedTransaction.id;

@@ -122,6 +122,14 @@ export default function PisoPayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.STRING,
         allowNull: true,  
       },
+      latitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,  
+      },
+      longitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       tableName: "pisopy_transaction_infos",

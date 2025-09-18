@@ -74,6 +74,54 @@ router.post('/remittance-validate-transaction', async (req, res, next) => {
     const response = await PhilippinesPaymentController.validatePisoPayTransaction({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 });
+
+
+
+/**
+ * @swagger
+ * /api/auth/pisopay/crypto/remittance-validate-transaction:
+ *   post:
+ *     tags:
+ *       - Philippines Payment
+ *     summary: Validate PisoPay transaction via QR code (Crypto)
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Encrypted payload containing QR code details
+ *               sig:
+ *                 type: string
+ *                 description: Signature for the envelope
+ *             required:
+ *               - envelope
+ *               - sig
+ *     responses:
+ *       200:
+ *         description: Crypto transaction validated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/crypto/remittance-validate-transaction', async (req, res, next) => {
+    const response = await PhilippinesPaymentController.cryptoValidatePisoPayTransaction({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
 /**
  * @swagger
  *  /api/auth/pisopay/remittance-initiate-transaction:
@@ -192,6 +240,63 @@ router.post('/buy-expense', async (req, res, next) => {
     const response = await PhilippinesPaymentController.buyExpense({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 });
+
+/**
+ * @swagger
+ * /api/auth/pisopay/crypto/buy-expense:
+ *   post:
+ *     tags:
+ *       - Philippines Payment
+ *     summary: Execute a crypto buy expense transaction
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Encrypted payload containing buy expense details
+ *               sig:
+ *                 type: string
+ *                 description: Signature for the envelope
+ *             required:
+ *               - envelope
+ *               - sig
+ *     responses:
+ *       200:
+ *         description: Crypto buy expense transaction executed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transactionId:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post('/crypto/buy-expense', async (req, res, next) => {
+    const response = await PhilippinesPaymentController.cryptoBuyExpense({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
 /**
  * @swagger
  *  /api/auth/pisopay/expense-transaction-details:

@@ -10,6 +10,7 @@ import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import { setNewPinValidator } from "../validators/setNewPin.validator.js";
 import redisClient from "../config/redis.config.js";
 import { randomSaltHex } from "../libraries/utility.js";
+ 
 
 const { User, UserDevices, Op } = db;
 
@@ -227,14 +228,28 @@ export default class LoginController {
         const getlatlng = deviceLocation.split(',');
         const latitude = getlatlng?.[0] ? parseFloat(getlatlng[0]) : null;
         const longitude = getlatlng?.[1] ? parseFloat(getlatlng[1]) : null;
+        let fetchedLocation = true; 
+        let addressLocation = 'Unknown location';
 
-        // console.log("Device location:", { latitude, longitude });
-
-        let location = await getAddress(latitude, longitude);
-
-      //  console.log("Location address:", location);
-
-
+       const checkDevice = await UserDevices.findOne({
+          where: { userId: user.id, deviceID: deviceid },
+        });
+        if(checkDevice){
+          if(parseFloat(checkDevice.latitude) === latitude && parseFloat(checkDevice.longitude) === longitude){
+             fetchedLocation = false; 
+             addressLocation= checkDevice.lastLoggedInLocation;
+             if(!addressLocation){
+                fetchedLocation = true;
+             }
+          }
+        }
+        console.log({fetchedLocation, latitude, longitude, addressLocation});
+       
+        if(fetchedLocation && (latitude || longitude)){
+            const  location = await getAddress(latitude, longitude);
+            addressLocation = location?.address || 'Unknown location';
+        }
+      
         // Ensure device record exists and update login info
         const [deviceRecord, created] = await UserDevices.findOrCreate({
           where: { userId: user.id, deviceID: deviceid },
@@ -245,7 +260,7 @@ export default class LoginController {
             deviceType: deviceType,
             firstLoggedIn: new Date(),
             lastLoggedIn: new Date(),
-            lastLoggedInLocation:  location?.address || 'Unknown location',
+            lastLoggedInLocation:  addressLocation,
             latitude: latitude ? latitude.toString() : null,
             longitude: longitude ? longitude.toString() : null,
           },
@@ -253,7 +268,7 @@ export default class LoginController {
 
         if (!created) {
             deviceRecord.lastLoggedIn = new Date();
-            deviceRecord.lastLoggedInLocation = location.address || 'Unknown location';
+            deviceRecord.lastLoggedInLocation = addressLocation;
             deviceRecord.latitude = latitude ? latitude.toString() : null;
             deviceRecord.longitude = longitude ? longitude.toString() : null;
             await deviceRecord.save();
