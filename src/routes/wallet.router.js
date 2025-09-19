@@ -54,12 +54,6 @@ router.post('/user-wallet', async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               currency:
- *                 type: array
- *                 items:
- *                   type: string
- *                 default: ["ILS", "USD", "EUR"]
- *                 description: Filter by currency (array of currency codes, e.g. ["ILS", "USD", "EUR"])
  *               page:
  *                 type: integer
  *                 default: 1
@@ -68,23 +62,15 @@ router.post('/user-wallet', async (req, res, next) => {
  *                 type: integer
  *                 default: 10
  *                 description: Number of items per page
- *               status:
- *                 type: array
- *                 items:
- *                   type: string
- *                 default: ["completed", "failed"]
- *                 description: Filter by transaction status (array of status values, e.g. ["completed", "failed"])
  *               filter:
- *                 type: array
- *                 items:
- *                   type: string
- *                   enum:
- *                     - sent
- *                     - received
- *                     - accepted
- *                     - rejected
- *                     - topup
- *                 default: ["sent", "received", "accepted", "rejected", "topup"]
+ *                 type: string
+ *                 enum:
+ *                   - sent
+ *                   - received
+ *                   - topup
+ *                   - expenses
+ *                 default: sent
+ *                 description: Filter by transaction type (sent, received, topup, expenses)
  *     responses:
  *       200:
  *         description: Success - User wallet transaction history retrieved

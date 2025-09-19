@@ -58,6 +58,7 @@ const relation = (db) => {
   TransferRequests.hasMany(WalletTransaction, { foreignKey: "transferRequestId", as: "transactions" });
 
   WalletTransaction.belongsTo(PisoPayTransactionInfos, { foreignKey: "pisoPayTransactionId", as: "pisopayTransaction" });
+  PisoPayTransactionInfos.hasMany(WalletTransaction, { foreignKey: "pisoPayTransactionId", as: "transactions" });
 
 
   Notification.belongsTo(User, { foreignKey: "userId", as: "user" });

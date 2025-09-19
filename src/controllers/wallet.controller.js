@@ -45,8 +45,8 @@ export default class WalletController {
         user,
       } = request;
       try {
-        const { currency, status, filter, page, limit } = payload;
-        const userWalletTransactionHistory = await WalletService.getUserWalletTransactionHistory(user.id, { currency, status, filter, page, limit });
+        const {  filter, page, limit } = payload;
+        const userWalletTransactionHistory = await WalletService.getUserWalletTransactionHistory(user.id, { filter, page, limit });
         if (userWalletTransactionHistory?.ERROR) {
           return {
             status: 500,

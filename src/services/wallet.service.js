@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import { getPeleCardCurrencyNumber, amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import CurrencyService from "./currency.service.js";
 import SettingsService from "./settings.service.js";
+import { where } from "sequelize";
 const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos } = db;
 
 export default class WalletService {
@@ -81,66 +82,40 @@ export default class WalletService {
       return { ERROR: e.message };
     }
   }
-  static async getUserWalletTransactionHistory(userId, { currency, status, filter, transferStatus, transferRequestStatus, page = 1, limit = 10 }) {
+  static async getUserWalletTransactionHistory(userId, {  filter, transferStatus, transferRequestStatus, page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
 
+      // console.log("filter", filter, userId);
+
       let whereClause = {
-      userId: userId,
-      ...(currency && currency.length > 0 ? { paymentCurrency: { [Op.in]: currency } } : {}),
-      ...(status && status.length > 0 ? { status: { [Op.in]: status } } : {}),
+        userId: userId,
       };
       let transferWhere = {};
       let transferRequestWhere = {};
-      if (filter && filter.length > 0) {
-      const orConditions = [
-        ...(filter.includes("topup") ? [{ paymentId: { [Op.ne]: null } }] : []),
-        ...(filter.includes("sent") ? [{ transferId: { [Op.ne]: null } }] : []),
-        ...(filter.includes("received") ? [{ transferRequestId: { [Op.ne]: null } }] : []),
-      ];
-      if (orConditions.length > 0) {
-        whereClause[Op.or] = orConditions;
-      }
-      if (filter.includes("accepted")) {
-        transferWhere.status = {
-          [Op.and]: [
-            { [Op.ne]: "rejected" },
-            { [Op.ne]: "pending" },
-            { [Op.eq]: "accepted" }
-          ]
-        };
-        transferRequestWhere.status = {
-          [Op.and]: [
-            { [Op.ne]: "rejected" },
-            { [Op.ne]: "pending" },
-            { [Op.eq]: "approved" }
-          ]
-        };
 
-        if (!whereClause[Op.or]) whereClause[Op.or] = [];
-        whereClause[Op.or].push({ transferId: { [Op.ne]: null } });
-        whereClause[Op.or].push({ transferRequestId: { [Op.ne]: null } });
-        whereClause[Op.or].push({ paymentId: { [Op.eq]: null } });
-      } else if (filter.includes("rejected")) {
-         transferWhere.status = {
-          [Op.and]: [
-            { [Op.eq]: "rejected" },
-            { [Op.ne]: "pending" },
-            { [Op.ne]: "accepted" }
-          ]
-        };
-        transferRequestWhere.status = {
-          [Op.and]: [
-            { [Op.eq]: "rejected" },
-            { [Op.ne]: "pending" },
-            { [Op.ne]: "approved" }
-          ]
-        };
-        if (!whereClause[Op.or]) whereClause[Op.or] = [];
-        whereClause[Op.or].push({ transferId: { [Op.ne]: null } });
-        whereClause[Op.or].push({ transferRequestId: { [Op.ne]: null } });
-        whereClause[Op.or].push({ paymentId: { [Op.eq]: null } });
-      }
+     if (
+        filter &&
+        ["sent", "received", "topup", "expenses"].includes(filter)
+      ) {
+        if (filter === "sent") {
+          whereClause[Op.or] = [
+            { transferId: { [Op.ne]: null } },
+            { transferRequestId: { [Op.ne]: null } },
+          ];
+          whereClause.type = "debit";
+        } else if (filter === "received") {
+          whereClause[Op.or] = [
+            { transferId: { [Op.ne]: null } },
+            { transferRequestId: { [Op.ne]: null } },
+          ];
+          whereClause.type = "credit";
+        } else if (filter === "topup") {
+          whereClause.paymentId = { [Op.ne]: null };
+        } else if (filter === "expenses") {
+          console.log("expenses filter");
+          whereClause.pisoPayTransactionId = { [Op.ne]: null };
+        }
       }
 
       const userWalletTransactions = await WalletTransaction.findAndCountAll({
@@ -219,6 +194,7 @@ export default class WalletService {
           {
             model: PisoPayTransactionInfos,
             as: "pisopayTransaction",
+            required: false,
           }
         ],
         order: [["createdAt", "DESC"]],
@@ -230,7 +206,8 @@ export default class WalletService {
       const filteredRows = userWalletTransactions.rows.filter(tx => 
       tx.walletPayment !== null ||
       tx.transfer !== null ||
-      tx.transferRequest !== null
+      tx.transferRequest !== null ||
+      tx.pisopayTransaction !== null
       );
       return { ...userWalletTransactions, rows: filteredRows };
     } catch (e) {
