@@ -112,6 +112,7 @@ export default class WalletService {
           whereClause.type = "credit";
         } else if (filter === "topup") {
           whereClause.paymentId = { [Op.ne]: null };
+          whereClause.status = { [Op.ne]: 'failed' };
         } else if (filter === "expenses") {
           console.log("expenses filter");
           whereClause.pisoPayTransactionId = { [Op.ne]: null };
