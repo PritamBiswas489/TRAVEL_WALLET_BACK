@@ -130,6 +130,14 @@ export default function PisoPayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      created_month: {
+        type: DataTypes.INTEGER,
+        allowNull: true,  
+      },
+      created_year: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       tableName: "pisopy_transaction_infos",

@@ -325,4 +325,38 @@ export default class PhilippinesPaymentController {
       await PhilippinesPaymentService.updateTransactionStatus(payload, i18n);
     }
   }
+  //get expense report for user
+  static async getExpensesReport(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      PhilippinesPaymentService.getExpensesReport(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "GET_EXPENSES_REPORT_FAILED"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSES_REPORT_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
 }

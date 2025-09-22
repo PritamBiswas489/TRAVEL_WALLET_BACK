@@ -276,5 +276,9 @@
 	"EXPENSE_TRANSACTION_NOT_FOUND": "Expense transaction not found.",
 	"EXPENSE_PAYMENT_TRANSACTION": "Spent {{amount}}{{currency}} at {{merchantName}} in {{merchantCity}} for {{expenseCatName}}.",
 	"EXPENSE_PAYMENT_TRANSACTION_FAILED": "Failed to spend {{amount}}{{currency}} at {{merchantName}} in {{merchantCity}} for {{expenseCatName}}.",
-	"actualPaymentAmount is not defined": "actualPaymentAmount is not defined"
+	"actualPaymentAmount is not defined": "actualPaymentAmount is not defined",
+	"FAILED_TO_FETCH_EXPENSES_REPORT": " Failed to fetch expenses report.",
+	"GET_EXPENSES_REPORT_SUCCESSFUL": "Get expenses report successful.",
+	"read ECONNRESET": "read ECONNRESET",
+	"GET_EXPENSES_REPORT_FAILED": "Get expenses report failed."
 }

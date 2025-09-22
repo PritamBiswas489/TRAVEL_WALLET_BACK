@@ -339,4 +339,54 @@ router.post('/expense-transaction-details', async (req, res, next) => {
     res.return(response);
 });
 
+
+
+/**
+ * @swagger
+ *  /api/auth/pisopay/expenses-report:
+ *   post:
+ *     summary: Get expenses report for a specific month and year
+ *     tags:
+ *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               month:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Month for the report (1-12), null for all months
+ *               year:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Year for the report, null for all years
+ *             required: []
+ *     responses:
+ *       200:
+ *         description: Expenses report retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/expenses-report', async (req, res, next) => {
+    const response = await PhilippinesPaymentController.getExpensesReport({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
 export default router;

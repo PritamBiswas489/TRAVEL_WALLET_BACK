@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { readdirSync } from 'fs';
 import { dirname, join, basename as _basename } from 'path';
 import chalk from 'chalk';
-import { Sequelize, DataTypes, Op } from 'sequelize';
+import { Sequelize, DataTypes, Op, col, fn } from 'sequelize';
 import relation from './relation.js';
 
 const { database, password, username, options } = dbConfig;
@@ -48,6 +48,8 @@ relation(db);
 // sequelize.sync();
 //Op means operators in Sequelize, which are used for building complex queries.
 db.Op = Op;
+db.col = col;
+db.fn = fn;
 // Sequelize instance and DataTypes are added to the db object for easy access
 db.Sequelize = Sequelize;
 // Sequelize instance is added to the db object for easy access

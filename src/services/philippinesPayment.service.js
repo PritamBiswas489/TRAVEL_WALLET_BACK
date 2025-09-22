@@ -3,6 +3,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import axios from "axios";
 import { walletCurrencies } from "../config/walletCurrencies.js";
+import { paymentCurrencies } from "../config/paymentCurrencies.js";
 import PisoPayApiService from "./pisoPayApi.service.js";
 import UserService from "./user.service.js";
 import CurrencyService from "./currency.service.js";
@@ -12,8 +13,13 @@ const {
   ExpensesCategories,
   UserWallet,
   WalletTransaction,
-  PisopyPaymentErrorLogs
+  PisopyPaymentErrorLogs,
+  Op,
+  fn,
+  col
 } = db;
+ 
+
 
 export default class PhilippinesPaymentService {
   //track transaction info
@@ -162,6 +168,7 @@ export default class PhilippinesPaymentService {
         });
     }
   }
+  //buy expense
   static async buyExpense({ payload, userId, i18n }, callback) {
     const tran = await db.sequelize.transaction();
     try {
@@ -300,16 +307,18 @@ export default class PhilippinesPaymentService {
           }
         );
         const dt = initiatePisoPayTransaction.data;
-        dt.userId = userId;
-        dt.expenseCatId = expenseCatId;
-        dt.memo = memo;
-        dt.amountInUserWalletCurrency = actualPaymentAmountToSelectedCurrency;
-        dt.walletCurrency = walletCurrency;
-        dt.merchantName = merchantName;
-        dt.merchantCity = merchantCity;
-        dt.qrCodeType = qrCodeType;
-        dt.latitude = payload?.latitude || null;
-        dt.longitude = payload?.longitude || null;
+        Object.assign(dt, {
+          userId,
+          expenseCatId,
+          memo,
+          amountInUserWalletCurrency: actualPaymentAmountToSelectedCurrency,
+          walletCurrency,
+          merchantName,
+          merchantCity,
+          qrCodeType,
+          latitude: payload?.latitude ?? null,
+          longitude: payload?.longitude ?? null
+        });
         //track transaction
         const trackedTransaction = await this.trackTransaction(dt, tran);
         const pisoPayTransactionId = trackedTransaction.id;
@@ -380,6 +389,7 @@ export default class PhilippinesPaymentService {
       return callback(e, null);
     }
   }
+  //get expense transaction details
   static async getExpenseTransactionDetails(
     { transaction_info_code, userId, i18n },
     callback
@@ -403,5 +413,67 @@ export default class PhilippinesPaymentService {
       console.error("Error fetching expense transaction details:", error);
       return callback(error, null);
     }
+  }
+  //get expenses report
+  static async getExpensesReport({ payload, userId, i18n }, callback) {
+      try{
+        console.log("Generating expenses report with payload:", payload, "for user ID:", userId);
+        const month = payload?.month;
+        const year = payload?.year;
+
+        const whereClause = {
+          userId: userId,
+          transaction_status: "Success",
+        };
+        // Add month/year filters only if provided
+        if (month) {
+          whereClause.created_month = month;
+        }
+        if (year) {
+          whereClause.created_year = year;
+        }
+
+        const results = await PisoPayTransactionInfos.findAll({
+          attributes: [
+            "expenseCatId",
+            [fn("SUM", col("amount")), "totalAmount"]
+          ],
+          where: whereClause,
+          group: [
+            "expenseCatId",
+          ],
+          raw: false
+        });
+        // const results = resultsRaw ? resultsRaw.map(r => r.get({ plain: true })) : [];
+        //get expenses categories
+        const getExpenseCategories = await ExpensesCategories.findAll({
+          attributes: { exclude: ["createdAt", "updatedAt"] }
+        });
+        let totalExpenseAmt = 0; // total expense amount
+        let reportArray = []; //report array to hold final report
+        if(results.length > 0){
+          const totalamt = results.reduce((sum, record) => {
+            return sum + parseFloat(record.getDataValue('totalAmount') || 0);
+          }, 0);
+          totalExpenseAmt = parseFloat(totalamt.toFixed(2));
+        }
+
+        for(const cat of getExpenseCategories){
+          const found = results.find(r => parseInt(r.getDataValue('expenseCatId')) === parseInt(cat.id));
+          reportArray.push({
+            catDetails: cat,
+            totalAmount: found ? parseFloat(found.getDataValue('totalAmount') || 0) : 0,
+            percentage: totalExpenseAmt > 0 ? parseFloat(((found ? parseFloat(found.getDataValue('totalAmount') || 0) : 0) / totalExpenseAmt * 100).toFixed(2)) : 0
+          });
+        }
+        // console.log("Expenses report results:", results);
+        return callback(null, { data: {currency: paymentCurrencies['PHP'],  totalExpenseAmt, reportArray} });
+      }catch(e){
+        if (process.env.SENTRY_ENABLED === "true") {
+          Sentry.captureException(e);
+        }
+        console.log("Error in getExpensesReport:", e.message);
+        callback(new Error("FAILED_TO_FETCH_EXPENSES_REPORT"), null);
+      }
   }
 }
