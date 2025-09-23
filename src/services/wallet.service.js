@@ -104,13 +104,15 @@ export default class WalletService {
             { transferId: { [Op.ne]: null } },
             { transferRequestId: { [Op.ne]: null } },
           ];
-          whereClause.type = "debit";
+         transferWhere = { senderId: userId }; 
+         transferRequestWhere = { receiverId : userId };
         } else if (filter === "received") {
           whereClause[Op.or] = [
             { transferId: { [Op.ne]: null } },
             { transferRequestId: { [Op.ne]: null } },
           ];
-          whereClause.type = "credit";
+          transferWhere = { receiverId: userId };
+          transferRequestWhere = { senderId: userId };
         } else if (filter === "topup") {
           whereClause.paymentId = { [Op.ne]: null };
           
