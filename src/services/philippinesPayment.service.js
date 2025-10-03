@@ -127,7 +127,7 @@ export default class PhilippinesPaymentService {
               newWalletBalance,
               pisoPayTransactionId: record.id,
               description: i18n.__(
-                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED", locale: "en" },
+                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED2", locale: "en" },
                 {
                   amount: amountInUserWalletCurrency,
                   currency: record.walletCurrency,
@@ -137,7 +137,7 @@ export default class PhilippinesPaymentService {
                 }
               ),
               description_he: i18n.__(
-                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED", locale: "he" },
+                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED2", locale: "he" },
                 {
                   amount: amountInUserWalletCurrency,
                   currency: record.walletCurrency,
@@ -335,7 +335,7 @@ export default class PhilippinesPaymentService {
             newWalletBalance: newWalletBalance,
             pisoPayTransactionId: pisoPayTransactionId,
             description: i18n.__(
-              { phrase: "EXPENSE_PAYMENT_TRANSACTION", locale: "en" },
+              { phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL", locale: "en" },
               {
                 amount: actualPaymentAmountToSelectedCurrency,
                 currency: walletCurrency,
@@ -345,7 +345,7 @@ export default class PhilippinesPaymentService {
               }
             ),
             description_he: i18n.__(
-              { phrase: "EXPENSE_PAYMENT_TRANSACTION", locale: "he" },
+              { phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL", locale: "he" },
               {
                 amount: actualPaymentAmountToSelectedCurrency,
                 currency: walletCurrency,
