@@ -61,6 +61,10 @@ const options = {
         name: "Philippines Payment Callback",
         description: "PisoPay Payment management  callback endpoints",
       },
+      {
+        name: "Vietnam Payment Callback",
+        description: "NinePay Payment management  callback endpoints",
+      },
       { name: "Admin routes", description: "Admin management endpoints" },
       {
         name: "Notification routes - Testing purposes",

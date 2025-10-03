@@ -11,6 +11,7 @@ import ExpensesCategoriesController from '../controllers/expenses.categories.con
 import fs from 'fs';
 import path from 'path';
 import PhilippinesPaymentController from '../controllers/philippinesPayment.controller.js';
+import VietnamPaymentController from '../controllers/VietnamPayment.controller.js';
 
 router.use(trackIpAddressDeviceId);
 
@@ -209,6 +210,31 @@ router.post('/sumsub-kyc-webhook', async (req, res) => {
 
 router.post("/pisopay-callback", async (req, res) => {
    const response = await PhilippinesPaymentController.callbackTransaction({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/front/ninePay-ipn:
+ *   post:
+ *     summary: Handle NinePay IPN events
+ *     tags: [Vietnam Payment Callback]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description:  Payload sent by NinePay IPN
+ *     responses:
+ *       200:
+ *         description: Callback received successfully
+ */
+router.post("/ninePay-ipn", async (req, res) => {
+   const response = await VietnamPaymentController.ninePayIpn({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });
 
