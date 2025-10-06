@@ -6,5 +6,9 @@ export const paymentCurrencies = {
     PHP: {
         symbol: "₱",
         name: "Philippine Peso"
+    },
+    VND: {
+        symbol: "₫",
+        name: "Vietnamese Dong"
     }
 };
