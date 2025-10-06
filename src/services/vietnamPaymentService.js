@@ -16,10 +16,14 @@ export default class VietnamPaymentService {
   static async decodeQrCode({ qrCode }, callback) {
     try {
       const decodedData = await NinePayApiService.decodeQrCode(qrCode);
-      callback(null, { qrCode, decoded: true, data: decodedData });
+      console.log("Decoded QR Code Data:", decodedData);
+      if(decodedData?.ERROR){
+        throw new Error("QR_CODE_DECODE_FAILED");
+      }
+      return callback(null, {data: { qrCode, decoded: true, data: decodedData }});
     } catch (e) {
       console.error("Error in decodeQrCode:", e.message);
-      throw new Error("QR_CODE_DECODE_FAILED");
+      return callback(e, null);
     }
   }
 }

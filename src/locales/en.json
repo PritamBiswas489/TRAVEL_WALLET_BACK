@@ -283,5 +283,5 @@
 	"GET_EXPENSES_REPORT_SUCCESSFUL": "Get expenses report successful.",
 	"read ECONNRESET": "read ECONNRESET",
 	"GET_EXPENSES_REPORT_FAILED": "Get expenses report failed.",
-	"QR_CODE_DECODE_FAILED": "QR_CODE_DECODE_FAILED"
+	"QR_CODE_DECODE_FAILED": "QR code decode failed."
 }

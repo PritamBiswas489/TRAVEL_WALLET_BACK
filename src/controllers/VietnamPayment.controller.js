@@ -24,7 +24,7 @@ export default class VietnamPaymentController {
       error: null,
     };
   }
-
+ //decode Qr code
   static async decodeQrCode(request) {
     const {
          headers: { i18n },
@@ -33,8 +33,7 @@ export default class VietnamPaymentController {
        } = request;
    
        const qrCode = payload?.qrCode || null;
-       
-   
+      
        return new Promise((resolve) => {
          VietnamPaymentService.decodeQrCode(
            {  qrCode },
