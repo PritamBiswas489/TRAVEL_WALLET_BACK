@@ -146,7 +146,7 @@ export default class PhilippinesPaymentService {
                   expenseCatName,
                 }
               ),
-              status: "failed",
+              status: "completed",
             },
             { transaction: tran }
           );

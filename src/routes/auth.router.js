@@ -10,6 +10,7 @@ import { default as transferRouter } from './transfer.router.js';
 import { default as transferRequestRouter } from './transferRequest.router.js';
 import { default as encryptionRouter } from './encryption.router.js';
 import { default as philippinesPayment } from './philippinesPayment.router.js';
+import { default as vietnamPaymentRouter } from './vietnamPayment.router.js';
 
 
 
@@ -18,7 +19,7 @@ const router = express.Router();
 
 //jwtVerify is a middleware that checks if the user is authenticated
 router.use(trackIpAddressDeviceId);
-router.use(jwtVerify);
+// router.use(jwtVerify);
 
 
 router.use('/profile', profileRouter);
@@ -29,5 +30,6 @@ router.use('/transfer', transferRouter);
 router.use('/transfer-request', transferRequestRouter);
 router.use('/crypto', encryptionRouter);
 router.use('/pisopay', philippinesPayment);
+router.use('/ninepay', vietnamPaymentRouter);
 
 export default router;

@@ -11,7 +11,7 @@ import ExpensesCategoriesController from '../controllers/expenses.categories.con
 import fs from 'fs';
 import path from 'path';
 import PhilippinesPaymentController from '../controllers/philippinesPayment.controller.js';
-import VietnamPaymentController from '../controllers/VietnamPayment.controller.js';
+import VietnamPaymentController from '../controllers/vietnamPayment.controller.js';
 
 router.use(trackIpAddressDeviceId);
 

@@ -1,7 +1,7 @@
 export const paymentCurrencies = {
     THB: {
         symbol: "฿",
-        name: "Thai Baht"
+        name: "Thai Baht",
     },
     PHP: {
         symbol: "₱",
