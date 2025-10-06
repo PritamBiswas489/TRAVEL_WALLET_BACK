@@ -15,6 +15,11 @@ export default async (req, res, next) => {
     if(routeSlug === "save-device-id"){
       checkdeviceid = false;
     }
+	console.log("Route Path:", routePath);
+	if(routePath.includes('ninePay')){
+		console.log("Skipping JWT verification for NinePay route");
+		return next();
+	}
 	 
 
 	try {

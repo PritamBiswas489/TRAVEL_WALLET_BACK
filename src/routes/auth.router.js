@@ -19,7 +19,7 @@ const router = express.Router();
 
 //jwtVerify is a middleware that checks if the user is authenticated
 router.use(trackIpAddressDeviceId);
- router.use(jwtVerify);
+router.use(jwtVerify);
 
 
 router.use('/profile', profileRouter);

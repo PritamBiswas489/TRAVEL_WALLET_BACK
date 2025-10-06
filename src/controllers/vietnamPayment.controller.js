@@ -58,4 +58,36 @@ export default class VietnamPaymentController {
          );
        });
   }
+  static async buyExpense(request) {
+    const {
+         headers: { i18n },
+         user,
+         payload,
+       } = request;
+
+       return new Promise((resolve) => {
+         VietnamPaymentService.buyExpense(
+           { user, payload },
+           (err, response) => {
+             if (err) {
+               return resolve({
+                 status: 400,
+                 data: null,
+                 error: {
+                   message: i18n.__(err.message || "PAYMENT_VALIDATION_FAILED"),
+                   reason: err.message,
+                 },
+               });
+             }
+
+             return resolve({
+               status: 200,
+               data: response.data,
+               message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
+               error: null,
+             });
+           }
+         );
+       });
+  }
 }

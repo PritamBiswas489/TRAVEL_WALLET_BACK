@@ -26,6 +26,23 @@ export default class VietnamPaymentService {
       return callback(e, null);
     }
   }
+  //buy expense
+  static async buyExpense({ user, payload }, callback) {
+    try{
+    const serviceTransfer = await NinePayApiService.serviceTransfer(payload);
+    console.log("Service Transfer Response:", serviceTransfer);
+    if(serviceTransfer?.ERROR){
+        throw new Error("QR_CODE_PAYMENT_FAILED");
+    }
+    //insert into ninepay_transactions table
+    
+    return callback(null, {data: serviceTransfer.data});
+    }catch(e){
+      console.error("Error in buyExpense:", e.message);
+      return callback(e, null);
+    }
+
+  }
 }
 
     
