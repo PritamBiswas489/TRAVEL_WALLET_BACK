@@ -317,7 +317,7 @@ export default class PhilippinesPaymentService {
           merchantCity,
           qrCodeType,
           latitude: payload?.latitude ?? null,
-          longitude: payload?.longitude ?? null
+          longitude: payload?.longitude ?? null,
         });
         //track transaction
         const trackedTransaction = await this.trackTransaction(dt, tran);

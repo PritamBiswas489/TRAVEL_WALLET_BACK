@@ -120,6 +120,16 @@ export default function NinePayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      is_valid_transfer_signature:{
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      is_valid_callback_signature:{
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      }
     },
     {
       tableName: "ninepay_transaction_infos",

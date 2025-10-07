@@ -49,6 +49,62 @@ router.post('/decode-qr-code', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/ninePay/crypto/decode-qr-code:
+ *   post:
+ *     tags:
+ *       - Vietnam Payment
+ *     summary:  Execute a crypto decode QR code transaction
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Encrypted payload containing buy expense details
+ *               sig:
+ *                 type: string
+ *                 description: Signature for the envelope
+ *             required:
+ *               - envelope
+ *               - sig
+ *     responses:
+ *       200:
+ *         description:  Crypto decode QR code transaction executed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transactionId:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post('/crypto/decode-qr-code', async (req, res, next) => {
+    const response = await VietnamPaymentController.cryptoDecodeQrCode({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+/**
+ * @swagger
  *  /api/auth/ninePay/buy-expense:
  *   post:
  *     summary: Buy expense using NinePay
@@ -119,6 +175,159 @@ router.post('/buy-expense', async (req, res, next) => {
     const response = await VietnamPaymentController.buyExpense({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 });
+
+/**
+ * @swagger
+ * /api/auth/ninePay/crypto/buy-expense:
+ *   post:
+ *     tags:
+ *       - Vietnam Payment
+ *     summary: Execute a crypto buy expense transaction
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               envelope:
+ *                 type: object
+ *                 description: Encrypted payload containing buy expense details
+ *               sig:
+ *                 type: string
+ *                 description: Signature for the envelope
+ *             required:
+ *               - envelope
+ *               - sig
+ *     responses:
+ *       200:
+ *         description: Crypto buy expense transaction executed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transactionId:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.post('/crypto/buy-expense', async (req, res, next) => {
+    const response = await VietnamPaymentController.cryptoBuyExpense({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+
+
+/**
+ * @swagger
+ *  /api/auth/ninePay/expense-transaction-details:
+ *   post:
+ *     summary: Get details of an expense transaction
+ *     tags:
+ *       - Vietnam Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               request_id:
+ *                 type: string
+ *                 description: Transaction info code to retrieve details
+ *             required:
+ *               - request_id
+ *     responses:
+ *       200:
+ *         description: Transaction details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/expense-transaction-details', async (req, res, next) => {
+    const response = await VietnamPaymentController.getExpenseTransactionDetails({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+
+
+/**
+ * @swagger
+ *  /api/auth/ninePay/expenses-report:
+ *   post:
+ *     summary: Get expenses report for a specific month and year
+ *     tags:
+ *       - Vietnam Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               month:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Month for the report (1-12), null for all months
+ *               year:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Year for the report, null for all years
+ *             required: []
+ *     responses:
+ *       200:
+ *         description: Expenses report retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/expenses-report', async (req, res, next) => {
+    const response = await VietnamPaymentController.getExpensesReport({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
 
 
 export default router;

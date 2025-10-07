@@ -16,10 +16,10 @@ export default async (req, res, next) => {
       checkdeviceid = false;
     }
 	console.log("Route Path:", routePath);
-	if(routePath.includes('ninePay')){
-		console.log("Skipping JWT verification for NinePay route");
-		return next();
-	}
+	// if(routePath.includes('ninePay')){
+	// 	console.log("Skipping JWT verification for NinePay route");
+	// 	return next();
+	// }
 	 
 
 	try {

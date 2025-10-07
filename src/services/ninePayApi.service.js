@@ -91,6 +91,35 @@ export default class NinePayApiService {
       const responseTransfer = await axios(configTransfer);
       const responseDataTransfer = responseTransfer?.data;
       if (responseDataTransfer?.success === true && responseDataTransfer?.data?.transaction_id) {
+        const include = [
+          'request_id',
+          'partner_id',
+          'transaction_id',
+          'bank_no',
+          'account_no',
+          'account_type',
+          'account_name',
+          'request_amount',
+          'transfer_amount',
+          'status',
+          'created_at']; // fields to include
+        console.log(Object.entries(responseDataTransfer?.data));
+        const sigdata = Object.entries(responseDataTransfer?.data)
+          .filter(([key]) => include.includes(key))      // remove unwanted fields
+          .map(([,value]) => value)                      // get values
+          .join('|');                                    // join with |
+
+        console.log(sigdata);
+
+
+        const responseSignature = Buffer.from(responseDataTransfer.data.signature.trim(), 'base64');
+        let isValid = false;
+        const verify = crypto.createVerify('SHA256');
+        verify.update(sigdata);
+        verify.end();
+        console.log("Public Key:", this.pubKey, responseSignature);
+        isValid = verify.verify(this.pubKey, responseSignature);
+        Object.assign(responseDataTransfer.data, { is_valid_transfer_signature: isValid });
         return { data: responseDataTransfer.data };
       }else{
         console.error("9Pay transfer failed:", responseDataTransfer);
@@ -99,6 +128,36 @@ export default class NinePayApiService {
     } catch (error) {
       console.error("Error decoding QR Code:", error);
       return { ERROR: 1 };
+    }
+  }
+  static async validateCallbackSignature(payload) {
+    try {
+      const signature = payload?.signature;
+      const include = [
+          'request_id',
+          'partner_id',
+          'trans_id',
+          'request_amount',
+          'fee',
+          'transfer_amount',
+          'type',
+          'status',
+          'created_at']; // fields to include
+        console.log(Object.entries(payload));
+        const sigdata = Object.entries(payload)
+          .filter(([key]) => include.includes(key))      // remove unwanted fields
+          .map(([,value]) => value)                      // get values
+          .join('|');      
+
+      const verify = crypto.createVerify("SHA256");
+      verify.update(sigdata);
+      verify.end();
+
+      const isValid = verify.verify(this.pubKey, Buffer.from(signature, "base64"));
+      return isValid;
+    } catch (error) {
+      console.error("Error validating callback signature:", error);
+      return false;
     }
   }
 }

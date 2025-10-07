@@ -283,5 +283,14 @@
 	"GET_EXPENSES_REPORT_SUCCESSFUL": "Get expenses report successful.",
 	"read ECONNRESET": "read ECONNRESET",
 	"GET_EXPENSES_REPORT_FAILED": "Get expenses report failed.",
-	"QR_CODE_DECODE_FAILED": "QR code decode failed."
+	"QR_CODE_DECODE_FAILED": "QR code decode failed.",
+	"UserWallet is not defined": "UserWallet is not defined",
+	"pisoPayTransactionId is not defined": "pisoPayTransactionId is not defined",
+	"i18n is not defined": "i18n is not defined",
+	"merchantName is not defined": "merchantName is not defined",
+	"expenseCatName is not defined": "expenseCatName is not defined",
+	"expenseDet is not defined": "expenseDet is not defined",
+	"insert or update on table \"wallet_transactions\" violates foreign key constraint \"wallet_transactions_pisoPayTransactionId_fkey\"": "insert or update on table \"wallet_transactions\" violates foreign key constraint \"wallet_transactions_pisoPayTransactionId_fkey\"",
+	"QR_CODE_PAYMENT_FAILED": "QR_CODE_PAYMENT_FAILED",
+	"expensesCategories is not associated to NinePayTransactionInfos!": "expensesCategories is not associated to NinePayTransactionInfos!"
 }

@@ -72,6 +72,10 @@ export default function WalletTransaction(sequelize, DataTypes) {
         allowNull: true,  
 
       },
+      ninePayTransactionId: {
+        type: DataTypes.BIGINT,
+        allowNull: true,  
+      },
     },
     {
       tableName: "wallet_transactions",

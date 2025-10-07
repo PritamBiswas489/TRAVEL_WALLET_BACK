@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -70,6 +70,18 @@ const relation = (db) => {
 
   PisoPayTransactionInfos.belongsTo(ExpensesCategories, { foreignKey: "expenseCatId", as: "expenseCategory" });
   ExpensesCategories.hasMany(PisoPayTransactionInfos, { foreignKey: "expenseCatId", as: "pisopayTransactions" });
+
+
+  WalletTransaction.belongsTo(NinePayTransactionInfos, { foreignKey: "ninePayTransactionId", as: "ninePayTransaction" });
+  NinePayTransactionInfos.hasMany(WalletTransaction, { foreignKey: "ninePayTransactionId", as: "transactions" });
+
+
+  NinePayTransactionInfos.belongsTo(User, { foreignKey: "userId", as: "user" });
+  User.hasMany(NinePayTransactionInfos, { foreignKey: "userId", as: "ninePayTransactions" });
+
+  NinePayTransactionInfos.belongsTo(ExpensesCategories, { foreignKey: "expenseCatId", as: "expenseCategory" });
+  ExpensesCategories.hasMany(NinePayTransactionInfos, { foreignKey: "expenseCatId", as: "ninePayTransactions" });
+
 
 
 

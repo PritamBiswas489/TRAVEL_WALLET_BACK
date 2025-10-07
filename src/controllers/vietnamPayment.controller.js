@@ -1,93 +1,273 @@
 import fs from "fs";
+import "../config/environment.js";
 import VietnamPaymentService from "../services/vietnamPaymentService.js";
+import { buildDecryptRequest } from "../services/crypto.server.js";
+import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
 export default class VietnamPaymentController {
   static async ninePayIpn(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    console.log("============== Received NinePay IPN ==============");
+
+    if (payload?.request_id) {
+      await VietnamPaymentService.updateTransactionStatus(payload, i18n);
+    }
+  }
+  //decode Qr code
+  static async decodeQrCode(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const qrCode = payload?.qrCode || null;
+
+    return new Promise((resolve) => {
+      VietnamPaymentService.decodeQrCode({ qrCode }, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(err.message || "PAYMENT_VALIDATION_FAILED"),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
+          error: null,
+        });
+      });
+    });
+  }
+  static async cryptoDecodeQrCode(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const { envelope, sig } = payload;
+    const decryptRequest = await buildDecryptRequest({ envelope, sig });
+    console.log("Decrypted request:", decryptRequest);
+    if (decryptRequest?.error) {
+      return {
+        status: 400,
+        data: null,
+        error: {
+          message: i18n.__(decryptRequest.error || "PAYMENT_VALIDATION_FAILED"),
+          reason: "Encryption failed",
+        },
+      };
+    }
+    const qrCode = decryptRequest?.qrCode || null;
+
+    return new Promise((resolve) => {
+      VietnamPaymentService.decodeQrCode({ qrCode }, (err, response) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(err.message || "PAYMENT_VALIDATION_FAILED"),
+              reason: err.message,
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: response.data,
+          message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
+          error: null,
+        });
+      });
+    });
+  }
+  static async buyExpense(request) {
     const {
       headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
-    const logEntry = `${new Date().toISOString()} - ${JSON.stringify(payload)}\n`;
-    fs.appendFile("callback-data.txt", logEntry, (err) => {
-      if (err) {
-        console.error("Error saving data:", err);
-        return { status: 500, message: "Failed to save data" };
-      }
-      console.log("Data saved:", logEntry);
-      return { status: 200, message: "Data received and saved" };
+
+    const userId = user?.id || 1;
+
+    const deviceLocationLatLng = deviceLocation || "";
+    console.log("Device location from headers:", deviceLocationLatLng);
+    if (deviceLocationLatLng) {
+      const [latitude, longitude] = deviceLocationLatLng.split(",");
+      payload.latitude = latitude;
+      payload.longitude = longitude;
+    }
+
+    return new Promise((resolve) => {
+      VietnamPaymentService.buyExpense(
+        { userId, payload, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "PAYMENT_VALIDATION_FAILED"),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
     });
-
-    return {
-      status: 200,
-      data: { received: true },
-      message: "Successfully processed NinePay IPN",
-      error: null,
-    };
   }
- //decode Qr code
-  static async decodeQrCode(request) {
+  static async cryptoBuyExpense(request) {
     const {
-         headers: { i18n },
-         user,
-         payload,
-       } = request;
-   
-       const qrCode = payload?.qrCode || null;
-      
-       return new Promise((resolve) => {
-         VietnamPaymentService.decodeQrCode(
-           {  qrCode },
-           (err, response) => {
-             if (err) {
-               return resolve({
-                 status: 400,
-                 data: null,
-                 error: {
-                   message: i18n.__(err.message || "PAYMENT_VALIDATION_FAILED"),
-                   reason: err.message,
-                 },
-               });
-             }
-             return resolve({
-               status: 200,
-               data: response.data,
-               message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
-               error: null,
-             });
-           }
-         );
-       });
+      headers: { i18n, deviceLocation },
+      user,
+      payload,
+    } = request;
+
+    const { envelope, sig } = payload;
+    const decryptRequest = await buildDecryptRequest({ envelope, sig });
+    console.log("Decrypted request:", decryptRequest);
+    if (decryptRequest?.error) {
+      return {
+        status: 400,
+        data: null,
+        error: {
+          message: i18n.__(decryptRequest.error || "BUY_EXPENSE_FAILED"),
+          reason: "Encryption failed",
+        },
+      };
+    }
+    const userId = user?.id || 1;
+    console.log(
+      "Crypto Buying expense with payload:",
+      decryptRequest,
+      "for user ID:",
+      userId
+    );
+    const deviceLocationLatLng = deviceLocation || "";
+    console.log("Device location from headers:", deviceLocationLatLng);
+    if (deviceLocationLatLng) {
+      const [latitude, longitude] = deviceLocationLatLng.split(",");
+      decryptRequest.latitude = latitude;
+      decryptRequest.longitude = longitude;
+    }
+
+    return new Promise((resolve) => {
+      VietnamPaymentService.buyExpense(
+        { userId, payload: decryptRequest, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "BUY_EXPENSE_FAILED"),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: buildAes256GcmEncryptRequest(response.data),
+            message: i18n.__("BUY_EXPENSE_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
   }
-  static async buyExpense(request) {
+  //Get Expense Transaction Details
+  static async getExpenseTransactionDetails(request) {
     const {
-         headers: { i18n },
-         user,
-         payload,
-       } = request;
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
 
-       return new Promise((resolve) => {
-         VietnamPaymentService.buyExpense(
-           { user, payload },
-           (err, response) => {
-             if (err) {
-               return resolve({
-                 status: 400,
-                 data: null,
-                 error: {
-                   message: i18n.__(err.message || "PAYMENT_VALIDATION_FAILED"),
-                   reason: err.message,
-                 },
-               });
-             }
+    const userId = user?.id || 1;
+    const { request_id } = payload || {};
+    console.log(
+      "Getting expense transaction details with payload:",
+      payload,
+      "for user ID:",
+      userId
+    );
 
-             return resolve({
-               status: 200,
-               data: response.data,
-               message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
-               error: null,
-             });
-           }
-         );
-       });
+    return new Promise((resolve) => {
+      VietnamPaymentService.getExpenseTransactionDetails(
+        { request_id, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "GET_EXPENSE_TRANSACTION_DETAILS_FAILED"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSE_TRANSACTION_DETAILS_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  //get expense report for user
+  static async getExpensesReport(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+       VietnamPaymentService.getExpensesReport(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "GET_EXPENSES_REPORT_FAILED"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSES_REPORT_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
   }
 }

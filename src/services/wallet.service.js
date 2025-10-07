@@ -5,7 +5,8 @@ import { getPeleCardCurrencyNumber, amountUptotwoDecimalPlaces } from "../librar
 import CurrencyService from "./currency.service.js";
 import SettingsService from "./settings.service.js";
 import { where } from "sequelize";
-const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos } = db;
+ 
+const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos} = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
@@ -118,7 +119,10 @@ export default class WalletService {
           
         } else if (filter === "expenses") {
           console.log("expenses filter");
-          whereClause.pisoPayTransactionId = { [Op.ne]: null };
+            whereClause[Op.or] = [
+            { pisoPayTransactionId: { [Op.ne]: null } },
+            { ninePayTransactionId: { [Op.ne]: null } }
+            ];
         }
       }
 
@@ -199,6 +203,11 @@ export default class WalletService {
             model: PisoPayTransactionInfos,
             as: "pisopayTransaction",
             required: false,
+          },
+          {
+            model: NinePayTransactionInfos,
+            as: "ninePayTransaction",
+            required: false,
           }
         ],
         order: [["createdAt", "DESC"]],
@@ -211,7 +220,8 @@ export default class WalletService {
       tx.walletPayment !== null ||
       tx.transfer !== null ||
       tx.transferRequest !== null ||
-      tx.pisopayTransaction !== null
+      tx.pisopayTransaction !== null ||
+      tx.ninePayTransaction !== null
       );
       return { ...userWalletTransactions, rows: filteredRows };
     } catch (e) {
