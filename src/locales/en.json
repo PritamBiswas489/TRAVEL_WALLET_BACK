@@ -292,5 +292,6 @@
 	"expenseDet is not defined": "expenseDet is not defined",
 	"insert or update on table \"wallet_transactions\" violates foreign key constraint \"wallet_transactions_pisoPayTransactionId_fkey\"": "insert or update on table \"wallet_transactions\" violates foreign key constraint \"wallet_transactions_pisoPayTransactionId_fkey\"",
 	"QR_CODE_PAYMENT_FAILED": "QR_CODE_PAYMENT_FAILED",
-	"expensesCategories is not associated to NinePayTransactionInfos!": "expensesCategories is not associated to NinePayTransactionInfos!"
+	"expensesCategories is not associated to NinePayTransactionInfos!": "expensesCategories is not associated to NinePayTransactionInfos!",
+	"ENCRYPTION_ERROR": "ENCRYPTION_ERROR"
 }

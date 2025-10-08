@@ -83,7 +83,7 @@ export default class VietnamPaymentController {
         }
         return resolve({
           status: 200,
-          data: response.data,
+          data: buildAes256GcmEncryptRequest(response.data),
           message: i18n.__("PAYMENT_VALIDATION_SUCCESSFUL"),
           error: null,
         });
