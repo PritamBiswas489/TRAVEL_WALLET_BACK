@@ -104,6 +104,8 @@ export default class WalletService {
           whereClause[Op.or] = [
             { transferId: { [Op.ne]: null } },
             { transferRequestId: { [Op.ne]: null } },
+            { pisoPayTransactionId: { [Op.ne]: null } },
+            { ninePayTransactionId: { [Op.ne]: null } }
           ];
          transferWhere = { senderId: userId }; 
          transferRequestWhere = { receiverId : userId };
