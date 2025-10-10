@@ -38,6 +38,41 @@ export default class WalletController {
       };
     }
   }
+  static async getUserWalletAllCurrencies(request){
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const userWallet = await WalletService.getUserWalletAllCurrencies(user.id);
+      if (userWallet?.ERROR) {
+        return {
+          status: 500,
+          data: [],
+          error: {
+            message: i18n.__("GET_USER_WALLET_FAILED"),
+            reason: userWallet.ERROR,
+          },
+        };
+      }
+      return {
+        status: 200,
+        data: userWallet,
+        message: i18n.__("USER_WALLET_FETCHED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+
+  }
   static async getUserWalletTransactionHistory(request) {
       const {
         payload,

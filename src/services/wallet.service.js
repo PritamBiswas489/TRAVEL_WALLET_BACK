@@ -5,6 +5,7 @@ import { getPeleCardCurrencyNumber, amountUptotwoDecimalPlaces } from "../librar
 import CurrencyService from "./currency.service.js";
 import SettingsService from "./settings.service.js";
 import { where } from "sequelize";
+import { walletCurrencies } from "../config/walletCurrencies.js";
  
 const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos} = db;
 
@@ -79,6 +80,22 @@ export default class WalletService {
       });
       return userWallet;
     } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return { ERROR: e.message };
+    }
+  }
+  static async getUserWalletAllCurrencies(userId) {
+    try{
+      const walletCurrenciesList = Object.keys(walletCurrencies);
+      let userWallets = [];
+      for (const currency of walletCurrenciesList) {
+        const existingWallet = await UserWallet.findOne({
+          where: { userId: userId, currency: currency },
+        });
+        userWallets.push({ currency, balance: existingWallet ? existingWallet.balance : 0 });
+      }
+      return userWallets;
+    }catch(e){
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: e.message };
     }

@@ -39,6 +39,27 @@ router.post('/user-wallet', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/wallet/user-wallet-all-currencies:
+ *   get:
+ *     summary: Get user wallet All Currencies information
+ *     tags:
+ *       - Auth-Wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - User wallet information retrieved
+ */
+router.get('/user-wallet-all-currencies', async (req, res, next) => {
+  const response = await WalletController.getUserWalletAllCurrencies({ headers: req.headers, user: req.user, payload: req.body });
+  res.return(response);
+});
+
+
+
+/**
+ * @swagger
  * /api/auth/wallet/user-wallet-transaction-history:
  *   post:
  *     summary: Get user wallet transaction history
