@@ -7,7 +7,7 @@ import SettingsService from "./settings.service.js";
 import { where } from "sequelize";
 import { walletCurrencies } from "../config/walletCurrencies.js";
  
-const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos} = db;
+const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, ExpensesCategories} = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
@@ -162,7 +162,7 @@ export default class WalletService {
               "DebitApproveNumber",
               "CardHebName",
               "TotalPayments",
-               [
+              [
                 db.Sequelize.literal(
                   'CAST("walletPayment"."interestRate" AS FLOAT)'
                 ),
@@ -222,12 +222,26 @@ export default class WalletService {
             model: PisoPayTransactionInfos,
             as: "pisopayTransaction",
             required: false,
+             include: [
+              {
+                model: ExpensesCategories,
+                as: "expenseCategory",
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+              },
+            ],
           },
           {
             model: NinePayTransactionInfos,
             as: "ninePayTransaction",
             required: false,
-          }
+            include: [
+              {
+                model: ExpensesCategories,
+                as: "expenseCategory",
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+              },
+            ],
+          },
         ],
         order: [["createdAt", "DESC"]],
         offset: offset,
