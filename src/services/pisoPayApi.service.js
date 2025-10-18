@@ -52,11 +52,16 @@ export default class PisoPayApiService {
 
         // console.log("PisoPay token acquired, validating transaction...",tokenResponse?.token);
 
-        const  data = JSON.stringify({
-           "remittance_method_code": remittanceMethodCode,
-            "qr_code": qrCode,
-            "purpose": purpose,
-            "amount": dt?.amount || 1.00,
+        const data = JSON.stringify({
+          remittance_method_code: remittanceMethodCode,
+          qr_code: qrCode,
+          purpose: purpose,
+          amount: dt?.amount || 1.0,
+          sender_customer_details: {
+            first_name: process.env.PISOPAY_DEFAULT_FIRSTNAME || "Avi",
+            middle_name: process.env.PISOPAY_DEFAULT_MIDDLE_NAME || "Dela",
+            last_name: process.env.PISOPAY_DEFAULT_LASTNAME || "Cruz",
+          },
         });
          
         var config = {
