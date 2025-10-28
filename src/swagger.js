@@ -69,6 +69,20 @@ const options = {
         name: "Vietnam Payment Callback",
         description: "Ninepay Payment management  callback endpoints",
       },
+      {
+        name: "Feedback routes",
+        description: "Feedback management endpoints",
+      },
+
+      {
+        name: "Suggestion routes",
+        description: "Suggestion management endpoints",
+      },
+      {
+        name: "Bug Report routes",
+        description: "Bug report management endpoints",
+      },
+
       { name: "Admin routes", description: "Admin management endpoints" },
       {
         name: "Notification routes - Testing purposes",

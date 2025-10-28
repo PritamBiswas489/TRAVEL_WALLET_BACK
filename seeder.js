@@ -3,6 +3,9 @@ import { updateCurrencyRates } from "./currency-cron.js";
 import SettingsService from "./src/services/settings.service.js";
 import UserService from "./src/services/user.service.js";
 import ExpensesCategoriesService from "./src/services/expenses.categories.service.js";
+import FeedbackService from "./src/services/feedbackService.js";
+import SuggestionService from "./src/services/SuggestionService.js";
+import BugReportService from "./src/services/bugReportService.js";
 const seedCurrencyData = async () => {
   console.log("Seeding Currency Data...");
   await updateCurrencyRates();
@@ -114,3 +117,235 @@ const seedDefaultExpenses = async () => {
 }
 
 seedDefaultExpenses();
+
+const createFeedbackCategories = async () => {
+  await FeedbackService.clearFeedbackCategoryTable(); // Clear existing entries before seeding
+  const feedbackCategories = [
+    {
+      engText: 'Transactions',
+      heText: 'עסקאות',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Wallet Balance',
+      heText: 'יתרת ארנק',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Money Transfer',
+      heText: 'העברת כספים',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Bill Payments',
+      heText: 'תשלומי חשבונות',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Security',
+      heText: 'אבטחה',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'User Interface',
+      heText: 'ממשק משתמש',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Other',
+      heText: 'אחר',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  console.log("Seeding Feedback Categories...");
+  await FeedbackService.addCategories(feedbackCategories);
+  console.log("Feedback Categories Seeding Completed.");
+
+}
+
+createFeedbackCategories();
+
+
+const createSuggestionTypes = async () => {
+  await SuggestionService.clearSuggestionTypeTable(); // Clear existing entries before seeding
+  const suggestionTypes = [
+    {
+      engText: 'New Feature',
+      heText: 'תכונה חדשה',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Improvement',
+      heText: 'שיפור',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Design Enhancement',
+      heText: 'שיפור עיצוב',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Performance',
+      heText: 'ביצועים',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: 'Other',
+      heText: 'אחר',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+  console.log("Seeding Suggestion Types...");
+  await SuggestionService.addSuggestionType(suggestionTypes);
+  console.log("Suggestion Types Seeding Completed.");
+}
+createSuggestionTypes();
+
+
+const createSuggestionPriorityLevels = async () => {
+   await SuggestionService.clearSuggestionPriorityLevelTable(); // Clear existing entries before seeding
+    const suggestionPriorityLevels = [
+      {
+        engText: "Nice to Have",
+        heText: "נחמד שיהיה",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        engText: "Would Be Helpful",
+        heText: "יכול לעזור",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        engText: "Very Important",
+        heText: "מאוד חשוב",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        engText: "Critical",
+        heText: "קריטי",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+      console.log("Seeding Suggestion Priority Levels...");
+      await SuggestionService.addSuggestionPriorityLevels(suggestionPriorityLevels);
+      console.log("Suggestion Priority Levels Seeding Completed.");
+
+}
+
+createSuggestionPriorityLevels();
+
+const createBugSeverity = async () => {
+  await BugReportService.clearBugSeverityTable(); // Clear existing entries before seeding
+  const bugSeverities = [
+    {
+      engText: "Low - Minor Issue",
+      heText: "נמוך - בעיה מינורית",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Medium - Inconvenient",
+      heText: "בינוני - בעיה לא נוחה",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "High - Major Problem",
+      heText: "גבוה - בעיה משמעותית",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Critical - App Unusable",
+      heText: "קריטי - האפליקציה לא שמישה",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+  console.log("Seeding Bug Severities...");
+  await BugReportService.addBugSeverity(bugSeverities);
+  console.log("Bug Severities Seeding Completed.");
+};
+createBugSeverity();
+
+
+const createBugPlaces = async () => {
+  await BugReportService.clearBugPlaceTable(); // Clear existing entries before seeding
+  const bugPlaces = [
+    {
+      engText: "Login/Registration",
+      heText: "כניסה/הרשמה",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Dashboard",
+      heText: "לוח מחוונים",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Send Money",
+      heText: "שלח כסף",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+     {
+      engText: "Request Money",
+      heText: "בקשת כסף",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+     {
+      engText: "Transaction History",
+      heText: "היסטוריית עסקאות",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Bill Payments",
+      heText: "תשלומי חשבונות",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+     {
+      engText: "Cards/Accounts",
+      heText: "כרטיסים/חשבונות",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Settings",
+      heText: "הגדרות",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      engText: "Other",
+      heText: "אחר",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+  console.log("Seeding Bug Places...");
+  await BugReportService.addBugPlaces(bugPlaces);
+  console.log("Bug Places Seeding Completed.");
+}
+createBugPlaces();

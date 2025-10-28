@@ -11,6 +11,9 @@ import { default as transferRequestRouter } from './transferRequest.router.js';
 import { default as encryptionRouter } from './encryption.router.js';
 import { default as philippinesPayment } from './philippinesPayment.router.js';
 import { default as vietnamPaymentRouter } from './vietnamPayment.router.js';
+import { default as feedbackRouter } from './feedback.router.js';
+import { default as suggestionRouter } from './suggestion.router.js';
+import { default as bugReportRouter } from './bugReport.router.js';
 
 
 
@@ -31,5 +34,7 @@ router.use('/transfer-request', transferRequestRouter);
 router.use('/crypto', encryptionRouter);
 router.use('/pisopay', philippinesPayment);
 router.use('/ninepay', vietnamPaymentRouter);
-
+router.use('/feedback', feedbackRouter);
+router.use('/suggestion', suggestionRouter);
+router.use('/bug-reports', bugReportRouter);
 export default router;
