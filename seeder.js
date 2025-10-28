@@ -4,7 +4,7 @@ import SettingsService from "./src/services/settings.service.js";
 import UserService from "./src/services/user.service.js";
 import ExpensesCategoriesService from "./src/services/expenses.categories.service.js";
 import FeedbackService from "./src/services/feedbackService.js";
-import SuggestionService from "./src/services/SuggestionService.js";
+import SuggestionService from "./src/services/suggestionService.js";
 import BugReportService from "./src/services/bugReportService.js";
 const seedCurrencyData = async () => {
   console.log("Seeding Currency Data...");
