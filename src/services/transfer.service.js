@@ -165,7 +165,7 @@ export default class TransferService {
     }
   }
   static async executeTransfer(
-    { senderUserId, receiverId, currency, amount, message, i18n },
+    { senderUserId, receiverId, currency, amount, message, i18n, deviceLocation },
     callback
   ) {
     const tran = await db.sequelize.transaction();
@@ -238,16 +238,25 @@ export default class TransferService {
       const senderOldBalance = parseFloat(senderWallet.balance);
       const newSenderBalance = senderOldBalance - parseFloat(amount);
 
-      // Create new transfer
-      const createTransfer = await Transfer.create(
-        {
+      const ct =  {
           senderId: senderUserId,
           receiverId: receiverId,
           currency: currency,
           amount: amount,
           status: "pending",
           message: message,   
-        },
+        };
+
+      const deviceLocationLatLng = deviceLocation || "";
+      if (deviceLocationLatLng) {
+        const [latitude, longitude] = deviceLocationLatLng.split(",");
+        ct.senderLatitude = latitude;
+        ct.senderLongitude = longitude;
+      } 
+
+      // Create new transfer
+      const createTransfer = await Transfer.create(
+        ct,
         { transaction: tran }
       );
 
@@ -313,7 +322,7 @@ export default class TransferService {
   }
 
   static async acceptRejectTransfer(
-    { transferId, userId, status, i18n, autoRejected },
+    { transferId, userId, status, i18n, autoRejected, deviceLocation },
     callback
   ) {
     // console.log("Accept/Reject Transfer", transferId, userId, status);
@@ -340,7 +349,18 @@ export default class TransferService {
       const receiverUserDetails = await UserService.getUserDetails(transfer.receiverId);
       // Check if receiver rejected the transfer
       if (status === "rejected") {
-        await transfer.update({ status: "rejected" }, { transaction: tran });
+
+      const r_ct = { status: "rejected" };
+
+      const deviceLocationLatLng = deviceLocation || "";
+      if (deviceLocationLatLng) {
+        const [latitude, longitude] = deviceLocationLatLng.split(",");
+        r_ct.receiverLatitude = parseFloat(latitude);
+        r_ct.receiverLongitude = parseFloat(longitude);
+      }
+
+
+        await transfer.update(r_ct, { transaction: tran });
         //add to sender wallet transaction
         const senderWallet = await UserWallet.findOne({
           where: {
@@ -405,7 +425,15 @@ export default class TransferService {
         });
       }
       if (status === "accepted") {
-        await transfer.update({ status: "accepted" }, { transaction: tran });
+
+        const a_ct = { status: "accepted" };
+        const deviceLocationLatLng = deviceLocation || "";
+        if (deviceLocationLatLng) {
+          const [latitude, longitude] = deviceLocationLatLng.split(",");
+          a_ct.receiverLatitude = parseFloat(latitude);
+          a_ct.receiverLongitude = parseFloat(longitude);
+        }
+        await transfer.update(a_ct, { transaction: tran });
 
         // Find or create receiver wallet
         let receiverWallet = await UserWallet.findOne({

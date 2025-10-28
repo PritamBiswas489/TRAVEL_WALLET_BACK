@@ -64,6 +64,14 @@ export default function WalletPelePayment(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: null,
       },
+      latitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      longitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       tableName: "wallet_pele_payments",

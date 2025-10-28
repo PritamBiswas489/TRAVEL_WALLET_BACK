@@ -162,6 +162,8 @@ export default class WalletService {
               "DebitApproveNumber",
               "CardHebName",
               "TotalPayments",
+              "latitude",
+              "longitude",
               [
                 db.Sequelize.literal(
                   'CAST("walletPayment"."interestRate" AS FLOAT)'

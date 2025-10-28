@@ -8,7 +8,7 @@ import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.
 export default class TransferRequestController {
   static async sendRequest(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -20,7 +20,7 @@ export default class TransferRequestController {
 
     return new Promise((resolve) => {
       TransferRequestService.executeTransferRequest(
-        { senderUserId: user.id, receiverId, currency, amount, message, i18n },
+        { senderUserId: user.id, receiverId, currency, amount, message, i18n, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({
@@ -46,7 +46,7 @@ export default class TransferRequestController {
   }
   static async sendCryptoRequest(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -74,7 +74,7 @@ export default class TransferRequestController {
 
     return new Promise((resolve) => {
       TransferRequestService.executeTransferRequest(
-        { senderUserId: user.id, receiverId, currency, amount, message, i18n },
+        { senderUserId: user.id, receiverId, currency, amount, message, i18n, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({
@@ -100,7 +100,7 @@ export default class TransferRequestController {
   }
   static async acceptRejectTransferRequest(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -116,6 +116,7 @@ export default class TransferRequestController {
           status,
           i18n,
           autoRejected: true,
+          deviceLocation,
         },
         (err, response) => {
           if (err) {
@@ -144,7 +145,7 @@ export default class TransferRequestController {
   }
   static async acceptRejectCryptoTransferRequest(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -174,6 +175,7 @@ export default class TransferRequestController {
           status,
           i18n,
           autoRejected: true,
+          deviceLocation,
         },
         (err, response) => {
           if (err) {

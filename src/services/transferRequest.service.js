@@ -9,7 +9,7 @@ import moment from "moment";
 
 export default class TransferRequestService {
   static async executeTransferRequest(
-    { senderUserId, receiverId, currency, amount, message, i18n },
+    { senderUserId, receiverId, currency, amount, message, i18n, deviceLocation },
     callback
   ) {
     const tran = await db.sequelize.transaction();
@@ -65,15 +65,23 @@ export default class TransferRequestService {
         );
       }
 
-      const createTransferRequest = await TransferRequests.create(
-        {
+      const createData = {
           senderId: senderUserId,
           receiverId: receiverId,
           currency: currency,
           amount: amount,
           message: message || null,
           status: "pending",
-        },
+        };
+      const deviceLocationLatLng = deviceLocation || "";
+      if (deviceLocationLatLng) {
+        const [latitude, longitude] = deviceLocationLatLng.split(",");
+        createData.senderLatitude = parseFloat(latitude);
+        createData.senderLongitude = parseFloat(longitude);
+      }
+
+      const createTransferRequest = await TransferRequests.create(
+        createData,
         { transaction: tran }
       );
        const createAtTimeMoment = moment.parseZone(createTransferRequest.createdAt);
@@ -108,7 +116,7 @@ export default class TransferRequestService {
   }
 
 static async acceptRejectTransferRequest(
-  { transferRequestId, userId, status, i18n, autoRejected },
+  { transferRequestId, userId, status, i18n, autoRejected, deviceLocation },
   callback
 ) {
   console.log(
@@ -141,8 +149,16 @@ static async acceptRejectTransferRequest(
     }
 
     if (status === "rejected") {
+      const ct = { status: "rejected" };
+      const deviceLocationLatLng = deviceLocation || "";
+      if (deviceLocationLatLng) {
+        const [latitude, longitude] = deviceLocationLatLng.split(",");
+        ct.receiverLatitude = parseFloat(latitude);
+        ct.receiverLongitude = parseFloat(longitude);
+      }
+
       await transferRequest.update(
-        { status: "rejected" },
+         ct,
         { transaction: tran }
       );
       await tran.commit();
@@ -246,9 +262,15 @@ static async acceptRejectTransferRequest(
         { balance: newReceiverBalance },
         { transaction: tran }
       );
-
+      const cty = { status: "approved" };
+      const deviceLocationLatLng = deviceLocation || "";
+      if (deviceLocationLatLng) {
+        const [latitude, longitude] = deviceLocationLatLng.split(",");
+        cty.receiverLatitude = parseFloat(latitude);
+        cty.receiverLongitude = parseFloat(longitude);
+      }
       await transferRequest.update(
-        { status: "approved" },
+        cty,
         { transaction: tran }
       );
 

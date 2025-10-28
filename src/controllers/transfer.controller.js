@@ -48,10 +48,12 @@ export default class TransferController {
   }
   static executeTransfer(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
+
+    console.log("Device Location:", deviceLocation);
 
     const receiverId = payload.receiverId;
     const currency = payload.currency;
@@ -60,7 +62,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.executeTransfer(
-        { senderUserId: user.id, receiverId, currency, amount, message, i18n },
+        { senderUserId: user.id, receiverId, currency, amount, message, i18n, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({
@@ -85,7 +87,7 @@ export default class TransferController {
 
   static async executeCryptoTransfer(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -106,7 +108,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.executeTransfer(
-        { senderUserId: user.id, ...decryptRequest, i18n },
+        { senderUserId: user.id, ...decryptRequest, i18n, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({
@@ -131,7 +133,7 @@ export default class TransferController {
 
   static async acceptRejectTransfer(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -141,7 +143,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.acceptRejectTransfer(
-        { userId: user.id, transferId, status, i18n, autoRejected: false },
+        { userId: user.id, transferId, status, i18n, autoRejected: false, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({
@@ -169,7 +171,7 @@ export default class TransferController {
   }
   static async acceptRejectCryptoTransfer(request) {
     const {
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -195,7 +197,7 @@ export default class TransferController {
 
     return new Promise((resolve) => {
       TransferService.acceptRejectTransfer(
-        { userId: user.id, transferId, status, i18n, autoRejected: false },
+        { userId: user.id, transferId, status, i18n, autoRejected: false, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({

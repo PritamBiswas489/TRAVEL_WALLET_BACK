@@ -39,6 +39,22 @@ export default function TransferRequests(sequelize, DataTypes) {
         type: DataTypes.DATE,
         allowNull: true,
       },
+       senderLatitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      senderLongitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      receiverLatitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      receiverLongitude: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       tableName: "transfer_requests",

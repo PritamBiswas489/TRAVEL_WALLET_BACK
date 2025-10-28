@@ -443,7 +443,7 @@ export default class DepositController {
   static async makePaymentAddToWallet(request) {
     const {
       payload,
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
     } = request;
 
@@ -516,6 +516,12 @@ export default class DepositController {
           HeStatusMessage: HeStatusMessage,
           interestRate: paymentResult?.interestRate || null,
         };
+        const deviceLocationLatLng = deviceLocation || "";
+        if (deviceLocationLatLng) {
+          const [latitude, longitude] = deviceLocationLatLng.split(",");
+          upgradedData.latitude = latitude;
+          upgradedData.longitude = longitude;
+        }
         // console.log("upgradedData", upgradedData);
         // Save payment details to the database
         const savepaymentDetails =
@@ -580,6 +586,8 @@ export default class DepositController {
             creditCardExpDate: savepaymentDetails?.CreditCardExpDate || "",
             approvalNumber: savepaymentDetails?.DebitApproveNumber || "",
             cardHebName: savepaymentDetails?.CardHebName || "",
+            latitude: savepaymentDetails?.latitude || "",
+            longitude: savepaymentDetails?.longitude || "",
             userWallet: updatedWallet?.userWallet || {},
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
@@ -610,7 +618,7 @@ export default class DepositController {
   static async makeCryptoPaymentAddToWallet(request) {
     const {
       payload,
-      headers: { i18n },
+      headers: { i18n, deviceLocation },
       user,
     } = request;
 
@@ -699,11 +707,17 @@ export default class DepositController {
           HeStatusMessage: HeStatusMessage,
           interestRate: paymentResult?.interestRate || null,
         };
+        const deviceLocationLatLng = deviceLocation || "";
+        if (deviceLocationLatLng) {
+          const [latitude, longitude] = deviceLocationLatLng.split(",");
+          upgradedData.latitude = latitude;
+          upgradedData.longitude = longitude;
+        }
         // console.log("upgradedData", upgradedData);
         // Save payment details to the database
         const savepaymentDetails =
           await PaymentService.savePelePaymentDetails(upgradedData);
-        // console.log("savepaymentDetails", savepaymentDetails);
+        
         if (savepaymentDetails?.ERROR) {
           return {
             status: 500,
@@ -763,6 +777,8 @@ export default class DepositController {
             creditCardExpDate: savepaymentDetails?.CreditCardExpDate || "",
             approvalNumber: savepaymentDetails?.DebitApproveNumber || "",
             cardHebName: savepaymentDetails?.CardHebName || "",
+            latitude: savepaymentDetails?.latitude || "",
+            longitude: savepaymentDetails?.longitude || "",
             userWallet: updatedWallet?.userWallet || {},
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
