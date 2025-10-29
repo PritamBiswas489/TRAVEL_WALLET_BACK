@@ -283,5 +283,17 @@
 	"GET_EXPENSES_REPORT_FAILED": "אחזור דוח הוצאות נכשל.",
 	"QR_CODE_DECODE_FAILED": "פענוח קוד QR נכשל.",
 	"QR_CODE_PAYMENT_FAILED": "תשלום קוד QR נכשל.",
-	"ENCRYPTION_ERROR": "שגיאת הצפנה"
+	"ENCRYPTION_ERROR": "שגיאת הצפנה",
+	"FEEDBACK_CATEGORY_FETCHED_SUCCESSFULLY": "קטגוריות משוב הוחזרו בהצלחה.",
+	"SUGGESTION_TYPES_FETCHED_SUCCESSFULLY": "סוגי הצעות הוחזרו בהצלחה.",
+	"SUGGESTION_PRIORITY_LEVELS_FETCHED_SUCCESSFULLY": "רמות עדיפות הצעות הוחזרו בהצלחה.",
+	"BUG_PLACES_FETCHED_SUCCESSFULLY": "מיקומי באגים הוחזרו בהצלחה.",
+	"BUG_SEVERITIES_FETCHED_SUCCESSFULLY": "רמות חומרה של באגים הוחזרו בהצלחה.",
+	"FEEDBACK_SUBMITTED_SUCCESSFULLY": "משוב הוגש בהצלחה.",
+	"FEEDBACKS_FETCHED_SUCCESSFULLY": "משובים הוחזרו בהצלחה.",
+	"SUGGESTION_SUBMITTED_SUCCESSFULLY": "הצעה הוגשה בהצלחה.",
+	"MY_SUGGESTIONS_FETCHED_SUCCESSFULLY": "ההצעות שלי הוחזרו בהצלחה.",
+	"ALL_SUGGESTIONS_FETCHED_SUCCESSFULLY": "כל ההצעות הוחזרו בהצלחה.",
+	"BUG_REPORT_SUBMITTED_SUCCESSFULLY": "דוח באג הוגש בהצלחה.",
+	"BUG_REPORTS_FETCHED_SUCCESSFULLY": "דוחות באג הוחזרו בהצלחה."
 }

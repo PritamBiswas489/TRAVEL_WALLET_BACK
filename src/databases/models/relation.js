@@ -105,10 +105,6 @@ const relation = (db) => {
   BugReports.belongsTo(BugPlace, { foreignKey: "placeId", as: "place" });
   BugPlace.hasMany(BugReports, { foreignKey: "placeId", as: "bugReports" });
 
-
-
-
-
 };
 
 export default relation;
