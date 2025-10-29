@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -96,6 +96,14 @@ const relation = (db) => {
   SuggestionType.hasMany(Suggestions, { foreignKey: "typeId", as: "suggestions" });
   Suggestions.belongsTo(SuggestionPriorityLevel, { foreignKey: "levelId", as: "priorityLevel" });
   SuggestionPriorityLevel.hasMany(Suggestions, { foreignKey: "levelId", as: "suggestions" });
+
+
+  BugReports.belongsTo(User, { foreignKey: "userId", as: "user" });
+  User.hasMany(BugReports, { foreignKey: "userId", as: "bugReports" });
+  BugReports.belongsTo(BugSeverity, { foreignKey: "severityId", as: "severity" });
+  BugSeverity.hasMany(BugReports, { foreignKey: "severityId", as: "bugReports" });
+  BugReports.belongsTo(BugPlace, { foreignKey: "placeId", as: "place" });
+  BugPlace.hasMany(BugReports, { foreignKey: "placeId", as: "bugReports" });
 
 
 

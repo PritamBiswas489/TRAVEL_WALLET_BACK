@@ -1,7 +1,7 @@
 import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
-const { BugSeverity, Op, User, BugPlace } = db;
+const { BugSeverity, Op, User, BugPlace, BugReports } = db;
 
 export default class BugReportService {
   static async addBugSeverity(bugSeverities) {
@@ -21,7 +21,6 @@ export default class BugReportService {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return { ERROR: true, message: error.message };
     }
-
   }
   static async clearBugSeverityTable() {
     try {
@@ -57,6 +56,77 @@ export default class BugReportService {
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return { error: error.message };
+    }
+  }
+
+  static async submitBugReport(userId, bugReportData) {
+    try {
+      bugReportData.userId = userId;
+      const report = await BugReports.create(bugReportData);
+      return { data: report };
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return { ERROR: true, message: error.message };
+    }
+  }
+
+  static async getMyBugReports(userId, payload) {
+    try {
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+      const bugReports = await BugReports.findAll({
+        where: {
+          userId: userId,
+        },
+        include: [
+          {
+            model: BugSeverity,
+            as: "severity",
+          },
+          {
+            model: BugPlace,
+            as: "place",
+          },
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [["createdAt", "DESC"]],
+      });
+      return { data: bugReports };
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return { ERROR: true, message: error.message };
+    }
+  }
+  static async getAllBugReports(payload) {
+    console.log("payload -", payload);
+    try {
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+      const bugReports = await BugReports.findAll({
+        include: [
+          {
+            model: BugSeverity,
+            as: "severity",
+          },
+          {
+            model: BugPlace,
+            as: "place",
+          },
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "email", "phoneNumber"],
+          },
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [["createdAt", "DESC"]],
+      });
+      return { data: bugReports };
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return { ERROR: true, message: error.message };
     }
   }
 }
