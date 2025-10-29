@@ -70,6 +70,10 @@ const options = {
         description: "Ninepay Payment management  callback endpoints",
       },
       {
+        name: "Cambodia Payment",
+        description: "KessPay Payment management endpoints",
+      },
+      {
         name: "Feedback routes",
         description: "Feedback management endpoints",
       },
