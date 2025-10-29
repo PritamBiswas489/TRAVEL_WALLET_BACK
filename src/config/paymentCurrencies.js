@@ -10,5 +10,9 @@ export const paymentCurrencies = {
     VND: {
         symbol: "₫",
         name: "Vietnamese Dong"
+    },
+    KHR: {
+        symbol: "៛",
+        name: "Cambodian Riel"
     }
 };
