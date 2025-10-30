@@ -76,6 +76,10 @@ export default function WalletTransaction(sequelize, DataTypes) {
         type: DataTypes.BIGINT,
         allowNull: true,  
       },
+      kesspayTransactionId: {
+        type: DataTypes.BIGINT,
+        allowNull: true,  
+      },
     },
     {
       tableName: "wallet_transactions",

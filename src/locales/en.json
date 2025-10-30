@@ -295,5 +295,7 @@
 	"MY_SUGGESTIONS_FETCHED_SUCCESSFULLY": "My suggestions fetched successfully.",
 	"ALL_SUGGESTIONS_FETCHED_SUCCESSFULLY": "All suggestions fetched successfully.",
 	"BUG_REPORT_SUBMITTED_SUCCESSFULLY": "Bug report submitted successfully.",
-	"BUG_REPORTS_FETCHED_SUCCESSFULLY": "Bug reports fetched successfully."
+	"BUG_REPORTS_FETCHED_SUCCESSFULLY": "Bug reports fetched successfully.",
+	"DECODE_QRCODE_FAILED": "Failed to decode QR code.",
+	"DECODE_QRCODE_SUCCESSFUL": "QR code decoded successfully."
 }
