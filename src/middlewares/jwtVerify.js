@@ -16,10 +16,10 @@ export default async (req, res, next) => {
       checkdeviceid = false;
     }
 	console.log("Route Path:", routePath);
-	if(routePath.includes('kesspay')){
-		console.log("Skipping JWT verification for KessPay route");
-		return next();
-	}
+	// if(routePath.includes('kesspay')){
+	// 	console.log("Skipping JWT verification for KessPay route");
+	// 	return next();
+	// }
 	 
 
 	try {
