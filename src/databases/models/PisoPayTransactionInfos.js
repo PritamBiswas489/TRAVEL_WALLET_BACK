@@ -138,6 +138,11 @@ export default function PisoPayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+       is_fixed_price:{
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      }
     },
     {
       tableName: "pisopy_transaction_infos",

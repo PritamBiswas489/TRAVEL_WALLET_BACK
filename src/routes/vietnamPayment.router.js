@@ -148,6 +148,14 @@ router.post('/crypto/decode-qr-code', async (req, res, next) => {
  *                 type: string
  *                 example: "NGUYEN VAN A"
  *                 description: Bank account holder name
+ *               qrCode:
+ *                 type: string
+ *                 description: QR code string for transaction validation
+ *                 example: "00020101021129370016A00000067701011101130066999999902081234567803037645802VND5909NGUYEN VAN A6009HO CHI MINH62070503***6304B1E2"
+ *               is_fixed_price:
+ *                 type: boolean
+ *                 default: false
+ *                 description: Whether the price is fixed or not
  *             required:
  *               - walletCurrency
  *               - amount
@@ -156,6 +164,8 @@ router.post('/crypto/decode-qr-code', async (req, res, next) => {
  *               - bank_no
  *               - account_number
  *               - account_name
+ *               - qrCode
+ *               - is_fixed_price
  *     responses:
  *       200:
  *         description: Expense bought successfully

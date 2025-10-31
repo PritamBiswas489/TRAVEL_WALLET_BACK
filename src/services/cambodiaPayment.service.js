@@ -29,6 +29,7 @@ export default class CambodiaPaymentService {
       const merchantName = payload?.merchantName;
       const merchantCity = payload?.merchantCity;
       const qrCode = payload?.qrCode;
+      const is_fixed_price = payload?.is_fixed_price || true;
       const expenseCatId = payload?.expenseCatId || 1;
 
       if (walletCurrencies[walletCurrency] === undefined) {
@@ -128,6 +129,7 @@ export default class CambodiaPaymentService {
         latitude: payload?.latitude || null,
         longitude: payload?.longitude || null,
         out_trade_no,
+        is_fixed_price,
       };
 
       const kesspayTransaction = await kessPayTransactionInfos.create(dt, {

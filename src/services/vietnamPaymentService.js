@@ -65,6 +65,8 @@ export default class VietnamPaymentService {
           latitude: paymentData.latitude,
           longitude: paymentData.longitude,
           is_valid_transfer_signature: paymentData.is_valid_transfer_signature,
+          qr_code: paymentData.qrCode,
+          is_fixed_price: paymentData.is_fixed_price,
         },
         { transaction }
       );
@@ -84,11 +86,13 @@ export default class VietnamPaymentService {
       const amount = parseFloat(payload?.amount || 0);
       const expenseCatId = payload?.expenseCatId || 1;
       const memo = payload?.memo || "Expense payment";
+      const qrCode = payload?.qrCode || "";
       const bank_no = payload?.bank_no || "";
       const account_number = payload?.account_number || "";
       const account_name = payload?.account_name || "";
       const latitude = payload?.latitude || "";
       const longitude = payload?.longitude || "";
+      const is_fixed_price = payload?.is_fixed_price || true;
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
       });
@@ -104,6 +108,7 @@ export default class VietnamPaymentService {
         account_name,
         latitude,
         longitude,
+        qrCode,
       });
 
       if (walletCurrencies[walletCurrency] === undefined) {
@@ -182,6 +187,8 @@ export default class VietnamPaymentService {
         userId,
         expenseCatId,
         memo,
+        qrCode,
+        is_fixed_price,
         amountInUserWalletCurrency: actualPaymentAmountToSelectedCurrency,
         walletCurrency,
         latitude: payload?.latitude ?? null,

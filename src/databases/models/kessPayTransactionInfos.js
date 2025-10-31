@@ -95,6 +95,11 @@ export default function kessPayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+       is_fixed_price:{
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      }
     },
     {
       tableName: "kesspay_transaction_infos",

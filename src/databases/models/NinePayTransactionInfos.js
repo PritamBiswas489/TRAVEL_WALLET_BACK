@@ -120,14 +120,23 @@ export default function NinePayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      is_valid_transfer_signature:{
+      is_valid_transfer_signature: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
         defaultValue: false,
       },
-      is_valid_callback_signature:{
+      is_valid_callback_signature: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
+        defaultValue: false,
+      },
+      qr_code: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      is_fixed_price:{
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
         defaultValue: false,
       }
     },

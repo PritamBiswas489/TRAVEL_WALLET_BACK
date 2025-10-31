@@ -55,7 +55,8 @@ export default class PhilippinesPaymentService {
           merchantCity: paymentData.merchantCity,
           qrCodeType: paymentData.qrCodeType,
           latitude: paymentData.latitude,
-          longitude: paymentData.longitude
+          longitude: paymentData.longitude,
+          is_fixed_price: paymentData.is_fixed_price,
         },
         { transaction }
       );
@@ -184,6 +185,7 @@ export default class PhilippinesPaymentService {
       const qrCode = payload?.qrCode;
       const expenseCatId = payload?.expenseCatId || 1;
       const memo = payload?.memo || "Expense payment";
+      const is_fixed_price = payload?.is_fixed_price || true;
 
       if (walletCurrencies[walletCurrency] === undefined) {
         await tran.rollback();
@@ -318,6 +320,7 @@ export default class PhilippinesPaymentService {
           qrCodeType,
           latitude: payload?.latitude ?? null,
           longitude: payload?.longitude ?? null,
+          is_fixed_price,
         });
         //track transaction
         const trackedTransaction = await this.trackTransaction(dt, tran);

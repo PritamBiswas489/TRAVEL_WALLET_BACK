@@ -214,6 +214,10 @@ router.post('/remittance-initiate-transaction', async (req, res, next) => {
  *                 type: string
  *                 example: "Manila"
  *                 description: City of the merchant
+ *               is_fixed_price:
+ *                 type: boolean
+ *                 default: false
+ *                 description: Whether the price is fixed
  *             required:
  *               - walletCurrency
  *               - amount
@@ -221,6 +225,7 @@ router.post('/remittance-initiate-transaction', async (req, res, next) => {
  *               - memo
  *               - merchantName
  *               - merchantCity
+ *               - is_fixed_price
  *     responses:
  *       200:
  *         description: Expense bought successfully

@@ -192,6 +192,10 @@ router.post('/crypto/decode-khqr', async (req, res) => {
  *                 type: number
  *                 default: 1
  *                 example: 1
+ *               is_fixed_price:
+ *                 type: boolean
+ *                 default: false
+ *                 example: false
  *     responses:
  *       200:
  *         description: Expense purchased successfully
