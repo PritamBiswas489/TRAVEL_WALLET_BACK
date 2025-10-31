@@ -6,8 +6,8 @@ import CurrencyService from "./currency.service.js";
 import SettingsService from "./settings.service.js";
 import { where } from "sequelize";
 import { walletCurrencies } from "../config/walletCurrencies.js";
- 
-const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, ExpensesCategories} = db;
+
+const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, kessPayTransactionInfos, ExpensesCategories} = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
@@ -122,7 +122,8 @@ export default class WalletService {
             { transferId: { [Op.ne]: null } },
             { transferRequestId: { [Op.ne]: null } },
             { pisoPayTransactionId: { [Op.ne]: null } },
-            { ninePayTransactionId: { [Op.ne]: null } }
+            { ninePayTransactionId: { [Op.ne]: null } },
+            { kesspayTransactionId: { [Op.ne]: null } },
           ];
          transferWhere = { senderId: userId }; 
          transferRequestWhere = { receiverId : userId };
@@ -140,7 +141,8 @@ export default class WalletService {
           console.log("expenses filter");
             whereClause[Op.or] = [
             { pisoPayTransactionId: { [Op.ne]: null } },
-            { ninePayTransactionId: { [Op.ne]: null } }
+            { ninePayTransactionId: { [Op.ne]: null } },
+            { kesspayTransactionId: { [Op.ne]: null } },
             ];
         }
       }
@@ -244,6 +246,18 @@ export default class WalletService {
               },
             ],
           },
+          {
+            model: kessPayTransactionInfos,
+            as: "kesspayTransaction",
+            required: false,
+            include: [
+              {
+                model: ExpensesCategories,
+                as: "expenseCategory",
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+              },
+            ],
+          },
         ],
         order: [["createdAt", "DESC"]],
         offset: offset,
@@ -256,7 +270,8 @@ export default class WalletService {
       tx.transfer !== null ||
       tx.transferRequest !== null ||
       tx.pisopayTransaction !== null ||
-      tx.ninePayTransaction !== null
+      tx.ninePayTransaction !== null ||
+      tx.kesspayTransaction !== null
       );
       return { ...userWalletTransactions, rows: filteredRows };
     } catch (e) {

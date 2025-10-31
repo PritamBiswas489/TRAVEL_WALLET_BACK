@@ -245,4 +245,111 @@ export default class CambodiaPaymentService {
       return callback(new Error("BUY_EXPENSE_FAILED"), null);
     }
   }
+
+  //get expense transaction details
+  static async getExpenseTransactionDetails({ id, userId, i18n }, callback) {
+    try {
+      const response = await kessPayTransactionInfos.findOne({
+        where: { id, userId },
+        include: [
+          {
+            model: ExpensesCategories,
+            as: "expenseCategory",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+        ],
+      });
+      if (!response) {
+        return callback(new Error("EXPENSE_TRANSACTION_NOT_FOUND"), null);
+      }
+      return callback(null, { data: response });
+    } catch (error) {
+      console.error("Error fetching expense transaction details:", error);
+      return callback(error, null);
+    }
+  }
+
+  //get expenses report
+  static async getExpensesReport({ payload, userId, i18n }, callback) {
+    try {
+      console.log(
+        "Generating expenses report with payload:",
+        payload,
+        "for user ID:",
+        userId
+      );
+      const month = payload?.month;
+      const year = payload?.year;
+
+      const whereClause = {
+        userId: userId,
+        transaction_status: "SUCCEEDED",
+      };
+      // Add month/year filters only if provided
+      if (month) {
+        whereClause.created_month = month;
+      }
+      if (year) {
+        whereClause.created_year = year;
+      }
+
+      const results = await kessPayTransactionInfos.findAll({
+        attributes: ["expenseCatId", [fn("SUM", col("transactionAmount")), "totalAmount"]],
+        where: whereClause,
+        group: ["expenseCatId"],
+        raw: false,
+      });
+      // const results = resultsRaw ? resultsRaw.map(r => r.get({ plain: true })) : [];
+      //get expenses categories
+      const getExpenseCategories = await ExpensesCategories.findAll({
+        attributes: { exclude: ["createdAt", "updatedAt"] },
+      });
+      let totalExpenseAmt = 0; // total expense amount
+      let reportArray = []; //report array to hold final report
+      if (results.length > 0) {
+        const totalamt = results.reduce((sum, record) => {
+          return sum + parseFloat(record.getDataValue("totalAmount") || 0);
+        }, 0);
+        totalExpenseAmt = parseFloat(totalamt.toFixed(2));
+      }
+
+      for (const cat of getExpenseCategories) {
+        const found = results.find(
+          (r) => parseInt(r.getDataValue("expenseCatId")) === parseInt(cat.id)
+        );
+        reportArray.push({
+          catDetails: cat,
+          totalAmount: found
+            ? parseFloat(found.getDataValue("totalAmount") || 0)
+            : 0,
+          percentage:
+            totalExpenseAmt > 0
+              ? parseFloat(
+                  (
+                    ((found
+                      ? parseFloat(found.getDataValue("totalAmount") || 0)
+                      : 0) /
+                      totalExpenseAmt) *
+                    100
+                  ).toFixed(2)
+                )
+              : 0,
+        });
+      }
+      // console.log("Expenses report results:", results);
+      return callback(null, {
+        data: {
+          currency: paymentCurrencies["PHP"],
+          totalExpenseAmt,
+          reportArray,
+        },
+      });
+    } catch (e) {
+      if (process.env.SENTRY_ENABLED === "true") {
+        Sentry.captureException(e);
+      }
+      console.log("Error in getExpensesReport:", e.message);
+      callback(new Error("FAILED_TO_FETCH_EXPENSES_REPORT"), null);
+    }
+  }
 }
