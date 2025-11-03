@@ -74,6 +74,10 @@ const options = {
         description: "KessPay Payment management endpoints",
       },
       {
+        name: "Favourite QR Codes",
+        description: "Favourite QR Code management endpoints",
+      },
+      {
         name: "Feedback routes",
         description: "Feedback management endpoints",
       },

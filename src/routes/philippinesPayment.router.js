@@ -394,4 +394,53 @@ router.post('/expenses-report', async (req, res, next) => {
     res.return(response);
 });
 
+
+
+
+/**
+ * @swagger
+ *  /api/auth/pisopay/transaction-mark-as-favorite:
+ *   post:
+ *     summary: Mark a transaction as favorite
+ *     tags:
+ *       - Philippines Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               label:
+ *                 type: string
+ *                 description: Name of the merchant
+ *               transaction_id:
+ *                 type: string
+ *                 description: ID of the transaction to mark as favorite
+ *             required:
+ *               - label
+ *               - transaction_id
+ *     responses:
+ *       200:
+ *         description: Transaction marked as favorite successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/transaction-mark-as-favorite', async (req, res, next) => {
+    const response = await PhilippinesPaymentController.markTransactionAsFavorite({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
 export default router;

@@ -3,7 +3,7 @@ import KessPayApiService from "../services/kesspayApi.service.js";
 import CambodiaPaymentService from "../services/cambodiaPayment.service.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
 import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
-
+import FavouriteQrCodeService from "../services/favouriteQrCode.service.js";
 export default class CambodiaPaymentController {
   static async getToken() {
     const responseToken = await KessPayApiService.accessToken();
@@ -298,4 +298,39 @@ export default class CambodiaPaymentController {
       );
     });
   }
+    static async markTransactionAsFavorite(request) {
+      const {
+        headers: { i18n },
+        user,
+        payload,
+      } = request;
+  
+      const userId = user?.id || 1;
+
+      payload.country = "KH";
+      return new Promise((resolve) => {
+        FavouriteQrCodeService.addFavouriteQrCode(
+          { userId, payload, i18n },
+          (err, response) => {
+            if (err) {
+              return resolve({
+                status: 400,
+                data: null,
+                error: {
+                  message: i18n.__(err.message || "MARK_TRANSACTION_AS_FAVORITE_FAILED"),
+                  reason: err.message,
+                },
+              });
+            }
+  
+            return resolve({
+              status: 200,
+              data: response.data,
+              message: i18n.__("MARK_TRANSACTION_AS_FAVORITE_SUCCESSFUL"),
+              error: null,
+            });
+          }
+        );
+      });
+    }
 }

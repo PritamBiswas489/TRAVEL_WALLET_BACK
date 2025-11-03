@@ -15,10 +15,12 @@ import { default as cambodiaPaymentRouter } from './cambodiaPayment.router.js';
 import { default as feedbackRouter } from './feedback.router.js';
 import { default as suggestionRouter } from './suggestion.router.js';
 import { default as bugReportRouter } from './bugReport.router.js';
+import { default as  favouriteQrCodeRouter} from './favouriteQrCode.router.js';
 
 
 
- 
+
+
 const router = express.Router();
 
 //jwtVerify is a middleware that checks if the user is authenticated
@@ -39,4 +41,5 @@ router.use('/kesspay', cambodiaPaymentRouter);
 router.use('/feedback', feedbackRouter);
 router.use('/suggestion', suggestionRouter);
 router.use('/bug-reports', bugReportRouter);
+router.use('/favourite', favouriteQrCodeRouter);
 export default router;

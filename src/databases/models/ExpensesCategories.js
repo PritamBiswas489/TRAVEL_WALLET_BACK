@@ -19,6 +19,10 @@ export default function ExpensesCategories(sequelize, DataTypes) {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
+      hebrewTitle: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       color: {
         type: DataTypes.STRING(255),
         allowNull: true,

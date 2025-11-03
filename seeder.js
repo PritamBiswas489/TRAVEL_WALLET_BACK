@@ -12,7 +12,7 @@ const seedCurrencyData = async () => {
   console.log("Currency Data Seeding Completed.");
 };
 
-seedCurrencyData();
+
 
 
 //Delta Rate Percentage Seeder
@@ -22,7 +22,7 @@ const seedDeltaRatePercentage = async () => {
     await SettingsService.updateSettings("delta_percentage", deltaRate);
     console.log("Delta Rate Percentage Seeding Completed.");
 };
-seedDeltaRatePercentage();
+
 
 
 
@@ -38,7 +38,7 @@ const seedTermsAndConditionsAndPrivacyPolicy = async () => {
     await SettingsService.updateSettings("privacy_policy", privacyPolicy);
     console.log("Privacy Policy Seeding Completed.");
 };
-seedTermsAndConditionsAndPrivacyPolicy();
+
 
 
 //create admin user seeder
@@ -47,7 +47,6 @@ const seedAdminUser = async () => {
     await UserService.createDefaultAdminUser();
     console.log("Admin User Seeding Completed.");
 }
-seedAdminUser();
 
 
 //create default expenses seeder
@@ -59,54 +58,63 @@ const seedDefaultExpenses = async () => {
         icon: "Ionicons",
         name: "chatbox-ellipses-outline",
         title: "General",
+        hebrewTitle: "כללי",
         color: "#F57C00",
       },
       {
         icon: "Ionicons",
         name: "bed-outline",
         title: "Accommodation",
+        hebrewTitle: "לינה",
         color: "#B71C1C",
       },
       {
         icon: "Ionicons",
         name: "bus-outline",
         title: "Transportation",
+        hebrewTitle: "תחבורה",
         color: "#FF6F00",
       },
       {
         icon: "Ionicons",
         name: "map-outline",
         title: "Sightseeing & Tours",
+        hebrewTitle: "אטרקציות וסיורים",
         color: "#43A047",
       },
       {
         icon: "Ionicons",
         name: "restaurant-outline",
         title: "Food & Drinks",
+        hebrewTitle: "אוכל ושתייה",
         color: "#00897B",
       },
       {
         icon: "Ionicons",
         name: "bag-handle-outline",
         title: "Shopping",
+        hebrewTitle: "קניות",
         color: "#388E3C",
       },
       {
         icon: "Ionicons",
         name: "flower-outline",
         title: "Spa & Wellness",
+        hebrewTitle: "ספא ובריאות",
         color: "#E91E63",
       },
       {
         icon: "Ionicons",
         name: "film-outline",
         title: "Entertainment",
+        hebrewTitle: "בידור",
         color: "#E53935",
       },
       {
         icon: "Ionicons",
         name: "gift-outline",
         title: "Gifts",
+        hebrewTitle: "מתנות",
         color: "#8E24AA",
       },
     ];
@@ -116,7 +124,7 @@ const seedDefaultExpenses = async () => {
     console.log("Default Expenses Seeding Completed.");
 }
 
-seedDefaultExpenses();
+
 
 const createFeedbackCategories = async () => {
   await FeedbackService.clearFeedbackCategoryTable(); // Clear existing entries before seeding
@@ -171,7 +179,7 @@ const createFeedbackCategories = async () => {
 
 }
 
-createFeedbackCategories();
+
 
 
 const createSuggestionTypes = async () => {
@@ -212,7 +220,7 @@ const createSuggestionTypes = async () => {
   await SuggestionService.addSuggestionType(suggestionTypes);
   console.log("Suggestion Types Seeding Completed.");
 }
-createSuggestionTypes();
+
 
 
 const createSuggestionPriorityLevels = async () => {
@@ -249,7 +257,7 @@ const createSuggestionPriorityLevels = async () => {
 
 }
 
-createSuggestionPriorityLevels();
+
 
 const createBugSeverity = async () => {
   await BugReportService.clearBugSeverityTable(); // Clear existing entries before seeding
@@ -283,7 +291,7 @@ const createBugSeverity = async () => {
   await BugReportService.addBugSeverity(bugSeverities);
   console.log("Bug Severities Seeding Completed.");
 };
-createBugSeverity();
+
 
 
 const createBugPlaces = async () => {
@@ -348,4 +356,17 @@ const createBugPlaces = async () => {
   await BugReportService.addBugPlaces(bugPlaces);
   console.log("Bug Places Seeding Completed.");
 }
-createBugPlaces();
+
+
+
+
+seedDefaultExpenses();
+// createBugPlaces();
+// createBugSeverity();
+// createSuggestionPriorityLevels();
+// createSuggestionTypes();
+// createFeedbackCategories();
+// seedAdminUser();
+// seedDeltaRatePercentage();
+// seedCurrencyData();
+// seedTermsAndConditionsAndPrivacyPolicy();

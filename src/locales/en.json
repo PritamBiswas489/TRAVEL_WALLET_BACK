@@ -297,5 +297,17 @@
 	"BUG_REPORT_SUBMITTED_SUCCESSFULLY": "Bug report submitted successfully.",
 	"BUG_REPORTS_FETCHED_SUCCESSFULLY": "Bug reports fetched successfully.",
 	"DECODE_QRCODE_FAILED": "Failed to decode QR code.",
-	"DECODE_QRCODE_SUCCESSFUL": "QR code decoded successfully."
+	"DECODE_QRCODE_SUCCESSFUL": "QR code decoded successfully.",
+	"MARK_TRANSACTION_AS_FAVORITE_SUCCESSFUL": "Mark transaction as favorite successful.",
+	"FAVOURITE_QR_CODE_ALREADY_EXISTS": "Favourite QR code already exists.",
+	"MARK_TRANSACTION_AS_FAVORITE_FAILED": "Mark transaction as favorite failed.",
+	"FAVOURITE_QR_CODE_NOT_FOUND": "Favourite QR code not found.",
+	"FAVOURITE_QR_CODE_ADDITION_FAILED": "Favourite QR code addition failed.",
+	"GET_FAVOURITE_QR_CODES_SUCCESSFUL": "Get favourite QR codes successful.",
+	"GET_FAVOURITE_QR_CODES_FAILED": "Get favourite QR codes failed.",
+	"REMOVE_FAVOURITE_QR_CODE_FAILED": "Remove favourite QR code failed.",
+	"REMOVE_FAVOURITE_QR_CODE_SUCCESSFUL": "Remove favourite QR code successful.",
+	"FAVOURITE_QR_CODE_RETRIEVAL_FAILED": "Favourite QR code retrieval failed.",
+	"FAVOURITE_QR_CODE_REMOVED_SUCCESSFULLY": "Favourite QR code removed successfully.",
+	"FAVOURITE_QR_CODE_REMOVAL_FAILED": "Favourite QR code removal failed."
 }
