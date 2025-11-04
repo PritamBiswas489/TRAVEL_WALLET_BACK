@@ -295,5 +295,19 @@
 	"MY_SUGGESTIONS_FETCHED_SUCCESSFULLY": "ההצעות שלי הוחזרו בהצלחה.",
 	"ALL_SUGGESTIONS_FETCHED_SUCCESSFULLY": "כל ההצעות הוחזרו בהצלחה.",
 	"BUG_REPORT_SUBMITTED_SUCCESSFULLY": "דוח באג הוגש בהצלחה.",
-	"BUG_REPORTS_FETCHED_SUCCESSFULLY": "דוחות באג הוחזרו בהצלחה."
+	"BUG_REPORTS_FETCHED_SUCCESSFULLY": "דוחות באג הוחזרו בהצלחה.",
+	"DECODE_QRCODE_FAILED": "פענוח קוד QR נכשל.",
+	"DECODE_QRCODE_SUCCESSFUL": "קוד QR פוענח בהצלחה.",
+	"MARK_TRANSACTION_AS_FAVORITE_SUCCESSFUL": "סימון עסקה כמועדפת הצליח.",
+	"FAVOURITE_QR_CODE_ALREADY_EXISTS": "קוד QR מועדף כבר קיים.",
+	"MARK_TRANSACTION_AS_FAVORITE_FAILED": "סימון עסקה כמועדפת נכשל.",
+	"FAVOURITE_QR_CODE_NOT_FOUND": "קוד QR מועדף לא נמצא.",
+	"FAVOURITE_QR_CODE_ADDITION_FAILED": "הוספת קוד QR מועדף נכשלה.",
+	"GET_FAVOURITE_QR_CODES_SUCCESSFUL": "אחזור קודי QR מועדפים הצליח.",
+	"GET_FAVOURITE_QR_CODES_FAILED": "אחזור קודי QR מועדפים נכשל.",
+	"REMOVE_FAVOURITE_QR_CODE_FAILED": "הסרת קוד QR מועדף נכשלה.",
+	"REMOVE_FAVOURITE_QR_CODE_SUCCESSFUL": "הסרת קוד QR מועדף הצליחה.",
+	"FAVOURITE_QR_CODE_RETRIEVAL_FAILED": "אחזור קוד QR מועדף נכשל.",
+	"FAVOURITE_QR_CODE_REMOVED_SUCCESSFULLY": "קוד QR מועדף הוסר בהצלחה.",
+	"FAVOURITE_QR_CODE_REMOVAL_FAILED": "הסרת קוד QR מועדף נכשלה."
 }

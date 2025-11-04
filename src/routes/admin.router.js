@@ -583,4 +583,132 @@ router.get("/cron-track-list", async (req, res, next) => {
     }));
 });
 
+
+
+/**
+ * @swagger
+ * /api/admin/feedback-list:
+ *   get:
+ *     summary: Get feedback list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved feedback list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/feedback-list', async (req, res, next) => {
+    res.return(await AdminController.getFeedbackList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+
+/**
+ * @swagger
+ * /api/admin/suggestion-list:
+ *   get:
+ *     summary: Get suggestion list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved suggestion list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/suggestion-list', async (req, res, next) => {
+    res.return(await AdminController.getSuggestionList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+
+/**
+ * @swagger
+ * /api/admin/bug-report-list:
+ *   get:
+ *     summary: Get bug report list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved bug report list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/bug-report-list', async (req, res, next) => {
+    res.return(await AdminController.getBugReportList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+
 export default router;

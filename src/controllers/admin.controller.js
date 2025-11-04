@@ -6,6 +6,9 @@ import TrackIpAddressDeviceIdService from "../services/trackIpAddressDeviceId.se
 import FaqService from "../services/faq.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import CronTrackService from "../services/crontrack.service.js";
+import FeedbackService from "../services/feedbackService.js";
+import SuggestionService from "../services/suggestionService.js";
+import BugReportService from "../services/bugReportService.js";
 import moment from "moment";
 const {
   User,
@@ -58,15 +61,15 @@ export default class AdminController {
           error: { message: i18n.__("INVALID_PASSWORD") },
         };
       }
-      
+
       return {
         status: 200,
-          user: {
-            id: adminUser.id,
-            name: adminUser.name,
-            email: adminUser.email,
-            role: adminUser.role,
-          },
+        user: {
+          id: adminUser.id,
+          name: adminUser.name,
+          email: adminUser.email,
+          role: adminUser.role,
+        },
         message: i18n.__("ADMIN_LOGIN_SUCCESS"),
       };
     } catch (e) {
@@ -81,7 +84,7 @@ export default class AdminController {
   static async getUserList(request) {
     const {
       payload,
-      headers: { i18n }
+      headers: { i18n },
     } = request;
     try {
       const page = parseInt(payload.page, 10) || 1;
@@ -411,14 +414,14 @@ export default class AdminController {
       if (transaction_type && transaction_type.length > 0) {
         whereClause[Op.or] = [
           ...(transaction_type.includes("wallet")
-        ? [{ paymentId: { [Op.ne]: null } }]
-        : []),
+            ? [{ paymentId: { [Op.ne]: null } }]
+            : []),
           ...(transaction_type.includes("transfer")
-        ? [{ transferId: { [Op.ne]: null }, transferRequestId: null }]
-        : []),
+            ? [{ transferId: { [Op.ne]: null }, transferRequestId: null }]
+            : []),
           ...(transaction_type.includes("transfer_request")
-        ? [{ transferRequestId: { [Op.ne]: null } }]
-        : []),
+            ? [{ transferRequestId: { [Op.ne]: null } }]
+            : []),
         ];
       }
 
@@ -460,16 +463,14 @@ export default class AdminController {
         as: "transfer",
         include: [
           {
-        model: User,
-        as: "sender",
-        attributes: ["id", "name", "phoneNumber", "email"],
-       
+            model: User,
+            as: "sender",
+            attributes: ["id", "name", "phoneNumber", "email"],
           },
           {
-        model: User,
-        as: "receiver",
-        attributes: ["id", "name", "phoneNumber", "email"],
-        
+            model: User,
+            as: "receiver",
+            attributes: ["id", "name", "phoneNumber", "email"],
           },
         ],
       };
@@ -479,16 +480,14 @@ export default class AdminController {
         as: "transferRequest",
         include: [
           {
-        model: User,
-        as: "sender",
-        attributes: ["id", "name", "phoneNumber", "email"],
-         
+            model: User,
+            as: "sender",
+            attributes: ["id", "name", "phoneNumber", "email"],
           },
           {
-        model: User,
-        as: "receiver",
-        attributes: ["id", "name", "phoneNumber", "email"],
-         
+            model: User,
+            as: "receiver",
+            attributes: ["id", "name", "phoneNumber", "email"],
           },
         ],
       };
@@ -517,7 +516,7 @@ export default class AdminController {
         where: {
           ...whereClause,
           ...(currency.length > 0 && {
-        paymentCurrency: { [Op.in]: currency },
+            paymentCurrency: { [Op.in]: currency },
           }),
           ...(status && status.length > 0 && { status: { [Op.in]: status } }),
           ...(type && type.length > 0 && { type: { [Op.in]: type } }),
@@ -639,7 +638,6 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
   static async getTransactionListByUser(request) {
     const {
@@ -743,7 +741,7 @@ export default class AdminController {
       };
     }
   }
-  static async getCronTrackList(request){
+  static async getCronTrackList(request) {
     const {
       payload,
       headers: { i18n },
@@ -765,7 +763,76 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
-
   }
 
+  static async getFeedbackList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const feedbackList = await FeedbackService.getAllFeedbacks(payload);
+
+      return {
+        status: 200,
+        data: feedbackList?.data,
+        message: i18n.__("FEEDBACK_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async getSuggestionList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const suggestionList = await SuggestionService.getAllSuggestions(payload);
+
+      return {
+        status: 200,
+        data: suggestionList?.data,
+        message: i18n.__("SUGGESTION_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+  static async getBugReportList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const bugReportList = await BugReportService.getAllBugReports(payload);
+      return {
+        status: 200,
+        data: bugReportList?.data,
+        message: i18n.__("BUG_REPORT_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
 }
