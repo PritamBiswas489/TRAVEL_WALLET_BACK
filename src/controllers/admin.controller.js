@@ -20,7 +20,17 @@ const {
   UserKyc,
   UserWallet,
   UserFcm,
+  Feedbacks,
+  FeedbackCategory,
+  Suggestions,
+  SuggestionType,
+  SuggestionPriorityLevel,
+  BugSeverity,
+  BugPlace,
+  BugReports,
 } = db;
+
+ 
 export default class AdminController {
   static async adminLogin(request) {
     //login by email and password
@@ -773,11 +783,34 @@ export default class AdminController {
     } = request;
 
     try {
-      const feedbackList = await FeedbackService.getAllFeedbacks(payload);
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+      const feedbackList = await Feedbacks.findAndCountAll({
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "email", "phoneNumber"],
+          },
+          {
+            model: FeedbackCategory,
+            as: "category",
+          },
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [["createdAt", "DESC"]],
+      });
 
       return {
         status: 200,
-        data: feedbackList?.data,
+        data: feedbackList.rows,
+        pagination: {
+          totalItems: feedbackList.count,
+          totalPages: Math.ceil(feedbackList.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
         message: i18n.__("FEEDBACK_LIST_FETCHED_SUCCESSFULLY"),
       };
     } catch (e) {
@@ -797,11 +830,29 @@ export default class AdminController {
     } = request;
 
     try {
-      const suggestionList = await SuggestionService.getAllSuggestions(payload);
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+
+      const suggestionsData = await Suggestions.findAndCountAll({
+        include: [
+          { model: User, as: "user" , attributes: ["id", "name", "email", "phoneNumber"], },
+          { model: SuggestionType, as: "type" },
+          { model: SuggestionPriorityLevel, as: "priorityLevel" },
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [["createdAt", "DESC"]],
+      });
 
       return {
         status: 200,
-        data: suggestionList?.data,
+       data: suggestionsData.rows,
+        pagination: {
+          totalItems: suggestionsData.count,
+          totalPages: Math.ceil(suggestionsData.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
         message: i18n.__("SUGGESTION_LIST_FETCHED_SUCCESSFULLY"),
       };
     } catch (e) {
@@ -820,10 +871,37 @@ export default class AdminController {
       user,
     } = request;
     try {
-      const bugReportList = await BugReportService.getAllBugReports(payload);
+       const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+      const bugReportsData = await BugReports.findAndCountAll({
+        include: [
+          {
+            model: BugSeverity,
+            as: "severity",
+          },
+          {
+            model: BugPlace,
+            as: "place",
+          },
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "email", "phoneNumber"],
+          },
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [["createdAt", "DESC"]],
+      });
       return {
         status: 200,
-        data: bugReportList?.data,
+        data: bugReportsData.rows,
+        pagination: {
+          totalItems: bugReportsData.count,
+          totalPages: Math.ceil(bugReportsData.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
         message: i18n.__("BUG_REPORT_LIST_FETCHED_SUCCESSFULLY"),
       };
     } catch (e) {
