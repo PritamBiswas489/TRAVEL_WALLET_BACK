@@ -187,6 +187,15 @@ export default class PhilippinesPaymentService {
       const memo = payload?.memo || "Expense payment";
       const is_fixed_price = payload?.is_fixed_price ;
 
+      const expenseDet = await ExpensesCategories.findOne({
+        where: { id: expenseCatId },
+      });
+      if (!expenseDet) {
+        callback(new Error("EXPENSE_CATEGORY_NOT_FOUND"), null);
+        await tran.rollback();
+        return;
+      }
+
       if (walletCurrencies[walletCurrency] === undefined) {
         await tran.rollback();
         return callback(new Error("INVALID_WALLET_CURRENCY"), null);
@@ -272,9 +281,7 @@ export default class PhilippinesPaymentService {
         const qrCodeType = getCalculateP2MOrP2PFromQRCode(qrCode);
         const merchantName = payload?.merchantName;
         const merchantCity = payload?.merchantCity;
-        const expenseDet = await ExpensesCategories.findOne({
-          where: { id: expenseCatId },
-        });
+        
         const expenseCatName = expenseDet ? expenseDet.title : "General Expense";
 
         console.log(

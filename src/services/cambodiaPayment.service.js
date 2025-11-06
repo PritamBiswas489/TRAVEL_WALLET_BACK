@@ -33,6 +33,15 @@ export default class CambodiaPaymentService {
       const expenseCatId = payload?.expenseCatId || 1;
       const memo = payload?.memo || null;
 
+       const expenseDet = await ExpensesCategories.findOne({
+         where: { id: expenseCatId },
+       });
+
+       if (!expenseDet) {
+         await tran.rollback();
+         return callback(new Error("EXPENSE_CATEGORY_NOT_FOUND"), null);
+       }
+
       if (walletCurrencies[walletCurrency] === undefined) {
         await tran.rollback();
         return callback(new Error("INVALID_WALLET_CURRENCY"), null);
@@ -47,9 +56,7 @@ export default class CambodiaPaymentService {
         return callback(new Error("MISSING_QR_CODE"), null);
       }
 
-      const expenseDet = await ExpensesCategories.findOne({
-        where: { id: expenseCatId },
-      });
+     
       const expenseCatName = expenseDet ? expenseDet.title : "General Expense";
 
       const userWallet = await UserWallet.findOne({

@@ -310,10 +310,9 @@
 	"FAVOURITE_QR_CODE_RETRIEVAL_FAILED": "Favourite QR code retrieval failed.",
 	"FAVOURITE_QR_CODE_REMOVED_SUCCESSFULLY": "Favourite QR code removed successfully.",
 	"FAVOURITE_QR_CODE_REMOVAL_FAILED": "Favourite QR code removal failed.",
-	"FEEDBACK_LIST_FETCHED_SUCCESSFULLY": "FEEDBACK_LIST_FETCHED_SUCCESSFULLY",
-	"SUGGESTION_LIST_FETCHED_SUCCESSFULLY": "SUGGESTION_LIST_FETCHED_SUCCESSFULLY",
-	"BUG_REPORT_LIST_FETCHED_SUCCESSFULLY": "BUG_REPORT_LIST_FETCHED_SUCCESSFULLY",
-	"insert or update on table \"ninepay_transaction_infos\" violates foreign key constraint \"ninepay_transaction_infos_expenseCatId_fkey\"": "insert or update on table \"ninepay_transaction_infos\" violates foreign key constraint \"ninepay_transaction_infos_expenseCatId_fkey\"",
-	"PHILIPPINES_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "PHILIPPINES_PAYMENT_LIST_FETCHED_SUCCESSFULLY",
-	"INVALID_FROM_CURRENCY_CODE": "INVALID_FROM_CURRENCY_CODE"
+	"FEEDBACK_LIST_FETCHED_SUCCESSFULLY": "Feedback list fetched successfully.",
+	"SUGGESTION_LIST_FETCHED_SUCCESSFULLY": "Suggestion list fetched successfully.",
+	"BUG_REPORT_LIST_FETCHED_SUCCESSFULLY": "Bug report list fetched successfully.",
+	"INVALID_FROM_CURRENCY_CODE": "Invalid from currency code.",
+	"EXPENSE_CATEGORY_NOT_FOUND": "Expense category not found."
 }

@@ -96,6 +96,10 @@ export default class VietnamPaymentService {
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
       });
+      if (!expenseDet) {
+        await tran.rollback();
+        return callback(new Error("EXPENSE_CATEGORY_NOT_FOUND"), null);
+      }
       const expenseCatName = expenseDet ? expenseDet.title : "General Expense";
 
       console.log("Payload:", {
