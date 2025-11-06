@@ -188,6 +188,9 @@ router.post('/crypto/decode-khqr', async (req, res) => {
  *                 type: boolean
  *                 default: false
  *                 example: false
+ *               memo:
+ *                 type: string
+ *                 example: "Coffee purchase"
  *     responses:
  *       200:
  *         description: Expense purchased successfully

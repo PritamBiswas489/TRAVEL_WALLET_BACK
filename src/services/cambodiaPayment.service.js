@@ -31,6 +31,7 @@ export default class CambodiaPaymentService {
       const qrCode = payload?.qrCode;
       const is_fixed_price = payload?.is_fixed_price;
       const expenseCatId = payload?.expenseCatId || 1;
+      const memo = payload?.memo || null;
 
       if (walletCurrencies[walletCurrency] === undefined) {
         await tran.rollback();
@@ -96,6 +97,11 @@ export default class CambodiaPaymentService {
         }
       );
 
+      console.log(
+        "Converted amount to wallet currency:",
+        convertActualPaymentAmountToSelectedCurrency.data
+      );
+
       const actualPaymentAmountToSelectedCurrency = parseFloat(
         convertActualPaymentAmountToSelectedCurrency.data
           .converted_amount_with_delta_percentage
@@ -130,6 +136,7 @@ export default class CambodiaPaymentService {
         longitude: payload?.longitude || null,
         out_trade_no,
         is_fixed_price,
+        memo,
       };
 
       const kesspayTransaction = await kessPayTransactionInfos.create(dt, {

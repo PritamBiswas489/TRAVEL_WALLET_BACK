@@ -270,7 +270,10 @@ router.post("/converter-payment-cur-to-wallet-cur", async (req, res, next) => {
  *         description: Success - Payment currencies retrieved
  */
 router.get("/get-payment-currencies", async (req, res, next) => {
-  res.return(paymentCurrencies);
+  const filteredPaymentCurrencies = Object.fromEntries(
+    Object.entries(paymentCurrencies).filter(([key, value]) => key !== 'USD')
+  );
+  res.return(filteredPaymentCurrencies);
 });
 
 /**

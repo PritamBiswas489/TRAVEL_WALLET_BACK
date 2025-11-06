@@ -1,3 +1,5 @@
+ 
+
 export const paymentCurrencies = {
     THB: {
         symbol: "฿",
@@ -14,5 +16,6 @@ export const paymentCurrencies = {
     KHR: {
         symbol: "៛",
         name: "Cambodian Riel"
-    }
+    },
+    
 };

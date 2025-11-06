@@ -193,16 +193,26 @@ export default class CurrencyService {
       
 
     try {
-      const currency = await Currency.findOne({
-      where: { code: `${toCurrency}_TO_${fromCurrency}` },
-      });
+      let rate = 1;
+      let currency = null;
+      if (fromCurrency !== toCurrency) {
+        currency = await Currency.findOne({
+          where: { code: `${toCurrency}_TO_${fromCurrency}` },
+        });
 
-      if (!currency) {
-      return callback({ ERROR: 1 }, null);
+        if (!currency) {
+          return callback({ ERROR: 1 }, null);
+        }
+        rate = currency.value;
       }
+     
+      
       const setting = await SettingsService.getSetting("delta_percentage");
-      const rate = currency.value;
-      const deltaCutPercentage = parseFloat(setting.data.value) || 0;
+
+      let deltaCutPercentage = parseFloat(setting.data.value) || 0;
+      if(rate === 1){
+        deltaCutPercentage = 0;
+      }
       const cutValue = (rate * deltaCutPercentage) / 100;
       const finalRateValue = rate - cutValue;
 
@@ -221,7 +231,7 @@ export default class CurrencyService {
         deltaCutPercentage,
         cutValue,
         finalRateValue: 1 / finalRateValue,
-        updatedTime: formatDateToTimezone(currency.updatedAt),
+        updatedTime: currency?.updatedAt ? formatDateToTimezone(currency?.updatedAt) : null ,
       },
       });
     } catch (e) {

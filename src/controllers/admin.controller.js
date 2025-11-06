@@ -973,6 +973,53 @@ export default class AdminController {
 
   static async getVietnamPaymentList(request) {
     //NinePayTransactionInfos
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+
+    try {
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+      const response = await NinePayTransactionInfos.findAndCountAll({
+        order: [["createdAt", "DESC"]],
+        offset: offset,
+        limit: limit,
+
+        include: [
+          {
+            model: ExpensesCategories,
+            as: "expenseCategory",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "email", "phoneNumber"],
+          },
+        ],
+      });
+       return {
+        status: 200,
+        data: response.rows,
+        pagination: {
+          totalItems: response.count,
+          totalPages: Math.ceil(response.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
+        message: i18n.__("VIETNAM_PAYMENT_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
   }
 
   static async getCambodiaPaymentList(request) {

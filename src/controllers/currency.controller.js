@@ -306,30 +306,30 @@ export default class CurrencyController {
     const supportedToCurrencies = Object.keys(walletCurrencies);
     const supportedFromCurrencies = Object.keys(paymentCurrencies);
 
-    if (!supportedFromCurrencies.includes(fromCurrency)) {
-      return {
-        status: 400,
-        data: [],
-        error: {
-          message: i18n.__("INVALID_FROM_CURRENCY_CODE"),
-          reason: i18n.__("INVALID_FROM_CURRENCY_CODE", {
-            currency: fromCurrency,
-          }),
-        },
-      };
-    }
-    if (!supportedToCurrencies.includes(toCurrency)) {
-      return {
-        status: 400,
-        data: [],
-        error: {
-          message: i18n.__("INVALID_TO_CURRENCY_CODE"),
-          reason: i18n.__("INVALID_TO_CURRENCY_CODE", {
-            currency: toCurrency,
-          }),
-        },
-      };
-    }
+    // if (!supportedFromCurrencies.includes(fromCurrency)) {
+    //   return {
+    //     status: 400,
+    //     data: [],
+    //     error: {
+    //       message: i18n.__("INVALID_FROM_CURRENCY_CODE"),
+    //       reason: i18n.__("INVALID_FROM_CURRENCY_CODE", {
+    //         currency: fromCurrency,
+    //       }),
+    //     },
+    //   };
+    // }
+    // if (!supportedToCurrencies.includes(toCurrency)) {
+    //   return {
+    //     status: 400,
+    //     data: [],
+    //     error: {
+    //       message: i18n.__("INVALID_TO_CURRENCY_CODE"),
+    //       reason: i18n.__("INVALID_TO_CURRENCY_CODE", {
+    //         currency: toCurrency,
+    //       }),
+    //     },
+    //   };
+    // }
 
     return new Promise((resolve) => {
       CurrencyService.currencyConverterPaymentCurToWalletCur(

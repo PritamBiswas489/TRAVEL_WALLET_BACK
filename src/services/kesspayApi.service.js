@@ -108,6 +108,7 @@ export default class KessPayApiService {
         seller_code: process.env.KESSPAY_SELLER_CODE,
       };
       params["sign"] = this.makeSign(params, process.env.KESSPAY_API_SECRET_KEY);
+      console.log("KessPay scanKHQR params:", params);
       const response = await axios.post(`${process.env.KESSPAY_API_URL}/api/mch/v2/gateway`, params, {
             headers: {
                 'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ export default class KessPayApiService {
         console.log("KessPay scanKHQR response:", response.data);
         return callback(null, {...response.data});
     } catch (err) {
-      console.error("Error in scanKHQR:", err.message);
+      console.error("Error in scanKHQR:", err);
       return callback(new Error("BUY_EXPENSE_FAILED"), null);
     }
   }
