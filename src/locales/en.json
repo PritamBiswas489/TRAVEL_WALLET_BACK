@@ -313,5 +313,6 @@
 	"FEEDBACK_LIST_FETCHED_SUCCESSFULLY": "FEEDBACK_LIST_FETCHED_SUCCESSFULLY",
 	"SUGGESTION_LIST_FETCHED_SUCCESSFULLY": "SUGGESTION_LIST_FETCHED_SUCCESSFULLY",
 	"BUG_REPORT_LIST_FETCHED_SUCCESSFULLY": "BUG_REPORT_LIST_FETCHED_SUCCESSFULLY",
-	"insert or update on table \"ninepay_transaction_infos\" violates foreign key constraint \"ninepay_transaction_infos_expenseCatId_fkey\"": "insert or update on table \"ninepay_transaction_infos\" violates foreign key constraint \"ninepay_transaction_infos_expenseCatId_fkey\""
+	"insert or update on table \"ninepay_transaction_infos\" violates foreign key constraint \"ninepay_transaction_infos_expenseCatId_fkey\"": "insert or update on table \"ninepay_transaction_infos\" violates foreign key constraint \"ninepay_transaction_infos_expenseCatId_fkey\"",
+	"PHILIPPINES_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "PHILIPPINES_PAYMENT_LIST_FETCHED_SUCCESSFULLY"
 }

@@ -711,4 +711,128 @@ router.get('/bug-report-list', async (req, res, next) => {
 });
 
 
+
+/**
+ * @swagger
+ * /api/admin/philippines-payment-list:
+ *   get:
+ *     summary: Get Philippines payment list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved Philippines payment list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/philippines-payment-list', async (req, res, next) => {
+    res.return(await AdminController.getPhilippinesPaymentList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+/**
+ * @swagger
+ * /api/admin/vietnam-payment-list:
+ *   get:
+ *     summary: Get Vietnam payment list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved Vietnam payment list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/vietnam-payment-list', async (req, res, next) => {
+    res.return(await AdminController.getVietnamPaymentList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+/**
+ * @swagger
+ * /api/admin/cambodia-payment-list:
+ *   get:
+ *     summary: Get Cambodia payment list
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved Cambodia payment list
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/cambodia-payment-list', async (req, res, next) => {
+    res.return(await AdminController.getCambodiaPaymentList({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
 export default router;

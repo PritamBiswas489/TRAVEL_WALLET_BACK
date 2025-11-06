@@ -28,6 +28,10 @@ const {
   BugSeverity,
   BugPlace,
   BugReports,
+  PisoPayTransactionInfos, // Philippines
+  kessPayTransactionInfos, //  Cambodia
+  NinePayTransactionInfos, // Vietnam
+  ExpensesCategories
 } = db;
 
  
@@ -835,7 +839,11 @@ export default class AdminController {
 
       const suggestionsData = await Suggestions.findAndCountAll({
         include: [
-          { model: User, as: "user" , attributes: ["id", "name", "email", "phoneNumber"], },
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "email", "phoneNumber"],
+          },
           { model: SuggestionType, as: "type" },
           { model: SuggestionPriorityLevel, as: "priorityLevel" },
         ],
@@ -846,7 +854,7 @@ export default class AdminController {
 
       return {
         status: 200,
-       data: suggestionsData.rows,
+        data: suggestionsData.rows,
         pagination: {
           totalItems: suggestionsData.count,
           totalPages: Math.ceil(suggestionsData.count / limit),
@@ -871,7 +879,7 @@ export default class AdminController {
       user,
     } = request;
     try {
-       const { page = 1, limit = 10 } = payload;
+      const { page = 1, limit = 10 } = payload;
       const offset = (page - 1) * limit;
       const bugReportsData = await BugReports.findAndCountAll({
         include: [
@@ -912,5 +920,62 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+
+  static async getPhilippinesPaymentList(request) {
+    //PisoPayTransactionInfos
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    try {
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+      const response = await PisoPayTransactionInfos.findAndCountAll({
+        order: [["createdAt", "DESC"]],
+        offset: offset,
+        limit: limit,
+
+        include: [
+          {
+            model: ExpensesCategories,
+            as: "expenseCategory",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "email", "phoneNumber"],
+          },
+        ],
+      });
+       return {
+        status: 200,
+        data: response.rows,
+        pagination: {
+          totalItems: response.count,
+          totalPages: Math.ceil(response.count / limit),
+          currentPage: page,
+          itemsPerPage: limit,
+        },
+        message: i18n.__("PHILIPPINES_PAYMENT_LIST_FETCHED_SUCCESSFULLY"),
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+
+  static async getVietnamPaymentList(request) {
+    //NinePayTransactionInfos
+  }
+
+  static async getCambodiaPaymentList(request) {
+    //NinePayTransactionInfos
   }
 }

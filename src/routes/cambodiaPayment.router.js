@@ -55,16 +55,8 @@ router.get('/token', async (req, res, next) => {
  *           schema:
  *             type: object
  *             required:
- *               - service
- *               - sign_type
  *               - qrcode
  *             properties:
- *               service:
- *                 type: string
- *                 example: "webpay.acquire.decodeKhqr"
- *               sign_type:
- *                 type: string
- *                 example: "MD5"
  *               qrcode:
  *                 type: string
  *                 example: "00020101021229370009khqr@aclb011009781311020206ACLEDA392000118551247962701014520420005802KH530384054045.005912PHOS RAKSMEY6010Phnom Penh621402100978131102630464F8"
