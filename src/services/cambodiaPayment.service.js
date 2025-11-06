@@ -29,7 +29,7 @@ export default class CambodiaPaymentService {
       const merchantName = payload?.merchantName;
       const merchantCity = payload?.merchantCity;
       const qrCode = payload?.qrCode;
-      const is_fixed_price = payload?.is_fixed_price || true;
+      const is_fixed_price = payload?.is_fixed_price;
       const expenseCatId = payload?.expenseCatId || 1;
 
       if (walletCurrencies[walletCurrency] === undefined) {

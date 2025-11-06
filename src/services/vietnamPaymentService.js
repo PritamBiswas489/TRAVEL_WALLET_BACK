@@ -92,7 +92,7 @@ export default class VietnamPaymentService {
       const account_name = payload?.account_name || "";
       const latitude = payload?.latitude || "";
       const longitude = payload?.longitude || "";
-      const is_fixed_price = payload?.is_fixed_price || true;
+      const is_fixed_price = payload?.is_fixed_price;
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
       });

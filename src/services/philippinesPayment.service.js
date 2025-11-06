@@ -185,7 +185,7 @@ export default class PhilippinesPaymentService {
       const qrCode = payload?.qrCode;
       const expenseCatId = payload?.expenseCatId || 1;
       const memo = payload?.memo || "Expense payment";
-      const is_fixed_price = payload?.is_fixed_price || true;
+      const is_fixed_price = payload?.is_fixed_price ;
 
       if (walletCurrencies[walletCurrency] === undefined) {
         await tran.rollback();
