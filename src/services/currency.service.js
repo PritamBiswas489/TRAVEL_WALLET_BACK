@@ -216,6 +216,8 @@ export default class CurrencyService {
       const cutValue = (rate * deltaCutPercentage) / 100;
       const finalRateValue = rate - cutValue;
 
+      
+
       const converted_amount_with_delta_percentage =
       amountUptotwoDecimalPlaces(amount * (1 / finalRateValue));
       const converted_amount_without_delta_percentage =
@@ -225,8 +227,8 @@ export default class CurrencyService {
         fromCurrency: fromCurrency,
         toCurrency: toCurrency,
         amount,
-        converted_amount_with_delta_percentage,
-        converted_amount_without_delta_percentage,
+        converted_amount_with_delta_percentage:  parseFloat(converted_amount_with_delta_percentage) === 0 ? 0.01 : converted_amount_with_delta_percentage,
+        converted_amount_without_delta_percentage : parseFloat(converted_amount_without_delta_percentage) === 0 ? 0.01 : converted_amount_without_delta_percentage,
         rate: 1 / rate,
         deltaCutPercentage,
         cutValue,
