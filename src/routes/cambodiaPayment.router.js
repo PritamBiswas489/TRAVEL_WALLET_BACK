@@ -340,6 +340,12 @@ router.post('/expense-transaction-details', async (req, res, next) => {
  *                 nullable: true
  *                 default: null
  *                 description: Year for the report, null for all years
+ *               currency:
+ *                 type: string
+ *                 nullable: true
+ *                 default: null
+ *                 example: "USD"
+ *                 description: Currency filter for the report (e.g., USD, ILS), null for all currencies
  *             required: []
  *     responses:
  *       200:

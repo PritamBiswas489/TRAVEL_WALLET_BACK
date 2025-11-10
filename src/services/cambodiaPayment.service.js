@@ -296,10 +296,12 @@ export default class CambodiaPaymentService {
       );
       const month = payload?.month;
       const year = payload?.year;
+      const currency = payload?.currency || 'KHR';
 
       const whereClause = {
         userId: userId,
         transaction_status: "SUCCEEDED",
+        transactionCurrency: currency,
       };
       // Add month/year filters only if provided
       if (month) {
