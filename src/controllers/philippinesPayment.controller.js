@@ -165,7 +165,7 @@ export default class PhilippinesPaymentController {
   }
   static async cryptoBuyExpense(request) {
     const {
-      headers: { i18n , deviceLocation },
+      headers: { i18n, deviceLocation },
       user,
       payload,
     } = request;
@@ -270,6 +270,42 @@ export default class PhilippinesPaymentController {
       );
     });
   }
+  static async getExpensesTransactions(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      PhilippinesPaymentService.getExpensesTransactions(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "GET_EXPENSES_TRANSACTIONS_FAILED"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSES_TRANSACTIONS_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
   //Get Expense Transaction Details
   static async getExpenseTransactionDetails(request) {
     const {
@@ -367,8 +403,8 @@ export default class PhilippinesPaymentController {
       payload,
     } = request;
 
-    const userId = user?.id || 1;;
-   
+    const userId = user?.id || 1;
+
     payload.country = "PH";
     return new Promise((resolve) => {
       FavouriteQrCodeService.addFavouriteQrCode(
@@ -379,7 +415,9 @@ export default class PhilippinesPaymentController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message || "MARK_TRANSACTION_AS_FAVORITE_FAILED"),
+                message: i18n.__(
+                  err.message || "MARK_TRANSACTION_AS_FAVORITE_FAILED"
+                ),
                 reason: err.message,
               },
             });

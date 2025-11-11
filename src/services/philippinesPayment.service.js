@@ -8,6 +8,7 @@ import PisoPayApiService from "./pisoPayApi.service.js";
 import UserService from "./user.service.js";
 import CurrencyService from "./currency.service.js";
 import { getCalculateP2MOrP2PFromQRCode } from "../libraries/utility.js";
+import { where } from "sequelize";
 const {
   PisoPayTransactionInfos,
   ExpensesCategories,
@@ -72,7 +73,7 @@ export default class PhilippinesPaymentService {
   static async updateTransactionStatus(payload, i18n) {
     const { transaction_info_code, status } = payload;
     const record = await PisoPayTransactionInfos.findOne({
-        where: { transaction_info_code },
+      where: { transaction_info_code },
     });
     try {
       const statusMap = {
@@ -80,18 +81,24 @@ export default class PhilippinesPaymentService {
         2: "Cancelled",
         3: "Failed",
       };
-      if(!transaction_info_code) { return }
+      if (!transaction_info_code) {
+        return;
+      }
       const statusValue = statusMap[parseInt(status)] || "Pending";
 
       if (!record) throw new Error(`Record not found ${transaction_info_code}`);
-      if(record.callBack_data) throw new Error(`Call back already processed ${transaction_info_code}`);
+      if (record.callBack_data)
+        throw new Error(`Call back already processed ${transaction_info_code}`);
 
       record.transaction_status = statusValue;
       record.callBack_data = payload;
       await record.save();
 
       if (["Failed", "Cancelled"].includes(statusValue)) {
-        console.log(`Handling ${statusValue.toLowerCase()} transaction for:`, transaction_info_code);
+        console.log(
+          `Handling ${statusValue.toLowerCase()} transaction for:`,
+          transaction_info_code
+        );
         const tran = await db.sequelize.transaction();
         try {
           // throw new Error("Simulated error to test refund logic");
@@ -112,8 +119,11 @@ export default class PhilippinesPaymentService {
           if (!userWallet) throw new Error("USER_WALLET_NOT_FOUND");
 
           const oldWalletBalance = parseFloat(userWallet.balance || 0);
-          const amountInUserWalletCurrency = parseFloat(record.amountInUserWalletCurrency) || 0;
-          const newWalletBalance = parseFloat((oldWalletBalance + amountInUserWalletCurrency).toFixed(6));
+          const amountInUserWalletCurrency =
+            parseFloat(record.amountInUserWalletCurrency) || 0;
+          const newWalletBalance = parseFloat(
+            (oldWalletBalance + amountInUserWalletCurrency).toFixed(6)
+          );
           userWallet.balance = newWalletBalance;
           await userWallet.save({ transaction: tran });
 
@@ -152,7 +162,10 @@ export default class PhilippinesPaymentService {
             { transaction: tran }
           );
           await tran.commit();
-          console.log("Refunded wallet for failed/cancelled transaction:", transaction_info_code);
+          console.log(
+            "Refunded wallet for failed/cancelled transaction:",
+            transaction_info_code
+          );
         } catch (e) {
           if (tran?.finished !== "commit") await tran.rollback();
           const ERROR_MSG = `Failed to refund wallet for transaction ${transaction_info_code}: ${e.message}`;
@@ -161,12 +174,12 @@ export default class PhilippinesPaymentService {
       }
       console.log("Transaction status updated for:", transaction_info_code);
     } catch (e) {
-        const ERROR_MSG = `Failed in Pisopay callback. ${transaction_info_code}: ${e.message}`;
-        console.log(ERROR_MSG);
-        const createPisopyPaymentErrorLogs =  PisopyPaymentErrorLogs.create({
-          userId: record?.userId || null,
-          errorMessage: ERROR_MSG,
-        });
+      const ERROR_MSG = `Failed in Pisopay callback. ${transaction_info_code}: ${e.message}`;
+      console.log(ERROR_MSG);
+      const createPisopyPaymentErrorLogs = PisopyPaymentErrorLogs.create({
+        userId: record?.userId || null,
+        errorMessage: ERROR_MSG,
+      });
     }
   }
   //buy expense
@@ -185,7 +198,7 @@ export default class PhilippinesPaymentService {
       const qrCode = payload?.qrCode;
       const expenseCatId = payload?.expenseCatId || 1;
       const memo = payload?.memo || "Expense payment";
-      const is_fixed_price = payload?.is_fixed_price ;
+      const is_fixed_price = payload?.is_fixed_price;
 
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
@@ -281,8 +294,10 @@ export default class PhilippinesPaymentService {
         const qrCodeType = getCalculateP2MOrP2PFromQRCode(qrCode);
         const merchantName = payload?.merchantName;
         const merchantCity = payload?.merchantCity;
-        
-        const expenseCatName = expenseDet ? expenseDet.title : "General Expense";
+
+        const expenseCatName = expenseDet
+          ? expenseDet.title
+          : "General Expense";
 
         console.log(
           "Proceeding with expense payment. Actual payment amount in PHP:",
@@ -345,7 +360,10 @@ export default class PhilippinesPaymentService {
             newWalletBalance: newWalletBalance,
             pisoPayTransactionId: pisoPayTransactionId,
             description: i18n.__(
-              { phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL", locale: "en" },
+              {
+                phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL",
+                locale: "en",
+              },
               {
                 amount: actualPaymentAmountToSelectedCurrency,
                 currency: walletCurrency,
@@ -355,7 +373,10 @@ export default class PhilippinesPaymentService {
               }
             ),
             description_he: i18n.__(
-              { phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL", locale: "he" },
+              {
+                phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL",
+                locale: "he",
+              },
               {
                 amount: actualPaymentAmountToSelectedCurrency,
                 currency: walletCurrency,
@@ -393,8 +414,8 @@ export default class PhilippinesPaymentService {
         Sentry.captureException(e);
       }
       PisopyPaymentErrorLogs.create({
-          userId: userId,
-          errorMessage: e.message,
+        userId: userId,
+        errorMessage: e.message,
       });
       return callback(e, null);
     }
@@ -424,66 +445,137 @@ export default class PhilippinesPaymentService {
       return callback(error, null);
     }
   }
+  static async getExpensesTransactions({ payload, userId, i18n }, callback) {
+    try {
+      console.log(
+        "Fetching expenses transactions with payload:",
+        payload,
+        "for user ID:",
+        userId
+      );
+      const page = parseInt(payload?.page) || 1;
+      const limit = parseInt(payload?.limit) || 10;
+      const offset = (page - 1) * limit;
+      const categoryId = payload?.categoryId || null;
+      const month = payload?.month || null;
+      const year = payload?.year || null;
+
+      const whereClause = {
+        userId: userId,
+      };
+      if (categoryId) {
+        whereClause.expenseCatId = categoryId;
+      }
+      if (month) {
+        whereClause.created_month = month;
+      }
+      if (year) {
+        whereClause.created_year = year;
+      }
+
+      const response = await PisoPayTransactionInfos.findAndCountAll({
+        order: [["createdAt", "DESC"]],
+        offset: offset,
+        limit: limit,
+        where: whereClause,
+        include: [
+          {
+            model: ExpensesCategories,
+            as: "expenseCategory",
+            attributes: { exclude: ["createdAt", "updatedAt"] },
+          },
+        ],
+      });
+      return callback(null, { data: response });
+    } catch (e) {
+      if (process.env.SENTRY_ENABLED === "true") {
+        Sentry.captureException(e);
+      }
+      console.log("Error in getExpensesTransactions:", e.message);
+      callback(new Error("FAILED_TO_FETCH_EXPENSES_TRANSACTIONS"), null);
+    }
+  }
   //get expenses report
   static async getExpensesReport({ payload, userId, i18n }, callback) {
-      try{
-        console.log("Generating expenses report with payload:", payload, "for user ID:", userId);
-        const month = payload?.month;
-        const year = payload?.year;
+    try {
+      console.log(
+        "Generating expenses report with payload:",
+        payload,
+        "for user ID:",
+        userId
+      );
+      const month = payload?.month;
+      const year = payload?.year;
 
-        const whereClause = {
-          userId: userId,
-          transaction_status: "Success",
-        };
-        // Add month/year filters only if provided
-        if (month) {
-          whereClause.created_month = month;
-        }
-        if (year) {
-          whereClause.created_year = year;
-        }
-
-        const results = await PisoPayTransactionInfos.findAll({
-          attributes: [
-            "expenseCatId",
-            [fn("SUM", col("amount")), "totalAmount"]
-          ],
-          where: whereClause,
-          group: [
-            "expenseCatId",
-          ],
-          raw: false
-        });
-        // const results = resultsRaw ? resultsRaw.map(r => r.get({ plain: true })) : [];
-        //get expenses categories
-        const getExpenseCategories = await ExpensesCategories.findAll({
-          attributes: { exclude: ["createdAt", "updatedAt"] }
-        });
-        let totalExpenseAmt = 0; // total expense amount
-        let reportArray = []; //report array to hold final report
-        if(results.length > 0){
-          const totalamt = results.reduce((sum, record) => {
-            return sum + parseFloat(record.getDataValue('totalAmount') || 0);
-          }, 0);
-          totalExpenseAmt = parseFloat(totalamt.toFixed(2));
-        }
-
-        for(const cat of getExpenseCategories){
-          const found = results.find(r => parseInt(r.getDataValue('expenseCatId')) === parseInt(cat.id));
-          reportArray.push({
-            catDetails: cat,
-            totalAmount: found ? parseFloat(found.getDataValue('totalAmount') || 0) : 0,
-            percentage: totalExpenseAmt > 0 ? parseFloat(((found ? parseFloat(found.getDataValue('totalAmount') || 0) : 0) / totalExpenseAmt * 100).toFixed(2)) : 0
-          });
-        }
-        // console.log("Expenses report results:", results);
-        return callback(null, { data: {currency: paymentCurrencies['PHP'],  totalExpenseAmt, reportArray} });
-      }catch(e){
-        if (process.env.SENTRY_ENABLED === "true") {
-          Sentry.captureException(e);
-        }
-        console.log("Error in getExpensesReport:", e.message);
-        callback(new Error("FAILED_TO_FETCH_EXPENSES_REPORT"), null);
+      const whereClause = {
+        userId: userId,
+        transaction_status: "Success",
+      };
+      // Add month/year filters only if provided
+      if (month) {
+        whereClause.created_month = month;
       }
+      if (year) {
+        whereClause.created_year = year;
+      }
+
+      const results = await PisoPayTransactionInfos.findAll({
+        attributes: ["expenseCatId", [fn("SUM", col("amount")), "totalAmount"]],
+        where: whereClause,
+        group: ["expenseCatId"],
+        raw: false,
+      });
+      // const results = resultsRaw ? resultsRaw.map(r => r.get({ plain: true })) : [];
+      //get expenses categories
+      const getExpenseCategories = await ExpensesCategories.findAll({
+        attributes: { exclude: ["createdAt", "updatedAt"] },
+      });
+      let totalExpenseAmt = 0; // total expense amount
+      let reportArray = []; //report array to hold final report
+      if (results.length > 0) {
+        const totalamt = results.reduce((sum, record) => {
+          return sum + parseFloat(record.getDataValue("totalAmount") || 0);
+        }, 0);
+        totalExpenseAmt = parseFloat(totalamt.toFixed(2));
+      }
+
+      for (const cat of getExpenseCategories) {
+        const found = results.find(
+          (r) => parseInt(r.getDataValue("expenseCatId")) === parseInt(cat.id)
+        );
+        reportArray.push({
+          catDetails: cat,
+          totalAmount: found
+            ? parseFloat(found.getDataValue("totalAmount") || 0)
+            : 0,
+          percentage:
+            totalExpenseAmt > 0
+              ? parseFloat(
+                  (
+                    ((found
+                      ? parseFloat(found.getDataValue("totalAmount") || 0)
+                      : 0) /
+                      totalExpenseAmt) *
+                    100
+                  ).toFixed(2)
+                )
+              : 0,
+        });
+      }
+      // console.log("Expenses report results:", results);
+      return callback(null, {
+        data: {
+          currency: paymentCurrencies["PHP"],
+          totalExpenseAmt,
+          reportArray,
+        },
+      });
+    } catch (e) {
+      if (process.env.SENTRY_ENABLED === "true") {
+        Sentry.captureException(e);
+      }
+      console.log("Error in getExpensesReport:", e.message);
+      callback(new Error("FAILED_TO_FETCH_EXPENSES_REPORT"), null);
+    }
   }
 }

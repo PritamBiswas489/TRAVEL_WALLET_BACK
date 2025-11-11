@@ -377,6 +377,56 @@ export default class VietnamPaymentService {
       return callback(error, null);
     }
   }
+    static async getExpensesTransactions({ payload, userId, i18n }, callback) {
+      try {
+        console.log(
+          "Fetching expenses transactions with payload:",
+          payload,
+          "for user ID:",
+          userId
+        );
+        const page = parseInt(payload?.page) || 1;
+        const limit = parseInt(payload?.limit) || 10;
+        const offset = (page - 1) * limit;
+        const categoryId = payload?.categoryId || null;
+        const month = payload?.month || null;
+        const year = payload?.year || null;
+  
+        const whereClause = {
+          userId: userId,
+        };
+        if (categoryId) {
+          whereClause.expenseCatId = categoryId;
+        }
+        if (month) {
+          whereClause.created_month = month;
+        }
+        if (year) {
+          whereClause.created_year = year;
+        }
+  
+        const response = await NinePayTransactionInfos.findAndCountAll({
+          order: [["createdAt", "DESC"]],
+          offset: offset,
+          limit: limit,
+          where: whereClause,
+          include: [
+            {
+              model: ExpensesCategories,
+              as: "expenseCategory",
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            },
+          ],
+        });
+        return callback(null, { data: response });
+      } catch (e) {
+        if (process.env.SENTRY_ENABLED === "true") {
+          Sentry.captureException(e);
+        }
+        console.log("Error in getExpensesTransactions:", e.message);
+        callback(new Error("FAILED_TO_FETCH_EXPENSES_TRANSACTIONS"), null);
+      }
+    }
   //get expenses report
   static async getExpensesReport({ payload, userId, i18n }, callback) {
     try {

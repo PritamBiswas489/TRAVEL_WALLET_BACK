@@ -287,6 +287,68 @@ router.post('/expense-transaction-details', async (req, res, next) => {
 });
 
 
+/**
+ * @swagger
+ *  /api/auth/ninePay/expenses-transactions:
+ *   post:
+ *     summary: Get expenses transactions for a specific month, year and category
+ *     tags:
+ *       - Vietnam Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               month:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Month for the transactions (1-12), null for all months
+ *               year:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Year for the transactions, null for all years
+ *               categoryId:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Category ID for filtering transactions, null for all categories
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 description: Page number for pagination
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 description: Number of transactions per page
+ *             required: []
+ *     responses:
+ *       200:
+ *         description: Expenses transactions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/expenses-transactions', async (req, res, next) => {
+    const response = await VietnamPaymentController.getExpensesTransactions({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
 
 
 /**
