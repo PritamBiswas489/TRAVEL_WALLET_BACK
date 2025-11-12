@@ -462,6 +462,7 @@ export default class PhilippinesPaymentService {
 
       const whereClause = {
         userId: userId,
+        transaction_status: "Success",
       };
       if (categoryId) {
         whereClause.expenseCatId = categoryId;

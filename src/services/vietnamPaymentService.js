@@ -394,6 +394,7 @@ export default class VietnamPaymentService {
   
         const whereClause = {
           userId: userId,
+          status: "SUCCESS",
         };
         if (categoryId) {
           whereClause.expenseCatId = categoryId;

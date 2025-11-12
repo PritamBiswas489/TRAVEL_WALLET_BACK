@@ -302,6 +302,7 @@ export default class CambodiaPaymentService {
   
         const whereClause = {
           userId: userId,
+          transaction_status: "SUCCEEDED",
         };
         if (categoryId) {
           whereClause.expenseCatId = categoryId;
