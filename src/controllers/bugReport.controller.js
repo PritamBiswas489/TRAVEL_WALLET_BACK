@@ -71,10 +71,12 @@ export default class BugReportController {
   static async submitBugReport(request) {
     const {
       payload,
-      headers: { i18n },
+      headers: { i18n, deviceName },
       user,
     } = request;
     try {
+      console.log("deviceName -", deviceName);
+      payload.deviceInformation = deviceName || "Unknown Device";
       const result = await BugReportService.submitBugReport(user.id, payload);
       if (result.ERROR) {
         return {
@@ -102,10 +104,11 @@ export default class BugReportController {
   static async getMyBugReports(request) {
     const {
       payload,
-      headers: { i18n },
+      headers: { i18n , deviceName},
       user,
     } = request;
     const userId = user ? user.id : null;
+   
     try {
       const result = await BugReportService.getMyBugReports(userId, payload);
       if (result.ERROR) {
