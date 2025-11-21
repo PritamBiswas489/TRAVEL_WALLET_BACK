@@ -80,10 +80,16 @@ export default class PisoPayApiService {
           const responseData = response.data;
           console.log("PisoPay transaction validation response:", responseData);
           if(responseData?.status === 200){
+            let amount  = null;
+            if(responseData?.data?.amount){
+              amount = responseData?.data?.amount;
+            }else if(dt?.amount){
+              amount = responseData?.data?.amount ;
+            }
             return callback(null, {
               data: {
                 qrCodeType,
-                amount: qrCodeType === "P2M" ?  (responseData?.data?.amount) : (dt?.amount ? responseData?.data?.amount : null),
+                amount: amount,
                 merchantName: responseData?.data?.merchant_name, 
                 merchantCity: responseData?.data?.merchant_city,
               },
