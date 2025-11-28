@@ -109,4 +109,47 @@ router.get("/get-user-kyc-data", async (req, res, next) => {
   const response = await KycController.getUserKycData({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
+
+
+// /**
+//  * @swagger
+//  * /api/auth/kyc/get-document-images-by-inspection-id:
+//  *   get:
+//  *     summary: Get document images by inspection ID
+//  *     description: Retrieves document images for a specific inspection ID.
+//  *     tags:
+//  *       - Auth-KYC
+//  *     security:
+//  *      - bearerAuth: []
+//  *      - refreshToken: []
+//  *     parameters:
+//  *       - in: query
+//  *         name: inspectionId
+//  *         required: true
+//  *         schema:
+//  *           type: string
+//  *         description: The inspection ID to retrieve document images for
+//  *     responses:
+//  *       200:
+//  *         description: Document images retrieved successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 images:
+//  *                   type: array
+//  *                   items:
+//  *                     type: object
+//  *       400:
+//  *         description: Bad request
+//  *       401:
+//  *         description: Unauthorized
+//  *       500:
+//  *         description: Internal server error
+//  */
+// router.get("/get-document-images-by-inspection-id", async (req, res, next) => {
+//   const response = await KycController.getDocumentImagesByInspectionId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+//   res.return(response);
+// });
 export default router;

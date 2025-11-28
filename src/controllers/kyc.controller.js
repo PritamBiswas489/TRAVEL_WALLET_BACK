@@ -173,4 +173,33 @@ export default class KycController {
       };
     }
   }
+
+  static async getDocumentImagesByInspectionId(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const inspectionId = payload?.inspectionId;
+    return new Promise((resolve) => {
+      KycService.getDocumentImagesByInspectionId(inspectionId, (err, images) => {
+        if (err) {
+          return resolve({
+            status: 400,
+            data: null,
+            error: {
+              message: i18n.__(err.message),
+              reason: i18n.__("DOCUMENT_IMAGES_RETRIEVAL_ERROR"),
+            },
+          });
+        }
+        return resolve({
+          status: 200,
+          data: images,
+          message: i18n.__("DOCUMENT_IMAGES_RETRIEVAL_SUCCESS"),
+          error: {},
+        });
+      });
+    });
+  }
 }

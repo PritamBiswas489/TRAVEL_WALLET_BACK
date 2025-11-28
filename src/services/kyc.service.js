@@ -6,7 +6,7 @@ import crypto from "crypto";
 import UserService from "./user.service.js";
 import { v4 as uuidv4 } from "uuid";
 
-const { Op, User, KycStatusWebhook } = db;
+const { Op, User, KycStatusWebhook, kycVerifiedDocuments } = db;
 
 export default class KycService {
   static async createApplicant(args, callback) {
@@ -27,7 +27,6 @@ export default class KycService {
 
       if (!user) return callback(new Error("USER_NOT_FOUND"));
 
-
       let firstName = "user " + user?.id;
       let lastName = user?.phoneNumber || "";
 
@@ -36,8 +35,6 @@ export default class KycService {
         if (nameParts[0]) firstName = nameParts[0];
         if (nameParts[1]) lastName = nameParts[1];
       }
-
-      
 
       const existingKycData = await UserService.getUserKycData(args.userId);
       if (
@@ -49,7 +46,7 @@ export default class KycService {
       }
       // If KYC data exists, delete it before creating a new applicant
       if (existingKycData) {
-          await UserService.deleteUserKycData(args.userId);
+        await UserService.deleteUserKycData(args.userId);
       }
 
       const newSiteApplicantId = uuidv4();
@@ -159,7 +156,7 @@ export default class KycService {
       };
       const response = await axios.post(FULL_URL, bodyJson, { headers });
       if (response.data?.token) {
-           return callback(null, response.data.token);
+        return callback(null, response.data.token);
       } else {
         return callback(new Error("FAILED_TO_GET_ACCESS_TOKEN"));
       }
@@ -314,6 +311,10 @@ export default class KycService {
           if (!updateKycData) {
             throw new Error("Failed to update KYC data status");
           }
+
+          if(currentStatus === "Approved"){
+            this.kycSaveUserDocuments(webhookData?.applicantId, webhookData?.inspectionId);
+          }
         }
 
         if (createWebResponse) {
@@ -354,6 +355,153 @@ export default class KycService {
       console.error("Error deleting webhook status:", error);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       throw error;
+    }
+  }
+  static async kycSaveUserDocuments(applicantId, inspectionId) {
+    try {
+      const userId = 1;
+      const APP_TOKEN = process.env.SUMSUB_API_KEY;
+      const SECRET_KEY = process.env.SUMSUB_API_SECRET;
+      const API_URL = process.env.SUMSUB_API_URL;
+      const URL_PATH = `/resources/applicants/${applicantId}/metadata/resources`;
+      const ts = Math.floor(Date.now() / 1000);
+      const stringToSign = `${ts}GET${URL_PATH}`;
+      const signature = crypto
+        .createHmac("sha256", SECRET_KEY)
+        .update(stringToSign)
+        .digest("hex");
+
+      const headers = {
+        "Content-Type": "application/json",
+        "X-App-Token": APP_TOKEN,
+        "X-App-Access-Sig": signature,
+        "X-App-Access-Ts": ts,
+      };
+
+      const response = await axios({
+        method: "GET",
+        url: `${API_URL}${URL_PATH}`,
+        headers: headers,
+      });
+      const checkExistingDocs = await kycVerifiedDocuments.findOne({
+        where: { userId, applicantId, inspectionId },
+      });
+      if (checkExistingDocs) {
+        checkExistingDocs.documentData = response.data;
+        await checkExistingDocs.save();
+        console.log("KYC user documents updated successfully.");
+        return;
+      } else {
+        await kycVerifiedDocuments.create({
+          userId,
+          applicantId,
+          inspectionId,
+          documentData: response.data,
+        });
+        console.log("KYC user documents saved successfully.");
+        await this.kycSaveUserDocumentFiles(userId, applicantId, inspectionId);
+        return;
+      }
+    } catch (error) {
+      console.error("Error saving KYC user documents:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+    }
+  }
+  static async kycSaveUserDocumentFiles(userId, applicantId, inspectionId) {
+   
+    try {
+       const checkExistingDocs = await kycVerifiedDocuments.findOne({
+        where: { userId, applicantId, inspectionId },
+      });
+      if(!checkExistingDocs){
+        throw new Error("KYC_DOCUMENT_DATA_NOT_FOUND");
+      }
+      const documentData = checkExistingDocs.documentData;
+      const documentDataItems = documentData?.items;
+      const imgDtaArray = [];
+      for (const item of documentDataItems) {
+        const imageId = item?.id;
+        const imagetype = item?.idDocDef?.idDocType || "unknown";
+        const imageSide = item?.idDocDef?.idDocSubType || "unknown";
+        imgDtaArray.push({ imageId, imagetype, imageSide });
+      }
+      const APP_TOKEN = process.env.SUMSUB_API_KEY;
+      const SECRET_KEY = process.env.SUMSUB_API_SECRET;
+      const API_URL = process.env.SUMSUB_API_URL;
+     
+      //saving images one by one
+      const saveFileData = []; 
+      for (const imgData of imgDtaArray) {
+        const { imageId, imagetype, imageSide } = imgData;
+        const URL_PATH = `/resources/inspections/${inspectionId}/resources/${imageId}`;
+        const ts = Math.floor(Date.now() / 1000);
+        const stringToSign = `${ts}GET${URL_PATH}`;
+
+        const signature = crypto
+          .createHmac("sha256", SECRET_KEY)
+          .update(stringToSign)
+          .digest("hex");
+
+        const headers = {
+          "X-App-Token": APP_TOKEN,
+          "X-App-Access-Sig": signature,
+          "X-App-Access-Ts": ts,
+        };
+
+        const response = await axios({
+          method: "GET",
+          url: `${API_URL}${URL_PATH}`,
+          headers: headers,
+          responseType: "arraybuffer",
+        });
+
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const uploadDir = path.join(process.cwd(), "uploads", "kyc", userId.toString());
+
+        await fs.mkdir(uploadDir, { recursive: true });
+
+        const getExtensionFromMimeType = (mimeType) => {
+          const mimeToExt = {
+            "image/jpeg": "jpg",
+            "image/jpg": "jpg",
+            "image/png": "png",
+            "image/gif": "gif",
+            "image/bmp": "bmp",
+            "image/webp": "webp",
+            "image/tiff": "tiff",
+            "application/pdf": "pdf",
+          };
+          return mimeToExt[mimeType] || "bin";
+        };
+
+        const contentType = response.headers["content-type"];
+        const extension = getExtensionFromMimeType(contentType);
+        const fileName = `${imageId}.${extension}`;
+        const outputPath = path.join(uploadDir, fileName);
+
+        await fs.writeFile(outputPath, Buffer.from(response.data));
+        console.log(`✓ Image saved successfully: ${outputPath}`);
+        
+        if(imagetype === 'SELFIE'){
+            saveFileData.push({
+                selfiePath: outputPath,
+                documentType: "SELFIE",
+            });
+        }else{
+            saveFileData.push({
+                documentPath: outputPath,
+                documentType: imageSide,
+            });
+        }
+      }
+      checkExistingDocs.documentFiles = saveFileData;
+      await checkExistingDocs.save();
+      console.log("KYC user document files saved successfully.");
+      return;
+    } catch (error) {
+      console.error("Error saving KYC user document files:", error);
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
     }
   }
 }
