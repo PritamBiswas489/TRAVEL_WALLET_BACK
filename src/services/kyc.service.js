@@ -6,7 +6,7 @@ import crypto from "crypto";
 import UserService from "./user.service.js";
 import { v4 as uuidv4 } from "uuid";
 
-const { Op, User, KycStatusWebhook, kycVerifiedDocuments } = db;
+const { Op, User, KycStatusWebhook, kycVerifiedDocuments, UserKyc } = db;
 
 export default class KycService {
   static async createApplicant(args, callback) {
@@ -313,7 +313,11 @@ export default class KycService {
           }
 
           if(currentStatus === "Approved"){
-            this.kycSaveUserDocuments(webhookData?.applicantId, webhookData?.inspectionId);
+            this.kycSaveUserDocuments({
+              uuid: webhookData?.externalUserId, 
+              applicantId: webhookData?.applicantId, 
+              inspectionId: webhookData?.inspectionId
+            });
           }
         }
 
@@ -357,9 +361,18 @@ export default class KycService {
       throw error;
     }
   }
-  static async kycSaveUserDocuments(applicantId, inspectionId) {
+  static async kycSaveUserDocuments({uuid, applicantId, inspectionId}) {
     try {
-      const userId = 1;
+      let userId = null;
+      const userKycData = await UserKyc.findOne({
+        where: { applicantId , uuid},
+      });
+      if(userKycData){
+        userId = userKycData.userId;
+      }
+      if (!userId) {
+        throw new Error("USER_ID_NOT_FOUND_FOR_APPLICANT");
+      }
       const APP_TOKEN = process.env.SUMSUB_API_KEY;
       const SECRET_KEY = process.env.SUMSUB_API_SECRET;
       const API_URL = process.env.SUMSUB_API_URL;

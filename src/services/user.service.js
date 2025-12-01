@@ -60,6 +60,7 @@ export default class UserService {
       throw error;
     }
   }
+   
   static async updateKycStatus({ applicantid, status }) {
     try {
       const updatedKyc = await UserKyc.update(
