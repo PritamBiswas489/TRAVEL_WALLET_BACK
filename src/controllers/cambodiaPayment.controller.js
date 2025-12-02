@@ -369,4 +369,104 @@ export default class CambodiaPaymentController {
         );
       });
     }
+
+    static async createUser(request) {
+      const {
+        headers: { i18n },
+        user,
+        payload,
+      } = request;
+      const userId = user?.id || 1;
+      return new Promise((resolve) => {
+        CambodiaPaymentService.createUser(
+          { payload, userId, i18n },
+          (err, response) => {
+            if (err) {
+              return resolve({
+                status: 400,
+                data: null,
+                error: {
+                  message: i18n.__(err.message || "CREATE_USER_FAILED"),
+                  reason: err.message,
+                },
+              });
+            }
+            return resolve({
+              status: 200,
+              data: response.data,
+              message: i18n.__("CREATE_USER_SUCCESSFUL"),
+              error: null,
+            });
+          }
+        );
+      });
+    }
+
+    static async updateKyc(request) {
+      const {
+        headers: { i18n },
+        user,
+        payload,
+      } = request;
+
+      const userId = user?.id || 1;
+
+      return new Promise((resolve) => {
+        CambodiaPaymentService.updateKyc(
+          { payload, userId, i18n },
+          (err, response) => {
+            if (err) {
+              return resolve({
+                status: 400,
+                data: null,
+                error: {
+                  message: i18n.__(err.message || "UPDATE_KYC_FAILED"),
+                  reason: err.message,
+                },
+              });
+            }
+            return resolve({
+              status: 200,
+              data: response.data,
+              message: i18n.__("UPDATE_KYC_SUCCESSFUL"),
+              error: null,
+            });
+          }
+        );
+      });
+
+    }
+    static async checkKycStatus(request) {
+      const {
+        headers: { i18n },
+        user,
+        payload,
+      } = request;
+
+      const userId = user?.id || 1;
+
+      return new Promise((resolve) => {
+        CambodiaPaymentService.checkKycStatus(
+          { payload, userId, i18n },
+          (err, response) => {
+            if (err) {
+              return resolve({
+                status: 400,
+                data: null,
+                error: {
+                  message: i18n.__(err.message || "CHECK_KYC_STATUS_FAILED"),
+                  reason: err.message,
+                },
+              });
+            }
+            return resolve({
+              status: 200,
+              data: response.data,
+              message: i18n.__("CHECK_KYC_STATUS_SUCCESSFUL"),
+              error: null,
+            });
+          }
+        );
+      });
+    }
 }

@@ -13,6 +13,8 @@ const {
   UserWallet,
   WalletTransaction,
   kessPayTransactionInfos,
+  KesspayKyc,
+  kycVerifiedDocuments,
   Op,
   fn,
   col,
@@ -36,6 +38,20 @@ export default class CambodiaPaymentService {
        const expenseDet = await ExpensesCategories.findOne({
          where: { id: expenseCatId },
        });
+       const getKyc = await KesspayKyc.findOne({
+         where: { userId: userId },
+       });
+       if(!getKyc){
+          await tran.rollback();
+          return callback(new Error("KESSPAY_KYC_NOT_FOUND"), null);
+       }
+       if(!getKyc?.kycStatus || getKyc.kycStatus !== 'validated'){
+          await tran.rollback();
+          return callback(new Error("KESSPAY_KYC_NOT_VALIDATED"), null);
+       }
+       const kessPayUserId = getKyc?.kessPayUserId;
+
+
 
        if (!expenseDet) {
          await tran.rollback();
@@ -167,6 +183,7 @@ export default class CambodiaPaymentService {
               out_trade_no,
               currency: transactionCurrency,
               amount: amount,
+              sender_id: kessPayUserId,
             },
             i18n,
           },
@@ -425,4 +442,138 @@ export default class CambodiaPaymentService {
       callback(new Error("FAILED_TO_FETCH_EXPENSES_REPORT"), null);
     }
   }
+
+
+  static async createUser({ payload, userId, i18n }, callback) {
+    try {
+       console.log("Creating KessPay user with payload:", userId);
+       const getUserDetails = await UserService.getUserById(userId);
+       if(!getUserDetails){
+        return callback(new Error("USER_NOT_FOUND"), null);
+       }
+       const firstName = getUserDetails?.name.trim().split(" ")?.[0] || '';
+       const lastName = getUserDetails?.name.trim().split(" ")?.[1] || '' ;
+       const email = getUserDetails?.email || '';
+       const phoneNumber = getUserDetails?.phoneNumber || '';
+       if(!firstName || !lastName){
+        return callback(new Error("USER_NAME_INSUFFICIENT"), null);
+       }
+       if(!email){
+        return callback(new Error("USER_EMAIL_NOT_FOUND"), null);
+       }
+       if(!phoneNumber){
+        return callback(new Error("USER_PHONE_NOT_FOUND"), null);
+       }
+      const phoneWithoutCountryCode = '0'+phoneNumber.replace(/^\+\d{1,2}/, '').trim();
+
+      if(phoneWithoutCountryCode.length >12){
+        return callback(new Error("USER_PHONE_INVALID"), null);
+      }
+  
+      console.log("KessPay createUser details:", {firstName, lastName, email, phoneWithoutCountryCode});
+
+  
+      const getAccessToken = await KessPayApiService.accessToken();
+
+      if (!getAccessToken?.access_token) {
+          await tran.rollback();
+          return callback(new Error("TOKEN_RETRIEVAL_FAILED"), null);
+      }
+      const createUserResponse = await new Promise((resolve, reject) =>
+        KessPayApiService.createUser(
+          {
+            token: getAccessToken?.access_token,
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              email: email,
+              phone_number: phoneWithoutCountryCode,
+            },
+            i18n,
+          },
+          (err, res) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(res);
+          }
+        )
+      );
+      
+      if(!createUserResponse?.data?.user_id){
+          return callback(new Error('CREATE_USER_FAILED'), null);
+      }
+      const kesspayKycRecord = await KesspayKyc.create({
+        userId: userId,
+        kessPayUserId: createUserResponse?.data?.user_id,
+        userInfo: createUserResponse.data || null,
+      });
+      return callback(null, { data: { apiResponse: createUserResponse, dbRecord: kesspayKycRecord } });
+      }catch(err){
+       console.log("Error in createUser:",  err);
+       return callback(new Error('CREATE_USER_FAILED'), null);
+      }
+
+  }
+  static async updateKyc({ payload, userId, i18n }, callback) {
+    console.log("Updating KYC with payload:", payload, "for user ID:", userId);
+    try {
+      console.log("Updating KYC with payload:", payload, "for user ID:", userId);
+      const kesspayKycRecord = await KesspayKyc.findOne({
+        where: { userId: userId },
+      });
+      const kessPayDocument = await kycVerifiedDocuments.findOne({
+        where: { userId: userId },
+      });
+      if(!kesspayKycRecord?.kessPayUserId){
+        return callback(new Error("KESSPAY_USER_NOT_FOUND"), null);
+      }
+      const documentFiles = kessPayDocument?.documentFiles || {};
+      if(Object.keys(documentFiles).length === 0){
+        return callback(new Error("KYC_DOCUMENTS_NOT_FOUND"), null);
+      }
+      console.log("KYC document files to be sent:", JSON.stringify(documentFiles));
+      console.log("KessPay User ID:", kesspayKycRecord?.kessPayUserId);
+
+      const getAccessToken = await KessPayApiService.accessToken();
+
+      if (!getAccessToken?.access_token) {
+          return callback(new Error("TOKEN_RETRIEVAL_FAILED"), null);
+      }
+      const kycUpdateResponse = await new Promise((resolve, reject) =>
+        KessPayApiService.updateKyc(
+          {
+            token: getAccessToken?.access_token,
+            data: {
+              user_id: kesspayKycRecord?.kessPayUserId,
+              document_files: documentFiles,
+            },
+            i18n,
+          },
+          (err, res) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(res);
+          }
+        )
+      );
+      if(kycUpdateResponse?.success !== true){
+          return callback(new Error('KYC_UPDATE_FAILED'), null);
+      }
+      kesspayKycRecord.kycStatus = kycUpdateResponse?.data?.status;
+      kesspayKycRecord.kycResponseData = kycUpdateResponse?.data || null;
+      await kesspayKycRecord.save();
+      return callback(null, { data: {kesspayKycRecord, kycUpdateResponse} });
+
+    } catch (err) {
+      // console.error("Error in updateKyc:", err);
+      return callback(new Error("KYC_UPDATE_FAILED"), null);
+    }
+  }
+  static async checkKycStatus({ userId, i18n }, callback) {
+    console.log("Checking KYC status for user ID:", userId);
+
+  }
+  
 }

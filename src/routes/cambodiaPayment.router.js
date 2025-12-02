@@ -483,6 +483,97 @@ router.post('/transaction-mark-as-favorite', async (req, res, next) => {
 
 
 
+/**
+ * @swagger
+ *  /api/auth/kesspay/create-user:
+ *   post:
+ *     summary: Create a new user
+ *     tags:
+ *       - Cambodia Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/create-user', async (req, res, next) => {
+    const response = await CambodiaPaymentController.createUser({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params,...req.query } });
+    res.return(response);
+});
+
+
+/**
+ * @swagger
+ *  /api/auth/kesspay/kyc-update:
+ *   post:
+ *     summary: Update KYC information
+ *     tags:
+ *       - Cambodia Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: KYC updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/kyc-update', async (req, res, next) => {
+    const response = await CambodiaPaymentController.updateKyc({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+/**
+ * @swagger
+ *  /api/auth/kesspay/check-kyc-status:
+ *   post:
+ *     summary: Check KYC status
+ *     tags:
+ *       - Cambodia Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: KYC status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/check-kyc-status', async (req, res, next) => {
+    const response = await CambodiaPaymentController.checkKycStatus({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
 
 
 
