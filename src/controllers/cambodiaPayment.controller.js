@@ -82,7 +82,6 @@ export default class CambodiaPaymentController {
       };
     }
 
-
     const qrCode = decryptRequest?.qrcode || null;
     const responseToken = await KessPayApiService.accessToken();
     if (!responseToken?.access_token) {
@@ -147,7 +146,7 @@ export default class CambodiaPaymentController {
       decryptRequest.longitude = longitude;
     }
     return new Promise((resolve) => {
-       CambodiaPaymentService.buyExpense(
+      CambodiaPaymentService.buyExpense(
         { payload: decryptRequest, userId, i18n },
         (err, response) => {
           if (err) {
@@ -264,42 +263,42 @@ export default class CambodiaPaymentController {
       );
     });
   }
-   static async getExpensesTransactions(request) {
-        const {
-          headers: { i18n },
-          user,
-          payload,
-        } = request;
-    
-        const userId = user?.id || 1;
-    
-        return new Promise((resolve) => {
-           CambodiaPaymentService.getExpensesTransactions(
-            { payload, userId, i18n },
-            (err, response) => {
-              if (err) {
-                return resolve({
-                  status: 400,
-                  data: null,
-                  error: {
-                    message: i18n.__(
-                      err.message || "GET_EXPENSES_TRANSACTIONS_FAILED"
-                    ),
-                    reason: err.message,
-                  },
-                });
-              }
-    
-              return resolve({
-                status: 200,
-                data: response.data,
-                message: i18n.__("GET_EXPENSES_TRANSACTIONS_SUCCESSFUL"),
-                error: null,
-              });
-            }
-          );
-        });
-      }
+  static async getExpensesTransactions(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      CambodiaPaymentService.getExpensesTransactions(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "GET_EXPENSES_TRANSACTIONS_FAILED"
+                ),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSES_TRANSACTIONS_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
   //get expense report for user
   static async getExpensesReport(request) {
     const {
@@ -334,139 +333,171 @@ export default class CambodiaPaymentController {
       );
     });
   }
-    static async markTransactionAsFavorite(request) {
-      const {
-        headers: { i18n },
-        user,
-        payload,
-      } = request;
-  
-      const userId = user?.id || 1;
+  static async markTransactionAsFavorite(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
 
-      payload.country = "KH";
-      return new Promise((resolve) => {
-        FavouriteQrCodeService.addFavouriteQrCode(
-          { userId, payload, i18n },
-          (err, response) => {
-            if (err) {
-              return resolve({
-                status: 400,
-                data: null,
-                error: {
-                  message: i18n.__(err.message || "MARK_TRANSACTION_AS_FAVORITE_FAILED"),
-                  reason: err.message,
-                },
-              });
-            }
-  
+    const userId = user?.id || 1;
+
+    payload.country = "KH";
+    return new Promise((resolve) => {
+      FavouriteQrCodeService.addFavouriteQrCode(
+        { userId, payload, i18n },
+        (err, response) => {
+          if (err) {
             return resolve({
-              status: 200,
-              data: response.data,
-              message: i18n.__("MARK_TRANSACTION_AS_FAVORITE_SUCCESSFUL"),
-              error: null,
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "MARK_TRANSACTION_AS_FAVORITE_FAILED"
+                ),
+                reason: err.message,
+              },
             });
           }
-        );
-      });
-    }
 
-    static async createUser(request) {
-      const {
-        headers: { i18n },
-        user,
-        payload,
-      } = request;
-      const userId = user?.id || 1;
-      return new Promise((resolve) => {
-        CambodiaPaymentService.createUser(
-          { payload, userId, i18n },
-          (err, response) => {
-            if (err) {
-              return resolve({
-                status: 400,
-                data: null,
-                error: {
-                  message: i18n.__(err.message || "CREATE_USER_FAILED"),
-                  reason: err.message,
-                },
-              });
-            }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("MARK_TRANSACTION_AS_FAVORITE_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+
+  static async createUser(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      CambodiaPaymentService.createUser(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
             return resolve({
-              status: 200,
-              data: response.data,
-              message: i18n.__("CREATE_USER_SUCCESSFUL"),
-              error: null,
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "CREATE_USER_FAILED"),
+                reason: err.message,
+              },
             });
           }
-        );
-      });
-    }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("CREATE_USER_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
 
-    static async updateKyc(request) {
-      const {
-        headers: { i18n },
-        user,
-        payload,
-      } = request;
+  static async updateKyc(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
 
-      const userId = user?.id || 1;
+    const userId = user?.id || 1;
 
-      return new Promise((resolve) => {
-        CambodiaPaymentService.updateKyc(
-          { payload, userId, i18n },
-          (err, response) => {
-            if (err) {
-              return resolve({
-                status: 400,
-                data: null,
-                error: {
-                  message: i18n.__(err.message || "UPDATE_KYC_FAILED"),
-                  reason: err.message,
-                },
-              });
-            }
+    return new Promise((resolve) => {
+      CambodiaPaymentService.updateKyc(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
             return resolve({
-              status: 200,
-              data: response.data,
-              message: i18n.__("UPDATE_KYC_SUCCESSFUL"),
-              error: null,
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "UPDATE_KYC_FAILED"),
+                reason: err.message,
+              },
             });
           }
-        );
-      });
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("UPDATE_KYC_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async checkKycStatus(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
 
-    }
-    static async checkKycStatus(request) {
-      const {
-        headers: { i18n },
-        user,
-        payload,
-      } = request;
+    const userId = user?.id || 1;
 
-      const userId = user?.id || 1;
-
-      return new Promise((resolve) => {
-        CambodiaPaymentService.checkKycStatus(
-          { payload, userId, i18n },
-          (err, response) => {
-            if (err) {
-              return resolve({
-                status: 400,
-                data: null,
-                error: {
-                  message: i18n.__(err.message || "CHECK_KYC_STATUS_FAILED"),
-                  reason: err.message,
-                },
-              });
-            }
+    return new Promise((resolve) => {
+      CambodiaPaymentService.checkKycStatus(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
             return resolve({
-              status: 200,
-              data: response.data,
-              message: i18n.__("CHECK_KYC_STATUS_SUCCESSFUL"),
-              error: null,
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "CHECK_KYC_STATUS_FAILED"),
+                reason: err.message,
+              },
             });
           }
-        );
-      });
-    }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("CHECK_KYC_STATUS_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async kycUserDetails(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      CambodiaPaymentService.kycUserDetails(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "GET_USER_DETAILS_FAILED"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_USER_DETAILS_SUCCESSFUL"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
 }

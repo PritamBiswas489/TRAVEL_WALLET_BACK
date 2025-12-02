@@ -193,4 +193,30 @@ export default class KessPayApiService {
       }
 
   }
+  static async getUserProfile({ token, user_id, i18n }, callback) {
+    console.log("KessPay getUserProfile user_id:", user_id);
+    try {
+      const params = {
+        service: "webpay.acquire.userprofile",
+        sign_type: "MD5",
+        seller_code: process.env.KESSPAY_SELLER_CODE,
+        user_id: user_id,
+      };
+      params["sign"] = this.makeSign(params, process.env.KESSPAY_API_SECRET_KEY);
+      console.log("KessPay getUserProfile params:", params);
+      const response = await axios.post(`${process.env.KESSPAY_API_URL}/api/mch/v2/gateway`, params, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log("KessPay getUserProfile response:", response.data);
+        return callback(null, {...response.data});
+    }catch (err) {
+      console.error("Error in getUserProfile:", err);
+      return callback(new Error("GET_USER_PROFILE_FAILED"), null);
+    }
+
+
+  }
 }

@@ -573,7 +573,68 @@ export default class CambodiaPaymentService {
   }
   static async checkKycStatus({ userId, i18n }, callback) {
     console.log("Checking KYC status for user ID:", userId);
+    try{
+      const kesspayKycRecord = await KesspayKyc.findOne({
+        where: { userId: userId },
+      });
+      if(!kesspayKycRecord){
+        return callback(new Error("KESSPAY_KYC_NOT_FOUND"), null);
+      }
+      if(kesspayKycRecord?.kycStatus === 'validated'){
+        return callback(null, { data: { kycStatus: 'validated' } });
+      }
 
+      const getAccessToken = await KessPayApiService.accessToken();
+
+      if (!getAccessToken?.access_token) {
+          return callback(new Error("TOKEN_RETRIEVAL_FAILED"), null);
+      }
+      const kycStatusResponse = await new Promise((resolve, reject) =>
+        KessPayApiService.getUserProfile(
+          {
+            token: getAccessToken?.access_token,
+            user_id: kesspayKycRecord?.kessPayUserId,
+            i18n,
+          },
+          (err, res) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(res);
+          }
+        )
+      );
+      if(kycStatusResponse?.success !== true){
+          return callback(new Error('KYC_STATUS_CHECK_FAILED'), null);
+      }
+      kesspayKycRecord.kycStatus = kycStatusResponse?.data?.kyc_status;
+      kesspayKycRecord.userInfo = kycStatusResponse?.data || null;
+      await kesspayKycRecord.save();
+      return callback(null, { data: { kycStatus: kesspayKycRecord.kycStatus } });
+
+    }catch(err){
+      console.error("Error in checkKycStatus:", err);
+      return callback(new Error("KYC_STATUS_CHECK_FAILED"), null);
+
+    }
+
+  }
+
+  static async kycUserDetails({ userId, i18n }, callback) {
+    console.log("Fetching KYC details for user ID:", userId);
+    try{
+      const kesspayKycRecord = await KesspayKyc.findOne({
+        where: { userId: userId },
+      });
+      if(!kesspayKycRecord){
+        return callback(new Error("KESSPAY_KYC_NOT_FOUND"), null);
+      }
+      return callback(null, { data: { kesspayKycRecord } });
+
+    } catch (err) {
+      console.error("Error in getKycDetails:", err);
+      return callback(new Error("KYC_DETAILS_FETCH_FAILED"), null);
+    }
   }
   
 }
