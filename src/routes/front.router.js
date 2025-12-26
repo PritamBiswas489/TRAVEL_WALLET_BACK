@@ -12,6 +12,8 @@ import fs from 'fs';
 import path from 'path';
 import PhilippinesPaymentController from '../controllers/philippinesPayment.controller.js';
 import VietnamPaymentController from '../controllers/vietnamPayment.controller.js';
+import multer from 'multer';
+import DecodeQrCodeService from '../services/decodeQrCode.service.js';
 
 router.use(trackIpAddressDeviceId);
 
@@ -237,6 +239,94 @@ router.post("/ninePay-ipn", async (req, res) => {
    const response = await VietnamPaymentController.ninePayIpn({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });
+
+const uploaddecodeQrCodeImageDir = './uploads/decodeQrCodeImage/';
+if (!fs.existsSync(uploaddecodeQrCodeImageDir)) {
+  fs.mkdirSync(uploaddecodeQrCodeImageDir, { recursive: true });
+}
+
+const storageDecodeQrCodeImage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploaddecodeQrCodeImageDir);
+  },
+  filename: (req, file, cb) => {
+    // Create unique filename: timestamp-originalname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const fileFilterSalesReport = (req, file, cb) => {
+   const allowedMimes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/heic'
+   ];
+    if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type'), false);
+    }
+};
+
+const uploadDecodeQrCodeImage = multer({ storage: storageDecodeQrCodeImage, fileFilter: fileFilterSalesReport });
+/**
+ * @swagger
+ * /api/front/decodeQrCodeImage:
+ *   post:
+ *     summary: Upload and decode a QR code image
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The QR code image file to upload
+ *     responses:
+ *       200:
+ *         description: QR code image uploaded and decoded successfully
+ *       400:
+ *         description: Invalid file type or upload error
+ */
+router.post("/decodeQrCodeImage", uploadDecodeQrCodeImage.single('file'), async (req, res) => {
+    if (!req.file) {
+         return res.status(400).json({ error: 'No file uploaded or invalid file type' });
+    }
+    const path = req.file.path;
+      try {
+         const decodedText = await DecodeQrCodeService.decodeQR(path);
+         // Optionally, delete the file after decoding
+         fs.unlink(path, (err) => {
+           if (err) {
+             console.error('Error deleting file:', err);
+           }
+         });
+         if(decodedText === null) {
+            return  res.status(400).json({ error: 'No QR code found in the image' });
+         }
+         res.json({ decodedText });
+      } catch (error) {
+         fs.unlink(path, (err) => {
+           if (err) {
+             console.error('Error deleting file:', err);
+           }
+         });
+         console.error('Error decoding QR code:', error);
+         res.status(500).json({ error: 'Failed to decode QR code' });
+      }
+});
+
+
+
 
 router.use('/login',loginRouter)
 router.use('/notification', notificationRouter);
