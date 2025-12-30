@@ -17,6 +17,7 @@ import customReturn from "./middlewares/responseBuilder.js";
 import locales from "./middlewares/locales.js";
 
 import { initializeSentry } from "./config/sentry.config.js";
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 // import "./cron/index.js"
 
@@ -41,13 +42,23 @@ const publicDir =
     ? pathResolve(pathJoin(dirname("./"), "public"))
     : pathResolve(pathJoin(dirname("./"), "public"));
 
-const app = express();
 
-if (SENTRY_ENABLED === "true") {
-  (async () => {
-    await initializeSentry(SENTRY_DSN);
-  })();
-}
+Sentry.init({
+     dsn: SENTRY_DSN,
+    integrations: [
+      // Add our Profiling integration
+      nodeProfilingIntegration(),
+    ],
+    // Add Tracing by setting tracesSampleRate
+    // We recommend adjusting this value in production
+    tracesSampleRate: 0,
+    // Set sampling rate for profiling
+    // This is relative to tracesSampleRate
+    profilesSampleRate: 1.0,
+});
+
+const app = express();
+ 
 app.use(
   cors({
     origin: true,
