@@ -5,6 +5,7 @@ import axios from "axios";
 import crypto from "crypto";
 import UserService from "./user.service.js";
 import { v4 as uuidv4 } from "uuid";
+import CambodiaPaymentService from "./cambodiaPayment.service.js";
 
 const { Op, User, KycStatusWebhook, kycVerifiedDocuments, UserKyc } = db;
 
@@ -313,11 +314,32 @@ export default class KycService {
           }
 
           if(currentStatus === "Approved"){
-            this.kycSaveUserDocuments({
-              uuid: webhookData?.externalUserId, 
-              applicantId: webhookData?.applicantId, 
-              inspectionId: webhookData?.inspectionId
-            });
+                await this.kycSaveUserDocuments({
+                  uuid: webhookData?.externalUserId, 
+                  applicantId: webhookData?.applicantId, 
+                  inspectionId: webhookData?.inspectionId
+                });
+                // Trigger Cambodia payment KYC update
+                const userKycData = await UserKyc.findOne({
+                  where: { applicantId : webhookData?.applicantId },
+                });
+                await CambodiaPaymentService.createUser(
+                  {
+                    payload: {},
+                    userId: updateKycData.userId,
+                    i18n: null,
+                  },
+                  async () => {
+                    await CambodiaPaymentService.updateKyc(
+                      {
+                        payload: {},
+                        userId: updateKycData.userId,
+                        i18n: null,
+                      },
+                      () => {}
+                    );
+                  }
+                );
           }
         }
 

@@ -516,9 +516,9 @@ export default class CambodiaPaymentService {
 
   }
   static async updateKyc({ payload, userId, i18n }, callback) {
-    console.log("Updating KYC with payload:", payload, "for user ID:", userId);
+  
     try {
-      console.log("Updating KYC with payload:", payload, "for user ID:", userId);
+      
       const kesspayKycRecord = await KesspayKyc.findOne({
         where: { userId: userId },
       });
