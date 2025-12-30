@@ -15,7 +15,7 @@ export function initializeSentry(dsn) {
 		],
 		// Add Tracing by setting tracesSampleRate
 		// We recommend adjusting this value in production
-		tracesSampleRate: 0,
+		tracesSampleRate: 1.0,
 		// Set sampling rate for profiling
 		// This is relative to tracesSampleRate
 		profilesSampleRate: 1.0,
