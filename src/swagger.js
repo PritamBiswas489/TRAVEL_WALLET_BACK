@@ -42,6 +42,10 @@ const options = {
         description: "Pelecard deposit endpoints",
       },
       {
+        name: "Auth-Deposit Bank Transfer routes",
+        description: "Bank transfer deposit endpoints",
+      },
+      {
         name: "Auth-Wallet routes",
         description: "Wallet management endpoints",
       },

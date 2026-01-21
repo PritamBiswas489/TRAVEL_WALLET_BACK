@@ -95,7 +95,7 @@ export default class BankTransferPaymentController {
       return {
         status: 200,
         message: "Bank transfer payment initiated successfully",
-        data: { paymentLink },
+        data: { paymentLink, result },
         error: {},
       };
     } catch (error) {

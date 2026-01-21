@@ -333,7 +333,7 @@ router.post("/decodeQrCodeImage", uploadDecodeQrCodeImage.single('file'), async 
  * /api/front/bank-transfer-payment:
  *   post:
  *     summary: Initiate a bank transfer payment
- *     tags: [Non authenticated routes]
+ *     tags: [Auth-Deposit Bank Transfer routes]
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
