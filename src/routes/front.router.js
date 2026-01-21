@@ -14,6 +14,7 @@ import PhilippinesPaymentController from '../controllers/philippinesPayment.cont
 import VietnamPaymentController from '../controllers/vietnamPayment.controller.js';
 import multer from 'multer';
 import DecodeQrCodeService from '../services/decodeQrCode.service.js';
+import BankTransferPaymentController from '../controllers/bankTransferPayment.controller.js';
 
 router.use(trackIpAddressDeviceId);
 
@@ -325,6 +326,32 @@ router.post("/decodeQrCodeImage", uploadDecodeQrCodeImage.single('file'), async 
       }
 });
 
+
+
+/**
+ * @swagger
+ * /api/front/bank-transfer-payment:
+ *   post:
+ *     summary: Initiate a bank transfer payment
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload for initiating bank transfer payment
+ *     responses:
+ *       200:
+ *         description: Bank transfer payment initiated successfully
+ */
+router.post('/bank-transfer-payment', async (req, res, next) => {
+   const response = await BankTransferPaymentController.initiateBankTransferPayment({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
 
 
 
