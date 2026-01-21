@@ -354,6 +354,31 @@ router.post('/bank-transfer-payment', async (req, res, next) => {
 });
 
 
+/**
+ * @swagger
+ * /api/front/bank-transfer-payment-webhook:
+ *   post:
+ *     summary: Handle bank transfer payment webhook events
+ *     tags: [Auth-Deposit Bank Transfer routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload sent by bank transfer payment webhook
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+router.post('/bank-transfer-payment-webhook', async (req, res, next) => {
+   const response = await BankTransferPaymentController.handleBankTransferPaymentWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
 
 router.use('/login',loginRouter)
 router.use('/notification', notificationRouter);

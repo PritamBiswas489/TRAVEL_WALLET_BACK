@@ -55,11 +55,11 @@ export default class BankTransferPaymentController {
         userWasAuthenticated: false,
         context: "R89001",
         redirects: {
-          ttlExpired: "https://btc-thai.com/offer/tests/feezback_webhook.php",
-          pisSuccess: "https://btc-thai.com/offer/tests/feezback_webhook.php",
-          pisFailure: "https://btc-thai.com/offer/tests/feezback_webhook.php",
+          ttlExpired: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
+          pisSuccess: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
+          pisFailure: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
           pisNotComplete:
-            "https://btc-thai.com/offer/tests/feezback_webhook.php",
+            `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
         },
       },
       // Uncomment to enable mock: enableMock: true
@@ -106,5 +106,25 @@ export default class BankTransferPaymentController {
 
       }
     }
+  }
+  static async handleBankTransferPaymentWebhook(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    console.log("Received webhook payload:", payload);
+
+     const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const filePathToSavePayload = path.join(
+      __dirname,
+      `../../public/freezBackKeys/webhooks/${
+        `bank_transfer_webhook_payload_${Date.now()}.json`
+      }`,
+    );
+    fs.writeFileSync(filePathToSavePayload, JSON.stringify(payload));
+    console.log("Webhook payload saved to:", filePathToSavePayload);
   }
 }
