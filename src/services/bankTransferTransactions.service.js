@@ -64,7 +64,7 @@ export default class BankTransferTransactionsService {
             pisFailure: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
             pisNotComplete: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
           },
-        //   enableMock: true,
+          enableMock: true,
         },
         // Uncomment to enable mock: enableMock: true
       };
