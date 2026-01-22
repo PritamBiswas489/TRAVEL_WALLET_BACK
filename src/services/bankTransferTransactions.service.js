@@ -33,13 +33,13 @@ export default class BankTransferTransactionsService {
       const paymentId = uuidv4();
 
       const payloadPayment = {
-        sub: paymentId,
+        sub: '123456',
         iss: "tpp/HEoRGloC4D",
         srv: "fast/user",
         flow: {
           id: "default",
           payment: {
-            remittanceInformationUnstructured: paymentId,
+            remittanceInformationUnstructured:  '123456',
             creditor: {
               name: "העברה בגין הזמנה R12345",
               account: "IL820126560000000688807",
@@ -68,6 +68,7 @@ export default class BankTransferTransactionsService {
         },
         // Uncomment to enable mock: enableMock: true
       };
+     
       const token = jwt.sign(payloadPayment, privateKey, { algorithm: "RS512" });
       const postData = {
         token: token,
