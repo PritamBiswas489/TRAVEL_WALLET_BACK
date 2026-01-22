@@ -157,5 +157,6 @@ export default class BankTransferPaymentController {
     );
     fs.writeFileSync(filePathToSavePayload, JSON.stringify(payload));
     console.log("Webhook payload saved to:", filePathToSavePayload);
+    // BankTransferTransactionsService.saveWebhookData(payload);
   }
 }

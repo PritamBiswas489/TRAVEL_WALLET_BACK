@@ -58,12 +58,12 @@ export default class BankTransferTransactionsService {
           },
           userWasAuthenticated: false,
           context: paymentId,
-          redirects: {
-            ttlExpired: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
-            pisSuccess: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
-            pisFailure: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
-            pisNotComplete: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
-          },
+        //   redirects: {
+        //     ttlExpired: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
+        //     pisSuccess: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
+        //     pisFailure: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
+        //     pisNotComplete: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
+        //   },
           enableMock: true,
         },
         // Uncomment to enable mock: enableMock: true
