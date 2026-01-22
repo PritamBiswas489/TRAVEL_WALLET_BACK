@@ -33,7 +33,7 @@ export default class BankTransferTransactionsService {
       const paymentId = uuidv4();
 
       const payloadPayment = {
-        sub: '6666',
+        sub: paymentId,
         iss: "tpp/HEoRGloC4D",
         srv: "fast/user",
         flow: {
@@ -57,7 +57,7 @@ export default class BankTransferTransactionsService {
             },
           },
           userWasAuthenticated: false,
-          context: 'R89001',
+          context: paymentId,
           redirects: {
             ttlExpired: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
             pisSuccess: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
