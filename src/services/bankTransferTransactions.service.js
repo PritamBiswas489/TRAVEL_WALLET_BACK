@@ -33,13 +33,13 @@ export default class BankTransferTransactionsService {
       const paymentId = uuidv4();
 
       const payloadPayment = {
-        sub: '123456',
+        sub: '6666',
         iss: "tpp/HEoRGloC4D",
         srv: "fast/user",
         flow: {
           id: "default",
           payment: {
-            remittanceInformationUnstructured:  '123456',
+            remittanceInformationUnstructured:  'R89001',
             creditor: {
               name: "העברה בגין הזמנה R12345",
               account: "IL820126560000000688807",
@@ -48,26 +48,29 @@ export default class BankTransferTransactionsService {
             transfer: {
               amount: {
                 value: amount.toFixed(2),
-                editable: true,
+                editable: false,
               },
               currency: {
                 value: "ILS",
-                editable: true,
+                editable: false,
               },
             },
           },
           userWasAuthenticated: false,
-          context: JSON.stringify({ userId, paymentId }),
+          context: 'R89001',
           redirects: {
             ttlExpired: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
             pisSuccess: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
             pisFailure: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
             pisNotComplete: `${process.env.BASE_URL}/api/front/bank-transfer-payment-webhook`,
           },
-          enableMock: true,
+        //   enableMock: true,
         },
         // Uncomment to enable mock: enableMock: true
       };
+
+    //   console.log("Payload for Payment Link:", JSON.stringify(payloadPayment));
+    //   return;
      
       const token = jwt.sign(payloadPayment, privateKey, { algorithm: "RS512" });
       const postData = {
