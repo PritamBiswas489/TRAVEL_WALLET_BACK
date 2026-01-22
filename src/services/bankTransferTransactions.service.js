@@ -39,7 +39,7 @@ export default class BankTransferTransactionsService {
         flow: {
           id: "default",
           payment: {
-            remittanceInformationUnstructured:  paymentId,
+            remittanceInformationUnstructured:  'topupWallet',
             creditor: {
               name: "העברה בגין הזמנה R12345",
               account: "IL820126560000000688807",
