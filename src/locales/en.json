@@ -331,6 +331,6 @@
 	"KESSPAY_USER_NOT_FOUND": "Kesspay user not found.",
 	"KYC_DOCUMENTS_NOT_FOUND": "KYC documents not found.",
 	"KYC_DETAILS_FETCH_FAILED": "KYC details fetch failed.",
-	"GET_USER_PROFILE_FAILED": "Get user profile failed."
-
+	"GET_USER_PROFILE_FAILED": "Get user profile failed.",
+	"FAILED_TO_GET_PAYMENT_LINK": "FAILED_TO_GET_PAYMENT_LINK"
 }

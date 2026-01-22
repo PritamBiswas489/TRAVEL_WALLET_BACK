@@ -16,6 +16,7 @@ import { default as feedbackRouter } from './feedback.router.js';
 import { default as suggestionRouter } from './suggestion.router.js';
 import { default as bugReportRouter } from './bugReport.router.js';
 import { default as  favouriteQrCodeRouter} from './favouriteQrCode.router.js';
+import { default as bankTransferRouter } from './bankTransfer.router.js';
 
 
 
@@ -42,4 +43,5 @@ router.use('/feedback', feedbackRouter);
 router.use('/suggestion', suggestionRouter);
 router.use('/bug-reports', bugReportRouter);
 router.use('/favourite', favouriteQrCodeRouter);
+router.use('/bank-transfer', bankTransferRouter);
 export default router;

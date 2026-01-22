@@ -16,12 +16,10 @@ export default async (req, res, next) => {
       checkdeviceid = false;
     }
 	console.log("Route Path:", routePath);
-	if(routePath.includes('get-document-images-by-inspection-id')){
+	if(routePath.includes('get-payment-link')){
 		console.log("Skipping JWT verification for KessPay route");
 		return next();
 	}
-	 
-
 	try {
 		const { authorization, refreshtoken } = req.headers;
 		// console.log({ authorization, refreshtoken });
