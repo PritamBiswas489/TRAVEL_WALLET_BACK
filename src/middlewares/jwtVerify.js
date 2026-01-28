@@ -16,8 +16,8 @@ export default async (req, res, next) => {
       checkdeviceid = false;
     }
 	console.log("Route Path:", routePath);
-	if(routePath.includes('get-payment-link')){
-		console.log("Skipping JWT verification for KessPay route");
+	if(routePath.includes('get-payment-link') || routePath.includes('airwallex-get-request-id-merchant-id')){
+		console.log("Skipping JWT verification for this route");
 		return next();
 	}
 	try {

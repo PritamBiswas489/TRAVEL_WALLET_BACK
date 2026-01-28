@@ -15,6 +15,7 @@ import VietnamPaymentController from '../controllers/vietnamPayment.controller.j
 import multer from 'multer';
 import DecodeQrCodeService from '../services/decodeQrCode.service.js';
 import BankTransferPaymentController from '../controllers/bankTransferPayment.controller.js';
+import AirwallexPaymentController from '../controllers/airwallexPayment.controller.js';
 
 router.use(trackIpAddressDeviceId);
 
@@ -376,6 +377,32 @@ router.post('/bank-transfer-payment', async (req, res, next) => {
  */
 router.post('/bank-transfer-payment-webhook', async (req, res, next) => {
    const response = await BankTransferPaymentController.handleBankTransferPaymentWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/front/airwallex-payment-webhook:
+ *   post:
+ *     summary: Handle airwallex payment webhook events
+ *     tags: [Auth-Deposit-airwallex routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload sent by airwallex payment webhook
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+router.post('/airwallex-payment-webhook', async (req, res, next) => {
+   const response = await AirwallexPaymentController.handlePaymentWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
 });
 

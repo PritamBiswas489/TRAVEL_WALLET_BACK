@@ -1,6 +1,7 @@
 import '../config/environment.js';
 import express from 'express';
 import { default as depositController } from '../controllers/deposit.controller.js';
+import { default as AirwallexPaymentController } from '../controllers/airwallexPayment.controller.js';
 
 const router = express.Router();
 
@@ -339,6 +340,41 @@ router.delete("/pelecard-user-card-delete/:cardId", async (req, res) => {
   const response = await depositController.removeUserCard({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-get-request-id-merchant-id:
+ *   post:
+ *     summary: Get request ID and merchant ID from Airwallex
+ *     tags:
+ *       - Auth-Deposit-airwallex routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Success - Request ID and merchant ID retrieved
+ */
+router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
+  const response = await AirwallexPaymentController.createMerchantOrderIdRequestId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+})
 
  
 

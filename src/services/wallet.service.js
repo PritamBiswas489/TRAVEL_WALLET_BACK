@@ -7,7 +7,7 @@ import SettingsService from "./settings.service.js";
 import { where } from "sequelize";
 import { walletCurrencies } from "../config/walletCurrencies.js";
 
-const { WalletPelePayment, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, kessPayTransactionInfos, ExpensesCategories} = db;
+const { WalletPelePayment, WalletAirwallexPayments, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, kessPayTransactionInfos, ExpensesCategories} = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
@@ -69,6 +69,67 @@ export default class WalletService {
       return { ERROR: e.message };
     }
   }
+  static async updateWalletAfterSuccessAirwallexPayment(
+    airwallexPaymentData){
+      try{
+        const amount = parseFloat(airwallexPaymentData?.amount);
+        const currency = airwallexPaymentData?.currency || "ILS";
+        const userId = airwallexPaymentData?.userId;
+        let oldWalletBalance = 0;
+        let newWalletBalance = 0;
+
+        const existingWallet = await UserWallet.findOne({
+          where: { userId: userId, currency: currency },
+        });
+        if (existingWallet) {
+          oldWalletBalance = parseFloat(existingWallet.balance);
+        }
+
+        if (existingWallet) {
+              const updatedBalance =
+              parseFloat(existingWallet.balance) + amount;
+              await UserWallet.update(
+                { balance: updatedBalance },
+                { where: { id: existingWallet.id } }
+              );
+         }else{
+            await UserWallet.create({
+                userId: userId,
+                balance: amount,
+                currency: currency,
+            });
+         }
+
+          const userWallet = await UserWallet.findOne({
+            where: {
+              userId: userId,
+              currency: currency,
+            },
+         });
+         newWalletBalance = parseFloat(userWallet?.balance || 0);
+
+          const walletTransactionDetails = await WalletTransaction.create({
+              userId: userId,
+              walletId: userWallet?.id || 0,
+              paymentAmt: amount,
+              paymentCurrency:  currency,
+              oldWalletBalance: oldWalletBalance,
+              newWalletBalance: newWalletBalance,
+              type: "credit",
+              description: `Add ${amount} ${currency}. ${airwallexPaymentData.status === "SUCCEEDED" ? "completed" : "failed"} payment`,
+              description_he: `הוספת ${amount} ${currency}. תשלום ${airwallexPaymentData.status === "SUCCEEDED" ? "הושלם" : "נכשל"}`,
+              status: airwallexPaymentData.status === "SUCCEEDED" ? "completed" : "failed",
+              airwallexPaymentId: airwallexPaymentData?.id,
+        });
+        return { userWallet,  walletTransactionDetails };
+          
+
+      } catch(e){
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+        return { ERROR: e.message };
+      }
+
+    } 
 
   static async getUserWallet(userId, currency = []) {
     try {
@@ -135,7 +196,14 @@ export default class WalletService {
           transferWhere = { receiverId: userId };
           transferRequestWhere = { senderId: userId };
         } else if (filter === "topup") {
-          whereClause.paymentId = { [Op.ne]: null };
+           whereClause[Op.or] = [
+            { paymentId: { [Op.ne]: null } },
+            { airwallexPaymentId: { [Op.ne]: null } },
+
+           ]
+
+         
+           
           
         } else if (filter === "expenses") {
           console.log("expenses filter");
@@ -185,6 +253,22 @@ export default class WalletService {
                 "FirstPaymentTotal",
               ],
             ],
+          },
+          {
+            model: WalletAirwallexPayments,
+            as: "walletAirwallexPayment",
+            attributes:[
+              "id",
+              "uuid",
+              "merchantOrderId",
+              "amount",
+              "currency",
+              "capturedAmount",
+              "status",
+              "latitude",
+              "longitude"
+              
+            ]
           },
           {
             model: Transfer,
@@ -267,6 +351,7 @@ export default class WalletService {
       // Remove transactions where all 3 relations are null
       const filteredRows = userWalletTransactions.rows.filter(tx => 
       tx.walletPayment !== null ||
+      tx.walletAirwallexPayment !== null ||
       tx.transfer !== null ||
       tx.transferRequest !== null ||
       tx.pisopayTransaction !== null ||
