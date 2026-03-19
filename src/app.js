@@ -43,6 +43,38 @@ const publicDir =
 
 const app = express();
 
+app.use((req, res, next) => {
+  
+  if (process.env.NODE_ENV === "development") {
+      const REQUIRED_NODE_VERSION = "20.19.4"; // Define your required version
+      const CURRENT_NODE_VERSION = process.versions.node; // Get current Node.js version
+
+      console.log(" Required node version", REQUIRED_NODE_VERSION);
+      console.log(" Current node version", CURRENT_NODE_VERSION);
+
+      // Check if current version meets the requirement
+      if (CURRENT_NODE_VERSION !== REQUIRED_NODE_VERSION) {
+        console.error(
+          `\x1b[31m[ERROR] Node.js version mismatch!\x1b[0m`,
+          `\nRequired: ${REQUIRED_NODE_VERSION}+`,
+          `\nCurrent: ${CURRENT_NODE_VERSION}`,
+        );
+
+        return res.status(503).json({
+          error: "Service Unavailable",
+          message: `Server is running on an incompatible Node.js version (${CURRENT_NODE_VERSION}). Required version: ${REQUIRED_NODE_VERSION} or higher.`,
+          currentVersion: CURRENT_NODE_VERSION,
+          requiredVersion: REQUIRED_NODE_VERSION,
+        });
+      }
+      console.log(
+        `\x1b[32m[INFO] Node.js version check passed.\x1b[0m Current version: ${CURRENT_NODE_VERSION}`,
+      );
+  }
+
+  next();
+});
+
 if (SENTRY_ENABLED === "true") {
   (async () => {
     await initializeSentry(SENTRY_DSN);

@@ -342,8 +342,58 @@ router.delete("/pelecard-user-card-delete/:cardId", async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-create-customer-account:
+ *   post:
+ *     summary: Create customer account in Airwallex
+ *     tags:
+ *       - Auth-Deposit-airwallex routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties: {}
+ *     responses:
+ *       200:
+ *         description: Success - Customer account created
+ */
+router.post('/airwallex-create-customer-account', async (req, res) => {
+   const response = await AirwallexPaymentController.airWallexCreateCustomerAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-authorize-account/{accountId}:
+ *   get:
+ *     summary: Authorize an Airwallex account
+ *     tags:
+ *       - Auth-Deposit-airwallex routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: accountId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The Airwallex account ID to authorize
+ *     responses:
+ *       200:
+ *         description: Success - Account authorized
+ */
+router.get('/airwallex-authorize-account/:accountId', async (req, res) => {
+   const response = await AirwallexPaymentController.airWallexAuthorizeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
 
 /**
  * @swagger

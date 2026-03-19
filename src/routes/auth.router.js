@@ -17,6 +17,7 @@ import { default as suggestionRouter } from './suggestion.router.js';
 import { default as bugReportRouter } from './bugReport.router.js';
 import { default as  favouriteQrCodeRouter} from './favouriteQrCode.router.js';
 import { default as bankTransferRouter } from './bankTransfer.router.js';
+import { default as thaiPaymentRouter } from './thaiPayment.router.js';
 
 
 
@@ -44,4 +45,5 @@ router.use('/suggestion', suggestionRouter);
 router.use('/bug-reports', bugReportRouter);
 router.use('/favourite', favouriteQrCodeRouter);
 router.use('/bank-transfer', bankTransferRouter);
+router.use('/ipps', thaiPaymentRouter);
 export default router;

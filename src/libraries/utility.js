@@ -9,6 +9,7 @@ import {
    
 } from 'libphonenumber-js';
 import axios from 'axios';
+import { Base64 } from 'js-base64';
 
 export const slugify = (str) =>
 	str
@@ -238,3 +239,51 @@ export function yyyymmddhhmmss() {
     const yyyymmddhhmmss = `${year}${month}${day}${hours}${minutes}${seconds}`;
    return yyyymmddhhmmss;
 }
+
+
+// Generate code_verifier
+const dec2hex = (dec) => {
+  return ('0' + dec.toString(16)).slice(-2);
+};
+
+const generateCodeVerifier = () => {
+  // generate random length for code_verifier which should be between 43 and 128
+  const length = Math.floor(Math.random() * (129 - 43) + 43);
+  const array = crypto.randomBytes(Math.floor(length / 2));
+  return Array.from(array, dec2hex).join('');
+};
+
+
+
+// Install js-base64 package (a third-party package, not under the control of Airwallex).
+
+
+// Generate code_challenge
+const sha256 = (plain) => {
+  return crypto.createHash('sha256').update(plain).digest();
+};
+
+const base64urlencode = (hashed) => {
+  const bytes = new Uint8Array(hashed);
+  const base64encoded = Base64.fromUint8Array(bytes, true);
+  return base64encoded;
+};
+
+ const generateCodeChallengeFromVerifier = async (codeVerifier) => {
+  const hashed = sha256(codeVerifier);
+  const base64encoded = base64urlencode(hashed);
+  return base64encoded;
+};
+
+export const codeChallenge = async () => {
+
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = await generateCodeChallengeFromVerifier(codeVerifier);
+
+  return { codeChallenge, codeVerifier };
+
+
+};
+
+
+
