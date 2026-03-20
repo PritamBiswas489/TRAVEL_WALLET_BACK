@@ -16,10 +16,10 @@ export default async (req, res, next) => {
       checkdeviceid = false;
     }
 	console.log("Route Path:", routePath);
-	if(routePath.includes('ipps')){
-		console.log("Skipping JWT verification for this route");
-		return next();
-	}
+	// if(routePath.includes('ipps')){
+	// 	console.log("Skipping JWT verification for this route");
+	// 	return next();
+	// }
 	try {
 		const { authorization, refreshtoken } = req.headers;
 		// console.log({ authorization, refreshtoken });

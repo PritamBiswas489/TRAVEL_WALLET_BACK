@@ -7,7 +7,7 @@ import SettingsService from "./settings.service.js";
 import { where } from "sequelize";
 import { walletCurrencies } from "../config/walletCurrencies.js";
 
-const { WalletPelePayment, WalletAirwallexPayments, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, kessPayTransactionInfos, ExpensesCategories} = db;
+const { WalletPelePayment, WalletAirwallexPayments, Op, User, UserWallet, WalletTransaction, Transfer, TransferRequests, PisoPayTransactionInfos , NinePayTransactionInfos, kessPayTransactionInfos, ExpensesCategories, ThaiPayments} = db;
 
 export default class WalletService {
   static async updateUserWalletBalanceAfterPayment(
@@ -185,6 +185,7 @@ export default class WalletService {
             { pisoPayTransactionId: { [Op.ne]: null } },
             { ninePayTransactionId: { [Op.ne]: null } },
             { kesspayTransactionId: { [Op.ne]: null } },
+            { thaiPaymentId: { [Op.ne]: null } },
           ];
          transferWhere = { senderId: userId }; 
          transferRequestWhere = { receiverId : userId };
@@ -211,6 +212,7 @@ export default class WalletService {
             { pisoPayTransactionId: { [Op.ne]: null } },
             { ninePayTransactionId: { [Op.ne]: null } },
             { kesspayTransactionId: { [Op.ne]: null } },
+            { thaiPaymentId: { [Op.ne]: null } },
             ];
         }
       }
@@ -342,6 +344,18 @@ export default class WalletService {
               },
             ],
           },
+          {
+            model: ThaiPayments,
+            as: "thaiPayment",
+            required: false,
+            include: [
+              {
+                model: ExpensesCategories,
+                as: "expenseCategory",
+                attributes: { exclude: ["createdAt", "updatedAt"] },
+              },
+            ]
+          }
         ],
         order: [["createdAt", "DESC"]],
         offset: offset,
@@ -356,7 +370,8 @@ export default class WalletService {
       tx.transferRequest !== null ||
       tx.pisopayTransaction !== null ||
       tx.ninePayTransaction !== null ||
-      tx.kesspayTransaction !== null
+      tx.kesspayTransaction !== null ||
+      tx.thaiPayment !== null
       );
       return { ...userWalletTransactions, rows: filteredRows };
     } catch (e) {

@@ -16,6 +16,7 @@ import multer from 'multer';
 import DecodeQrCodeService from '../services/decodeQrCode.service.js';
 import BankTransferPaymentController from '../controllers/bankTransferPayment.controller.js';
 import AirwallexPaymentController from '../controllers/airwallexPayment.controller.js';
+import { countryCodes } from '../config/countries.js';
 
 router.use(trackIpAddressDeviceId);
 
@@ -147,6 +148,38 @@ router.get('/privacy-policy', async (req, res, next) => {
 router.get('/expenses-categories', async (req, res, next) => {
    const response = await ExpensesCategoriesController.listExpenses({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
    res.return(response);
+});
+/**
+ * @swagger
+ * /api/front/countries:
+ *   get:
+ *     summary: Get list of supported countries
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: List of countries retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       code:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ */
+router.get('/countries', async (req, res, next) => {
+   res.json({ success: true, data: countryCodes });
 });
 
 

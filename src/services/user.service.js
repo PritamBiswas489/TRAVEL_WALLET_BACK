@@ -159,6 +159,9 @@ export default class UserService {
           "language",
           "hexSalt",
           "logged_device_id",
+          "passportId",
+          "passportExpiryDate",
+          "nationality"
         ],
         include: [
           {

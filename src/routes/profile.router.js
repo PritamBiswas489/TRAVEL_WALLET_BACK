@@ -85,6 +85,15 @@ router.get("/detail", async (req, res, next) => {
  *               language:
  *                 type: string
  *                 default: "he"
+ *               passportId:
+ *                 type: string
+ *                 default: "1234567890123"
+ *               passportExpiryDate:
+ *                 type: string
+ *                 default: "2029-07-20"
+ *               nationality:
+ *                 type: string
+ *                 default: "IN"
  *     responses:
  *       200:
  *         description: Success - User profile updated

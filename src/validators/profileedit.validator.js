@@ -16,6 +16,15 @@ export const profileEditValidator = async (data, i18n) => {
     language: joi.string().allow('').valid('en', 'he').default('he').optional().messages({
       'any.only': i18n.__('INVALID_LANGUAGE'),
     }),
+    passportId: joi.string().allow('').optional().messages({
+      'string.max': i18n.__('PASSPORT_ID_MAX_LENGTH'),
+    }),
+    passportExpiryDate: joi.string().allow('').isoDate().optional().messages({
+      'string.isoDate': i18n.__('INVALID_PASSPORT_EXPIRY_DATE'),
+    }),
+    nationality: joi.string().allow('').max(50).optional().messages({
+      'string.max': i18n.__('NATIONALITY_MAX_LENGTH'),
+    }),
   });
     return [null, await schema.validateAsync(data)];
   } catch (e) {

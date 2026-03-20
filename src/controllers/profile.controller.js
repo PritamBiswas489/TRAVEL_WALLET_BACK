@@ -65,6 +65,10 @@ export default class ProfileController {
         address: payload.address,
         dob: payload.dob,
         language: payload.language,
+        passportId: payload.passportId,
+        passportExpiryDate: payload.passportExpiryDate,
+        nationality: payload.nationality,
+
       };
 
       const [validationError, validatedData] = await profileEditValidator(

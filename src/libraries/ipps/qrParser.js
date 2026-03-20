@@ -230,7 +230,7 @@ export function mapQRToQueryParams(parsed, walletId, overrideAmount = null) {
   if (!parsed.valid) throw new Error(`Invalid QR: ${parsed.error}`);
 
   const amount = parsed.amount ?? overrideAmount;
-  if (!amount || amount <= 0) throw new Error("Amount is required (not present in QR)");
+  // if (!amount || amount <= 0) throw new Error("Amount is required (not present in QR)");
 
   const body = {
     walletId,

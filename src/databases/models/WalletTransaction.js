@@ -84,6 +84,10 @@ export default function WalletTransaction(sequelize, DataTypes) {
         type: DataTypes.BIGINT,
         allowNull: true,
       },
+      thaiPaymentId: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
     },
     {
       tableName: "wallet_transactions",

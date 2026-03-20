@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -70,6 +70,10 @@ const relation = (db) => {
   kessPayTransactionInfos.hasMany(WalletTransaction, { foreignKey: "kesspayTransactionId", as: "transactions" });
 
 
+  WalletTransaction.belongsTo(ThaiPayments, { foreignKey: "thaiPaymentId", as: "thaiPayment" });
+  ThaiPayments.hasMany(WalletTransaction, { foreignKey: "thaiPaymentId", as: "transactions" });
+
+
   Notification.belongsTo(User, { foreignKey: "userId", as: "user" });
   User.hasMany(Notification, { foreignKey: "userId", as: "notifications" });
 
@@ -87,6 +91,12 @@ const relation = (db) => {
   kessPayTransactionInfos.belongsTo(ExpensesCategories, { foreignKey: "expenseCatId", as: "expenseCategory" });
   ExpensesCategories.hasMany(kessPayTransactionInfos, { foreignKey: "expenseCatId", as: "kesspayTransactions" });
 
+
+  ThaiPayments.belongsTo(ExpensesCategories, { foreignKey: "expense_cat_id", as: "expenseCategory" });
+  ExpensesCategories.hasMany(ThaiPayments, { foreignKey: "expense_cat_id", as: "thaiPayments" });
+
+  ThaiPayments.belongsTo(User, { foreignKey: "user_id", as: "user" });
+  User.hasMany(ThaiPayments, { foreignKey: "user_id", as: "thaiPayments" });
 
 
   WalletTransaction.belongsTo(NinePayTransactionInfos, { foreignKey: "ninePayTransactionId", as: "ninePayTransaction" });

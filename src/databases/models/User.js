@@ -60,6 +60,18 @@ export default function User(sequelize, DataTypes) {
         type: DataTypes.STRING,
         allowNull: true,
       },
+        passportId: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        passportExpiryDate: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        nationality: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
     },
     {
       tableName: "users",
