@@ -3,6 +3,7 @@ import ThaiPaymentService from "../services/thaiPayment.service.js";
 import * as Sentry from "@sentry/node";
 import { buildDecryptRequest } from "../services/crypto.server.js";
 import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
+import FavouriteQrCodeService from "../services/favouriteQrCode.service.js";
 
 export default class ThaiPaymentController {
   static async getpaymentQueryData({ headers, user, payload }) {
@@ -38,11 +39,7 @@ export default class ThaiPaymentController {
   }
   // This method is currently a placeholder. You can implement it based on your specific requirements for fetching payment query data related to crypto payments.
   static async cryptoGetpaymentQueryData(request) {
-     const {
-      headers,
-      user,
-      payload,
-    } = request;
+    const { headers, user, payload } = request;
     const { envelope, sig } = payload;
     const userId = user?.id;
     const decryptRequest = await buildDecryptRequest({ envelope, sig });
@@ -77,15 +74,13 @@ export default class ThaiPaymentController {
           }
           return resolve({
             status: 200,
-            data:  buildAes256GcmEncryptRequest(response.data),
+            data: buildAes256GcmEncryptRequest(response.data),
             message: headers.i18n.__("QR_CODE_VALIDATION_SUCCESSFUL"),
             error: null,
           });
         },
       );
     });
-
-
   }
   static async processTransfer({ headers, user, payload }) {
     const userId = user?.id;
@@ -125,11 +120,7 @@ export default class ThaiPaymentController {
     });
   }
   static async cryptoProcessTransfer(request) {
-     const {
-      headers,
-      user,
-      payload,
-    } = request;
+    const { headers, user, payload } = request;
     const { envelope, sig } = payload;
     const userId = user?.id;
     const decryptRequest = await buildDecryptRequest({ envelope, sig });
@@ -152,7 +143,7 @@ export default class ThaiPaymentController {
       decryptRequest.longitude = longitude;
     }
 
-     return new Promise((resolve) => {
+    return new Promise((resolve) => {
       ThaiPaymentService.processTransfer(
         { payload: decryptRequest, userId, headers },
         (err, response) => {
@@ -177,7 +168,6 @@ export default class ThaiPaymentController {
         },
       );
     });
-
   }
   static async confirmTransfer({ headers, user, payload }) {
     const userId = user?.id;
@@ -238,7 +228,7 @@ export default class ThaiPaymentController {
   static async deactivateWallet({ headers, user, payload }) {
     return new Promise((resolve) => {
       ThaiPaymentService.deactivateWallet(
-        { payload,  headers },
+        { payload, headers },
         (err, response) => {
           if (err) {
             return resolve({
@@ -256,6 +246,112 @@ export default class ThaiPaymentController {
             status: 200,
             data: response.data,
             message: headers.i18n.__("WALLET_DEACTIVATION_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async markTransactionAsFavorite(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    payload.country = "TH";
+    return new Promise((resolve) => {
+      FavouriteQrCodeService.addFavouriteQrCode(
+        { userId, payload, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "MARK_TRANSACTION_AS_FAVORITE_FAILED",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("MARK_TRANSACTION_AS_FAVORITE_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async getExpensesTransactions(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      ThaiPaymentService.getExpensesTransactions(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "GET_EXPENSES_TRANSACTIONS_FAILED",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSES_TRANSACTIONS_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async getExpensesReport(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      ThaiPaymentService.getExpensesReport(
+        { payload, userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "GET_EXPENSES_REPORT_FAILED"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GET_EXPENSES_REPORT_SUCCESSFUL"),
             error: null,
           });
         },

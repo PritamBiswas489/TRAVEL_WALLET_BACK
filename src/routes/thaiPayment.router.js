@@ -11,6 +11,9 @@ const router = express.Router();
  *     summary: Get payment query data from Thai Payment QR code
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -46,7 +49,7 @@ const router = express.Router();
  */
 router.post('/get-payment-query-data', async (req, res) => {
      const response = await ThaiPaymentController.getpaymentQueryData({ headers: req.headers, user: req.user, payload: req.body });
-     res.json(response);
+     res.return(response);
 });
 
 
@@ -58,6 +61,9 @@ router.post('/get-payment-query-data', async (req, res) => {
  *     summary: Get payment query data for Crypto envelope
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -93,7 +99,7 @@ router.post('/get-payment-query-data', async (req, res) => {
  */
 router.post('/crypto/get-payment-query-data', async (req, res) => {
      const response = await ThaiPaymentController.cryptoGetpaymentQueryData({ headers: req.headers, user: req.user, payload: req.body });
-     res.json(response);
+     res.return(response);
 });
 
 
@@ -104,6 +110,9 @@ router.post('/crypto/get-payment-query-data', async (req, res) => {
  *     summary: Process transfer for Thai Payment
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -121,6 +130,10 @@ router.post('/crypto/get-payment-query-data', async (req, res) => {
  *                 description: Expense category ID
  *                 default: 1
  *                 example: 1
+ *               qrCode:
+ *                type: string
+ *                description: QR code string for validation
+ *                example: "00020101021230820016A0000006770101120115010753600037405021500000220066077703204611316260181X00000053037645406178.225802TH5918LIMTRENDEMPORIUM6212070846113162630427E5"
  *               paymentParams:
  *                 type: object
  *                 description: Payment parameters
@@ -153,7 +166,7 @@ router.post('/crypto/get-payment-query-data', async (req, res) => {
  */
 router.post('/process-transfer', async (req, res) => {
      const response = await ThaiPaymentController.processTransfer({ headers: req.headers, user: req.user, payload: req.body });
-     res.json(response);
+     res.return(response);
 });
 
 
@@ -164,6 +177,9 @@ router.post('/process-transfer', async (req, res) => {
  *     summary: Process transfer for Crypto envelope
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -199,7 +215,7 @@ router.post('/process-transfer', async (req, res) => {
  */
 router.post('/crypto/process-transfer', async (req, res) => {
      const response = await ThaiPaymentController.cryptoProcessTransfer({ headers: req.headers, user: req.user, payload: req.body });
-     res.json(response);
+     res.return(response);
 });
 
 
@@ -211,6 +227,9 @@ router.post('/crypto/process-transfer', async (req, res) => {
  *     summary: Confirm transfer for Thai Payment
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -241,7 +260,7 @@ router.post('/crypto/process-transfer', async (req, res) => {
  */
 router.post("/confirm-transfer", async (req, res) => {
      const response = await ThaiPaymentController.confirmTransfer({ headers: req.headers, user: req.user, payload: req.body });
-     res.json(response);
+     res.return(response);
 });
 
 
@@ -254,6 +273,9 @@ router.post("/confirm-transfer", async (req, res) => {
  *     summary: Get transfer details for Thai Payment
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     parameters:
  *       - in: query
  *         name: id
@@ -281,7 +303,7 @@ router.post("/confirm-transfer", async (req, res) => {
  */
 router.get("/get-transfer-details",async (req,res)=>{
   const response = await ThaiPaymentController.getTransferDetails({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query } });
-  res.json(response);
+  res.return(response);
 });
 
 
@@ -293,6 +315,9 @@ router.get("/get-transfer-details",async (req,res)=>{
  *     summary: Deactivate Thai Payment wallet
  *     tags:
  *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -323,8 +348,168 @@ router.get("/get-transfer-details",async (req,res)=>{
  */
 router.post("/deactivate-wallet", async (req, res) => {
     const response = await ThaiPaymentController.deactivateWallet({ headers: req.headers, user: req.user, payload: req.body });
-    res.json(response);
+    res.return(response);
 })
+
+/**
+ * @swagger
+ *  /api/auth/ipps/expenses-transactions:
+ *   post:
+ *     summary: Get expenses transactions for a specific month, year and category
+ *     tags:
+ *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               month:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Month for the transactions (1-12), null for all months
+ *               year:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Year for the transactions, null for all years
+ *               categoryId:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Category ID for filtering transactions, null for all categories
+ *               page:
+ *                 type: integer
+ *                 default: 1
+ *                 description: Page number for pagination
+ *               limit:
+ *                 type: integer
+ *                 default: 10
+ *                 description: Number of transactions per page
+ *             required: []
+ *     responses:
+ *       200:
+ *         description: Expenses transactions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/expenses-transactions', async (req, res, next) => {
+    const response = await ThaiPaymentController.getExpensesTransactions({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+
+/**
+ * @swagger
+ *  /api/auth/ipps/expenses-report:
+ *   post:
+ *     summary: Get expenses report for a specific month and year
+ *     tags:
+ *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               month:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Month for the report (1-12), null for all months
+ *               year:
+ *                 type: integer
+ *                 nullable: true
+ *                 default: null
+ *                 description: Year for the report, null for all years
+ *             required: []
+ *     responses:
+ *       200:
+ *         description: Expenses report retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/expenses-report', async (req, res, next) => {
+    const response = await ThaiPaymentController.getExpensesReport({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
+
+
+/**
+ * @swagger
+ *  /api/auth/ipps/transaction-mark-as-favorite:
+ *   post:
+ *     summary: Mark a transaction as favorite
+ *     tags:
+ *       - Thai Payment
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               label:
+ *                 type: string
+ *                 description: Name of the merchant
+ *               transaction_id:
+ *                 type: string
+ *                 description: ID of the transaction to mark as favorite
+ *             required:
+ *               - label
+ *               - transaction_id
+ *     responses:
+ *       200:
+ *         description: Transaction marked as favorite successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid request
+ */
+router.post('/transaction-mark-as-favorite', async (req, res, next) => {
+    const response = await ThaiPaymentController.markTransactionAsFavorite({ headers: req.headers, user: req.user, payload: req.body });
+    res.return(response);
+});
+
 
 export default router;
  

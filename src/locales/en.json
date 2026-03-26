@@ -367,5 +367,6 @@
 	"TRANSFER_PROCESSING_FAILED": " Transfer processing failed. Please try again later.",
 	"TRANSFER_CONFIRMATION_FAILED": " Transfer confirmation failed. Please try again later.",
 	"TRANSFER_DETAILS_FETCH_FAILED": " Transfer details fetch failed. Please try again later.",
-	"WALLET_DEACTIVATION_FAILED": " Wallet deactivation failed. Please try again later."
+	"WALLET_DEACTIVATION_FAILED": " Wallet deactivation failed. Please try again later.",
+	"FAILED_TO_FETCH_EXPENSES_TRANSACTIONS": "FAILED_TO_FETCH_EXPENSES_TRANSACTIONS"
 }

@@ -11,8 +11,9 @@ import {
 import UserService from "./user.service.js";
 import CurrencyService from "./currency.service.js";
 import { walletCurrencies } from "../config/walletCurrencies.js";
+import { paymentCurrencies } from "../config/paymentCurrencies.js";
  
-const { Op, User, ThaiPayments, UserWallet , ExpensesCategories, WalletTransaction, UserThaiWalletIds } = db;
+const { Op, fn, col, User, ThaiPayments, UserWallet , ExpensesCategories, WalletTransaction, UserThaiWalletIds } = db;
 
 export default class ThaiPaymentService {
   // This function fetches user details and registers a wallet for the user if not already registered
@@ -150,6 +151,7 @@ export default class ThaiPaymentService {
       const latitude = payload.latitude || null;
       const longitude = payload.longitude || null;
       const amount = paymentParams.amount;
+      const qrCode = payload.qrCode || null;
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
       });
@@ -220,6 +222,8 @@ export default class ThaiPaymentService {
           wallet_currency: walletCurrency,
           wallet_payment_amt: actualPaymentAmountToSelectedCurrency,
           expense_cat_id: expenseCatId,
+          qr_code: qrCode,
+          amount: amount,
           latitude,
           longitude,
         },
@@ -412,8 +416,11 @@ export default class ThaiPaymentService {
       paymentRecord.confirmation_data = confirmResult;
       await paymentRecord.save();
 
+      const pt = paymentRecord.toJSON(); 
+       
       return callback(null, {
-        data: paymentRecord,
+        data: { ...pt , amountInUserWalletCurrency: pt.wallet_payment_amt, walletCurrency: pt.wallet_currency, createdAt: pt.created_at },
+         
       });
     } catch (e) {
       console.error("Error during transfer confirmation:", e);
@@ -478,4 +485,138 @@ export default class ThaiPaymentService {
     }
 
   }
+  static async getExpensesTransactions({ payload, userId, i18n }, callback) {
+      try {
+        console.log(
+          "Fetching expenses transactions with payload:",
+          payload,
+          "for user ID:",
+          userId
+        );
+        const page = parseInt(payload?.page) || 1;
+        const limit = parseInt(payload?.limit) || 10;
+        const offset = (page - 1) * limit;
+        const categoryId = payload?.categoryId || null;
+        const month = payload?.month || null;
+        const year = payload?.year || null;
+  
+        const whereClause = {
+          user_id: userId,
+          payment_status: "confirmed",
+        };
+        if (categoryId) {
+          whereClause.expense_cat_id = categoryId;
+        }
+        if (month) {
+          whereClause.created_month = month;
+        }
+        if (year) {
+          whereClause.created_year = year;
+        }
+  
+        const response = await ThaiPayments.findAndCountAll({
+          order: [["created_at", "DESC"]],
+          offset: offset,
+          limit: limit,
+          where: whereClause,
+          include: [
+            {
+              model: ExpensesCategories,
+              as: "expenseCategory",
+              attributes: { exclude: ["created_at", "updated_at"] },
+            },
+          ],
+        });
+        return callback(null, { data: response });
+      } catch (e) {
+        if (process.env.SENTRY_ENABLED === "true") {
+          Sentry.captureException(e);
+        }
+        console.log("Error in getExpensesTransactions:", e.message);
+        callback(new Error("FAILED_TO_FETCH_EXPENSES_TRANSACTIONS"), null);
+      }
+    }
+    //get expenses report
+    static async getExpensesReport({ payload, userId, i18n }, callback) {
+      try {
+        console.log(
+          "Generating expenses report with payload:",
+          payload,
+          "for user ID:",
+          userId
+        );
+        const month = payload?.month;
+        const year = payload?.year;
+  
+        const whereClause = {
+          user_id: userId,
+          payment_status: "confirmed",
+        };
+        // Add month/year filters only if provided
+        if (month) {
+          whereClause.created_month = month;
+        }
+        if (year) {
+          whereClause.created_year = year;
+        }
+  
+        const results = await ThaiPayments.findAll({
+          attributes: ["expense_cat_id", [fn("SUM", col("amount")), "totalAmount"]],
+          where: whereClause,
+          group: ["expense_cat_id"],
+          raw: false,
+        });
+        // const results = resultsRaw ? resultsRaw.map(r => r.get({ plain: true })) : [];
+        //get expenses categories
+        const getExpenseCategories = await ExpensesCategories.findAll({
+          attributes: { exclude: ["created_at", "updated_at"] },
+        });
+        let totalExpenseAmt = 0; // total expense amount
+        let reportArray = []; //report array to hold final report
+        if (results.length > 0) {
+          const totalamt = results.reduce((sum, record) => {
+            return sum + parseFloat(record.getDataValue("totalAmount") || 0);
+          }, 0);
+          totalExpenseAmt = parseFloat(totalamt.toFixed(2));
+        }
+  
+        for (const cat of getExpenseCategories) {
+          const found = results.find(
+            (r) => parseInt(r.getDataValue("expense_cat_id")) === parseInt(cat.id)
+          );
+          reportArray.push({
+            catDetails: cat,
+            totalAmount: found
+              ? parseFloat(found.getDataValue("totalAmount") || 0)
+              : 0,
+            percentage:
+              totalExpenseAmt > 0
+                ? parseFloat(
+                    (
+                      ((found
+                        ? parseFloat(found.getDataValue("totalAmount") || 0)
+                        : 0) /
+                        totalExpenseAmt) *
+                      100
+                    ).toFixed(2)
+                  )
+                : 0,
+          });
+        }
+        // console.log("Expenses report results:", results);
+        return callback(null, {
+          data: {
+            currency: paymentCurrencies["THB"],
+            totalExpenseAmt,
+            reportArray,
+          },
+        });
+      } catch (e) {
+        if (process.env.SENTRY_ENABLED === "true") {
+          Sentry.captureException(e);
+        }
+        console.log("Error in getExpensesReport:", e.message);
+        callback(new Error("FAILED_TO_FETCH_EXPENSES_REPORT"), null);
+      }
+    }
 }

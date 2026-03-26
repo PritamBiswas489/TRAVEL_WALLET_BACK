@@ -6,6 +6,7 @@ const {
   PisoPayTransactionInfos,
   NinePayTransactionInfos,
   kessPayTransactionInfos,
+  ThaiPayments,
   Op,
   User,
 } = db;
@@ -42,6 +43,15 @@ export default class FavouriteQrCodeService {
           },
         });
       }
+      if(country === "TH"){
+        existingFavourite = await ThaiPayments.findOne({
+          where: {
+            user_id: userId,
+            id: transaction_id,
+          },
+        });
+        console.log("Existing favourite for TH:", existingFavourite);
+      }
       if (!existingFavourite?.id) {
         return callback(new Error("FAVOURITE_QR_CODE_NOT_FOUND"), null);
       }
@@ -63,6 +73,7 @@ export default class FavouriteQrCodeService {
       });
       return callback(null, { data: newFavourite });
     } catch (error) {
+      console.error("Error in addFavouriteQrCode:", error);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(new Error("FAVOURITE_QR_CODE_ADDITION_FAILED"), null);
     }

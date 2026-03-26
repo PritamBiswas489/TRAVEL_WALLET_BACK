@@ -46,6 +46,14 @@ export default function ThaiPayments(sequelize, DataTypes) {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      qr_code:{
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      amount:{
+        type: DataTypes.DECIMAL(18, 2),
+        allowNull: true,
+      },
       longitude:{
         type: DataTypes.TEXT,
         allowNull: true,
