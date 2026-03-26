@@ -42,6 +42,10 @@ export default function ThaiPayments(sequelize, DataTypes) {
         allowNull: false,
         defaultValue: 0,
       },
+      memo:{
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       latitude:{
         type: DataTypes.TEXT,
         allowNull: true,

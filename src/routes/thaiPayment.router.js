@@ -134,6 +134,10 @@ router.post('/crypto/get-payment-query-data', async (req, res) => {
  *                type: string
  *                description: QR code string for validation
  *                example: "00020101021230820016A0000006770101120115010753600037405021500000220066077703204611316260181X00000053037645406178.225802TH5918LIMTRENDEMPORIUM6212070846113162630427E5"
+ *               memo:
+ *                 type: string
+ *                 description: Memo for the payment
+ *                 example: "Demo payment"
  *               paymentParams:
  *                 type: object
  *                 description: Payment parameters
@@ -148,6 +152,7 @@ router.post('/crypto/get-payment-query-data', async (req, res) => {
  *             required:
  *               - walletCurrency
  *               - expenseCatId
+ *               - memo
  *               - paymentParams
  *     responses:
  *       200:

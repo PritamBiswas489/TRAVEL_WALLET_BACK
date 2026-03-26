@@ -152,6 +152,7 @@ export default class ThaiPaymentService {
       const longitude = payload.longitude || null;
       const amount = paymentParams.amount;
       const qrCode = payload.qrCode || null;
+      const memo = payload.memo || null;
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
       });
@@ -223,6 +224,7 @@ export default class ThaiPaymentService {
           wallet_payment_amt: actualPaymentAmountToSelectedCurrency,
           expense_cat_id: expenseCatId,
           qr_code: qrCode,
+          memo: memo,
           amount: amount,
           latitude,
           longitude,
