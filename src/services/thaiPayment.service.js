@@ -324,6 +324,9 @@ export default class ThaiPaymentService {
       if (!paymentRecord) {
         return callback(new Error("TRANSFER_RECORD_NOT_FOUND"));
       }
+      if(paymentRecord.payment_status !== "pending"){
+        return callback(new Error("TRANSFER_ALREADY_CONFIRMED_OR_FAILED"));
+      }
       console.log("Payment record found for confirmation:", paymentRecord);
       const lookupRef = paymentRecord.transfer_query_response?.lookupRef;
       const receiverBank = paymentRecord.transfer_query_response?.receiverBank;

@@ -367,5 +367,7 @@
 	"TRANSFER_PROCESSING_FAILED": "עיבוד העברה נכשל. אנא נסה שוב מאוחר יותר.",
 	"TRANSFER_CONFIRMATION_FAILED": " אישור העברה נכשל. אנא נסה שוב מאוחר יותר.",
 	"TRANSFER_DETAILS_FETCH_FAILED": "אחזור פרטי העברה נכשל. אנא נסה שוב מאוחר יותר.",
-	"WALLET_DEACTIVATION_FAILED": "השבתת הארנק נכשלה. אנא נסה שוב מאוחר יותר."
+	"WALLET_DEACTIVATION_FAILED": "השבתת הארנק נכשלה. אנא נסה שוב מאוחר יותר.",
+	"FAILED_TO_FETCH_EXPENSES_TRANSACTIONS": "אחזור עסקאות הוצאות נכשל. אנא נסה שוב מאוחר יותר.",
+	"TRANSFER_ALREADY_CONFIRMED_OR_FAILED": "העברה כבר אושרה או נכשלה."
 }
