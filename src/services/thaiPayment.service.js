@@ -11,6 +11,7 @@ import {
 import UserService from "./user.service.js";
 import CurrencyService from "./currency.service.js";
 import { walletCurrencies } from "../config/walletCurrencies.js";
+ 
 const { Op, User, ThaiPayments, UserWallet , ExpensesCategories, WalletTransaction, UserThaiWalletIds } = db;
 
 export default class ThaiPaymentService {
@@ -305,6 +306,13 @@ export default class ThaiPaymentService {
         return callback(new Error("MISSING_TRANSFER_ID"));
       }
       const paymentRecord = await ThaiPayments.findOne({
+        include: [
+            {
+                model: ExpensesCategories,
+                as: "expenseCategory",
+                required: false,
+            }
+        ],
         where: { id, user_id: userId },
       });
       if (!paymentRecord) {
