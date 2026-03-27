@@ -454,7 +454,10 @@ export default class ThaiPaymentService {
       if (!paymentRecord) {
         return callback(new Error("TRANSFER_RECORD_NOT_FOUND"));
       }
-      return callback(null, { data: paymentRecord });
+      const pt = paymentRecord.toJSON();
+      
+
+      return callback(null, { data: { ...pt , amountInUserWalletCurrency: pt.wallet_payment_amt, walletCurrency: pt.wallet_currency, createdAt: pt.created_at   } });
     } catch (e) {
       console.error("Error fetching transfer details:", e);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
