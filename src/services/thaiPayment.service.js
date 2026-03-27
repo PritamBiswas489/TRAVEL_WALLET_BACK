@@ -447,7 +447,7 @@ export default class ThaiPaymentService {
             {
                 model: ExpensesCategories,
                 as: "expenseCategory",
-                attributes: ["id", "title"],
+                attributes: { exclude: ["created_at", "updated_at"] },
             }
         ]
       });
@@ -532,7 +532,16 @@ export default class ThaiPaymentService {
             },
           ],
         });
-        return callback(null, { data: response });
+        const formattedData = response.rows.length > 0 ? response.rows.map((record) => {
+          const rec = record.toJSON();
+          return {
+            ...rec,
+            amountInUserWalletCurrency: rec.wallet_payment_amt,
+            walletCurrency: rec.wallet_currency,
+            createdAt: rec.created_at,
+          };
+        }) : [];
+        return callback(null, { data: formattedData });
       } catch (e) {
         if (process.env.SENTRY_ENABLED === "true") {
           Sentry.captureException(e);
