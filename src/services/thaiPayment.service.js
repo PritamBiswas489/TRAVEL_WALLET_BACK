@@ -541,7 +541,7 @@ export default class ThaiPaymentService {
             createdAt: rec.created_at,
           };
         }) : [];
-        return callback(null, { data: formattedData });
+        return callback(null, { data: {rows : formattedData, count: response.count}  });
       } catch (e) {
         if (process.env.SENTRY_ENABLED === "true") {
           Sentry.captureException(e);
