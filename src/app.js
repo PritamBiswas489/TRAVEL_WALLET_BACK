@@ -43,6 +43,9 @@ const publicDir =
 
 const app = express();
 
+
+app.use(express.static(publicDir));
+
 app.use((req, res, next) => {
   
   if (process.env.NODE_ENV === "development") {
@@ -127,7 +130,19 @@ app.use(
   })
 );
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      withCredentials: true,
+      persistAuthorization: true,
+    },
+    customJs: "/swagger-restore-api.js",
+  })
+);
+
 
 const isProduction = process.env.NODE_ENV === "production";
 const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
@@ -153,7 +168,7 @@ app.use(
     parameterLimit: 50000,
   })
 );
-app.use(express.static(publicDir));
+
 
 /**
  * @swagger
