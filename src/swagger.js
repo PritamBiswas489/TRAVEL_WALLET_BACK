@@ -41,6 +41,10 @@ const options = {
         name: "Auth-Deposit routes",
         description: "Pelecard deposit endpoints",
       },
+      {
+        name: "Auth-airwallex-kyc routes",
+        description: "Airwallex KYC endpoints",
+      },
        {
         name: "Auth-Deposit-airwallex routes",
         description: "Airwallex deposit endpoints",

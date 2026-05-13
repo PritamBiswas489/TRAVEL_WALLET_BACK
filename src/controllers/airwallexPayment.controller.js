@@ -92,6 +92,79 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async airwallexSubmitKycDocuments(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+      files,
+    } = request;
+
+    
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      AirwallexPaymentService.airwallexSubmitKycDocuments(
+        { payload, userId, i18n, files },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_SUBMIT_KYC_DOCUMENTS",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("KYC_DOCUMENTS_SUBMITTED_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+
+  static async getAndUpdateAirWallexCustomerAccount(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAndUpdateAirWallexCustomerAccount(
+        { userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_UPDATE_CUSTOMER_ACCOUNT",
+                ),
+                reason: err.message,  
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("CUSTOMER_ACCOUNT_UPDATED_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+
+  }
+
   static async airWallexAuthorizeAccount(request) {
     const {
       payload,
@@ -127,6 +200,10 @@ export default class AirwallexPaymentController {
         },
       );
     });
+  }
+  static async airwallexCreateWebhookEndpointForKyc(request) {
+       
+
   }
 
   static async handlePaymentWebhook(request) {
