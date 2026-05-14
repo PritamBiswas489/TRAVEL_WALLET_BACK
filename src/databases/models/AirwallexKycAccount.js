@@ -207,6 +207,11 @@ export default function AirwallexKycAccount(sequelize, DataTypes) {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      userInputData: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: {},
+      },
     },
     {
       tableName: 'airwallex_kyc_account',

@@ -100,7 +100,6 @@ export default class AirwallexPaymentController {
       files,
     } = request;
 
-    
     const userId = user?.id || 1;
 
     return new Promise((resolve) => {
@@ -125,7 +124,7 @@ export default class AirwallexPaymentController {
             message: i18n.__("KYC_DOCUMENTS_SUBMITTED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -149,7 +148,7 @@ export default class AirwallexPaymentController {
                 message: i18n.__(
                   err.message || "FAILED_TO_UPDATE_CUSTOMER_ACCOUNT",
                 ),
-                reason: err.message,  
+                reason: err.message,
               },
             });
           }
@@ -159,10 +158,9 @@ export default class AirwallexPaymentController {
             message: i18n.__("CUSTOMER_ACCOUNT_UPDATED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
-
   }
 
   static async airWallexAuthorizeAccount(request) {
@@ -171,7 +169,6 @@ export default class AirwallexPaymentController {
       headers: { i18n },
       user,
     } = request;
-
 
     const userId = user?.id || 1;
 
@@ -201,9 +198,32 @@ export default class AirwallexPaymentController {
       );
     });
   }
-  static async airwallexCreateWebhookEndpointForKyc(request) {
-       
-
+   
+  static async airwallexKycWebhook(request) {
+    const { payload } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.airwallexKycWebhook(
+        { payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_KYC_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "KYC Webhook processed successfully",
+            error: null,
+          });
+        },
+      );
+    });
   }
 
   static async handlePaymentWebhook(request) {
@@ -222,4 +242,67 @@ export default class AirwallexPaymentController {
       error: {},
     };
   }
+  static async testModeUpdateAccountStatus(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+    const { accountId, status } = payload;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.testModeUpdateAccountStatus(
+        { accountId, status, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_UPDATE_ACCOUNT_STATUS",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Account status updated successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async savedVerifiedKycDocuments(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.savedVerifiedKycDocuments(
+        { userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_SAVE_VERIFIED_KYC_DOCUMENTS",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Verified KYC documents saved successfully",
+            error: null,
+          });
+        }
+        );
+
+      });
+    }
+
 }

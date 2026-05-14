@@ -408,7 +408,13 @@
         "KYC_DOCUMENTS_SUBMITTED_SUCCESSFULLY": "מסמכי KYC הוגשו בהצלחה.",
         "FAILED_TO_UPDATE_CUSTOMER_ACCOUNT": "עדכון חשבון לקוח נכשל.",
         "FAILED_TO_AUTHORIZE_CUSTOMER_ACCOUNT": "הרשאת חשבון לקוח נכשלה.",
+        "IDENTIFICATION_FRONT_IMAGE_REQUIRED": "תמונת חזית זיהוי נדרשת.",
+        "IDENTIFICATION_BACK_IMAGE_REQUIRED": "תמונת גב זיהוי נדרשת.",
+        "PROOF_OF_ADDRESS_IMAGE_REQUIRED": "תמונת הוכחת כתובת נדרשת.",
+        "SELFIE_IMAGE_REQUIRED": "תמונת סלפי נדרשת.",
         "IDENTIFICATION_FRONT_IMAGE_UPLOAD_FAILED": "העלאת תמונת חזית זיהוי נכשלה.",
         "IDENTIFICATION_BACK_IMAGE_UPLOAD_FAILED": "העלאת תמונת גב זיהוי נכשלה.",
-        "PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED": "העלאת תמונת הוכחת כתובת נכשלה."
+        "PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED": "העלאת תמונת הוכחת כתובת נכשלה.",
+        "SELFIE_IMAGE_UPLOAD_FAILED": "העלאת תמונת הסלפי נכשלה.",
+        "WEBHOOK_URL_REQUIRED": "כתובת ה-Webhook נדרשת."
 }

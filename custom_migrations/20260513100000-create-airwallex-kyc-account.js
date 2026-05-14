@@ -233,7 +233,12 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true,
       comment: 'created_at returned by Airwallex',
     },
-
+    userInputData: {
+      type: Sequelize.JSONB,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Raw user input data used to create the Airwallex account, stored for reference',
+    },
     createdAt: {
       allowNull: false,
       type: Sequelize.DATE,

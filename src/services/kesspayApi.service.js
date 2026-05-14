@@ -142,9 +142,16 @@ export default class KessPayApiService {
                 'Authorization': `Bearer ${token}`
             }
         });
+        console.log("KessPay createUser response:", response.data);
+        if (response?.data?.success === false) {
+          const errMsg = response.data.error_des || response.data.status_code || "CREATE_USER_FAILED";
+          return callback(new Error(errMsg), null);
+        }
         return callback(null, {...response.data});
      }catch(err){
-       return callback(new Error(err.message), null);
+       console.error("Error in createUser:", err);
+       const errMsg = err.response?.data?.error_des || err.response?.data?.status_code || err.message || "CREATE_USER_FAILED";
+       return callback(new Error(errMsg), null);
      }
   }
   static async updateKyc({ token, data, i18n }, callback) {

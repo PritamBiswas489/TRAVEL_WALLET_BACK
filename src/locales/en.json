@@ -412,13 +412,19 @@
 	"IDENTIFICATION_FRONT_IMAGE_REQUIRED": "Identification front image is required.",
 	"IDENTIFICATION_BACK_IMAGE_REQUIRED": "Identification back image is required.",
 	"PROOF_OF_ADDRESS_IMAGE_REQUIRED": "Proof of address image is required.",
+	"SELFIE_IMAGE_REQUIRED": "Selfie image is required.",
 	"Identification front image is required.": "Identification front image is required.",
 	"Identification back image is required.": "Identification back image is required.",
 	"Proof of address image is required.": "Proof of address image is required.",
 	"IDENTIFICATION_FRONT_IMAGE_UPLOAD_FAILED": "Failed to upload identification front image.",
 	"IDENTIFICATION_BACK_IMAGE_UPLOAD_FAILED": "Failed to upload identification back image.",
 	"PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED": "Failed to upload proof of address image.",
+	"SELFIE_IMAGE_UPLOAD_FAILED": "Failed to upload selfie image.",
+	"WEBHOOK_URL_REQUIRED": "Webhook URL is required.",
 	"[field_required] ensure length is between 1 and 100 (source: account_details.individual_details.first_name)": "[field_required] ensure length is between 1 and 100 (source: account_details.individual_details.first_name)",
 	"ensure length is between 1 and 100": "ensure length is between 1 and 100",
-	"[invalid_argument] Cannot update an account that has already been submitted (source: status)": "[invalid_argument] Cannot update an account that has already been submitted (source: status)"
+	"[invalid_argument] Cannot update an account that has already been submitted (source: status)": "[invalid_argument] Cannot update an account that has already been submitted (source: status)",
+	"[field_required] ensure is true (source: customer_agreements.agreed_to_biometrics_consent)": "[field_required] ensure is true (source: customer_agreements.agreed_to_biometrics_consent)",
+	"Error: The email has already been taken.": "Error: The email has already been taken.",
+	"The email has already been taken.": "The email has already been taken."
 }

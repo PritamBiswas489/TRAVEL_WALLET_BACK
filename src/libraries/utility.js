@@ -285,5 +285,16 @@ export const codeChallenge = async () => {
 
 };
 
+export const getUserKycStatus = (status) => {
+  const statusMap = {
+    "CREATED": "Created",
+    "ACTION_REQUIRED": "Action_required",
+    "ACTIVE": "Approved",
+    "SUBMITTED": "Submitted",
+    "SUSPENDED": "Suspended"
+  };
+  return statusMap[status] || "Document_pending";
+}
+
 
 

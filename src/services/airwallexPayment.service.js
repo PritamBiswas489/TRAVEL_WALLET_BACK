@@ -10,9 +10,9 @@ import WalletService from "./wallet.service.js";
 import UserService from "./user.service.js";
 import { codeChallenge } from "../libraries/utility.js";
 import { airwallexKycValidator } from "../validators/airwallexKyc.validator.js";
- 
+import { getUserKycStatus } from "../libraries/utility.js"; 
 
-const { Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount } = db;
+const { Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount, UserKyc } = db;
 
 export default class AirwallexPaymentService {
   static async getAirWalletxToken() {
@@ -98,7 +98,10 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  static async getAndUpdateAirWallexCustomerAccount({userId, i18n},callback) {
+  static async getAndUpdateAirWallexCustomerAccount(
+    { userId, i18n },
+    callback,
+  ) {
     try {
       const accressToken = await this.getAirWalletxToken();
       if (!accressToken) {
@@ -113,7 +116,7 @@ export default class AirwallexPaymentService {
       const getData = await AirwallexKycAccount.findOne({
         where: { userId },
       });
-      if(!getData || !getData.airwallexAccountId){
+      if (!getData || !getData.airwallexAccountId) {
         return {
           status: 404,
           data: null,
@@ -136,7 +139,7 @@ export default class AirwallexPaymentService {
           accountData: response.data,
           userId,
         });
-       return callback(null, {
+        return callback(null, {
           data: response.data,
         });
       } else {
@@ -227,6 +230,7 @@ export default class AirwallexPaymentService {
 
       // Airwallex-side timestamp
       airwallexCreatedAt: accountData?.created_at || null,
+      userInputData: accountData?.userInputData || null, // store raw user input data for reference
     };
 
     const existing = await AirwallexKycAccount.findOne({
@@ -240,77 +244,255 @@ export default class AirwallexPaymentService {
       return await AirwallexKycAccount.create(mappedData);
     }
   }
-  static async airwallexSubmitKycDocuments({ payload, userId, i18n, files }, callback) {
-  try {
-    const [validError, validationResult] = await airwallexKycValidator(payload);
-    console.log("KYC validation result:", validationResult);
-    if (validError) {
-      return callback(new Error(validError?.error?.message));
-    }
-    console.log("Validated KYC data:", validationResult);
-    console.log("Received files for KYC submission:", files);
-
-    if (!files?.identificationFrontImage?.path) {
-      return callback(new Error("IDENTIFICATION_FRONT_IMAGE_REQUIRED"));
-    }
-    if (!files?.identificationBackImage?.path && validationResult?.identificationType !== "PASSPORT") {
-      return callback(new Error("IDENTIFICATION_BACK_IMAGE_REQUIRED"));
-    }
-    if (!files?.proofOfAddressImage?.path) {
-      return callback(new Error("PROOF_OF_ADDRESS_IMAGE_REQUIRED"));
-    }
-
-    const frontImagePath = files.identificationFrontImage.path;
-    const backImagePath = files.identificationBackImage?.path;
-    const poaImagePath = files.proofOfAddressImage.path;
-
-    const accessToken = await this.getAirWalletxToken();
-    if (!accessToken) {
-      return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
-    }
-
-    // Helper to extract Airwallex error message
-    const extractAirwallexError = (error) => {
-      if (error.response?.data) {
-        const { code, message, source, trace_id, details } = error.response.data;
-        const errMsg = [
-          code ? `[${code}]` : null,
-          message || "Unknown error",
-          source ? `(source: ${source})` : null,
-          trace_id ? `| trace_id: ${trace_id}` : null,
-        ]
-          .filter(Boolean)
-          .join(" ");
-        console.error("Airwallex API Error:", error.response.data);
-        return { errMsg, airwallexError: { code, message, source, trace_id, details } };
+  static async airwallexSubmitKycDocuments(
+    { payload, userId, i18n, files },
+    callback,
+  ) {
+    try {
+      const [validError, validationResult] =
+        await airwallexKycValidator(payload);
+      console.log("KYC validation result:", validationResult);
+      if (validError) {
+        return callback(new Error(validError?.error?.message));
       }
-      return { errMsg: error.message, airwallexError: null };
-    };
+      console.log("Validated KYC data:", validationResult);
+      console.log("Received files for KYC submission:", files);
 
-   
-    let airwallexId = null;
-    if(validationResult.resubmit){
-      await AirwallexKycAccount.destroy({ where: { userId } });
+      if (!files?.identificationFrontImage?.path) {
+        return callback(new Error("IDENTIFICATION_FRONT_IMAGE_REQUIRED"));
+      }
+      if (
+        !files?.identificationBackImage?.path &&
+        validationResult?.identificationType !== "PASSPORT"
+      ) {
+        return callback(new Error("IDENTIFICATION_BACK_IMAGE_REQUIRED"));
+      }
+      if (!files?.proofOfAddressImage?.path) {
+        return callback(new Error("PROOF_OF_ADDRESS_IMAGE_REQUIRED"));
+      }
+      if (!files?.selfieImage?.path) {
+        return callback(new Error("SELFIE_IMAGE_REQUIRED"));
+      }
 
-    }
-    const getData = await AirwallexKycAccount.findOne({ where: { userId } });
-    if (!getData) {
-      const platformIdentifier = `AWCUST-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const email = validationResult.email;
+      const frontImagePath = files.identificationFrontImage.path;
+      const backImagePath = files.identificationBackImage?.path;
+      const poaImagePath = files.proofOfAddressImage.path;
+      const selfieImagePath = files.selfieImage.path;
 
-      let createResponse;
-      try {
-        createResponse = await axios.post(
-          `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/create`,
-          {
-            account_details: { legal_entity_type: "INDIVIDUAL" },
-            customer_agreements: {
-              agreed_to_data_usage: true,
-              agreed_to_terms_and_conditions: true,
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      // Helper to extract Airwallex error message
+      const extractAirwallexError = (error) => {
+        if (error.response?.data) {
+          const { code, message, source, trace_id, details } =
+            error.response.data;
+          const errMsg = [
+            code ? `[${code}]` : null,
+            message || "Unknown error",
+            source ? `(source: ${source})` : null,
+            trace_id ? `| trace_id: ${trace_id}` : null,
+          ]
+            .filter(Boolean)
+            .join(" ");
+          console.error("Airwallex API Error:", error.response.data);
+          return {
+            errMsg,
+            airwallexError: { code, message, source, trace_id, details },
+          };
+        }
+        return { errMsg: error.message, airwallexError: null };
+      };
+
+      let airwallexId = null;
+      // Check if user already has an Airwallex account and delete if exists and create new account if validation requires resubmission
+      if (validationResult.resubmit) {
+        await AirwallexKycAccount.destroy({ where: { userId } });
+        await UserKyc.destroy({ where: { userId } });
+      }
+      const getData = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!getData) {
+        const platformIdentifier = `AWCUST-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const email = validationResult.email;
+
+        let createResponse;
+        try {
+          createResponse = await axios.post(
+            `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/create`,
+            {
+              account_details: { legal_entity_type: "INDIVIDUAL" },
+              customer_agreements: {
+                agreed_to_data_usage: true,
+                agreed_to_terms_and_conditions: true,
+                agreed_to_biometrics_consent: true,
+              },
+              primary_contact: { email },
+              identifier: platformIdentifier,
             },
-            primary_contact: { email },
-            identifier: platformIdentifier,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          );
+        } catch (error) {
+          const { errMsg, airwallexError } = extractAirwallexError(error);
+          return callback(new Error(errMsg), { airwallexError });
+        }
+
+        if (createResponse?.data?.id) {
+          airwallexId = createResponse.data.id;
+          await this.saveAirwallexKycAccountDetails({
+            accountData: createResponse.data,
+            userId,
+          });
+        } else {
+          return callback(new Error("AIRWALLEX_ACCOUNT_CREATION_FAILED"));
+        }
+      } else {
+        airwallexId = getData?.airwallexAccountId;
+        if (!airwallexId) {
+          return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+        }
+      }
+
+      // Upload images to Airwallex and get file IDs
+      const uploadFile = async (filePath) => {
+        const form = new FormData();
+        form.append("file", fs.createReadStream(filePath));
+        try {
+          const res = await axios.post(
+            `${process.env.AIRWALLEX_FILES_API_URL}/api/v1/files/upload`,
+            form,
+            {
+              headers: {
+                ...form.getHeaders(),
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          );
+          return res.data.file_id;
+        } catch (error) {
+          const { errMsg, airwallexError } = extractAirwallexError(error);
+          throw { errMsg, airwallexError };
+        }
+      };
+
+      let frontFileId, backFileId, poaFileId, selfieFileId;
+      try {
+        frontFileId = await uploadFile(frontImagePath);
+        backFileId = backImagePath ? await uploadFile(backImagePath) : null;
+        poaFileId = await uploadFile(poaImagePath);
+        selfieFileId = await uploadFile(selfieImagePath);
+      } catch (uploadErr) {
+        return callback(new Error(uploadErr.errMsg), {
+          airwallexError: uploadErr.airwallexError,
+        });
+      }
+
+      if (!frontFileId) {
+        return callback(new Error("IDENTIFICATION_FRONT_IMAGE_UPLOAD_FAILED"));
+      }
+      if (!backFileId && backImagePath) {
+        return callback(new Error("IDENTIFICATION_BACK_IMAGE_UPLOAD_FAILED"));
+      }
+      if (!selfieFileId) {
+        return callback(new Error("SELFIE_IMAGE_UPLOAD_FAILED"));
+      }
+      if (!poaFileId) {
+        return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
+      }
+
+      console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
+
+      const identificationPayload = (() => {
+        const type = validationResult.identificationType;
+        const base = {
+          identification_type: type,
+          issuing_country_code: validationResult.nationality,
+        };
+        if (type === "PASSPORT") {
+          return { ...base, passport: { front_file_id: frontFileId } };
+        } else if (type === "DRIVERS_LICENSE") {
+          return {
+            ...base,
+            drivers_license: {
+              front_file_id: frontFileId,
+              ...(backFileId && { back_file_id: backFileId }),
+            },
+          };
+        } else {
+          return {
+            ...base,
+            personal_id: {
+              front_file_id: frontFileId,
+              ...(backFileId && { back_file_id: backFileId }),
+            },
+          };
+        }
+      })();
+
+      const updatePayload = {
+        account_details: {
+          legal_entity_type: "INDIVIDUAL",
+          individual_details: {
+            first_name: validationResult.firstName,
+            last_name: validationResult.lastName,
+            date_of_birth: new Date(validationResult.dateOfBirth)
+              .toISOString()
+              .split("T")[0],
+            nationality: validationResult.nationality,
+            live_selfie_file_id: selfieFileId,
+            residential_address: {
+              address_line1: validationResult.address,
+              country_code: validationResult.country,
+              postcode: validationResult.postCode,
+              state: validationResult.state,
+              suburb: validationResult.suburb,
+            },
+            identifications: { primary: identificationPayload },
+            attachments: {
+              individual_documents: [
+                { file_id: poaFileId, tag: "PROOF_OF_ADDRESS" },
+              ],
+            },
+            account_usage: {
+              card_usage: validationResult.cardUsage,
+              collection_country_codes: validationResult.collectionCountryCode,
+              collection_from: validationResult.collectionFrom,
+              payout_country_codes: validationResult.payoutCountryCodes,
+              payout_to: validationResult.payoutTo,
+              product_reference: validationResult.productReference,
+              ...(validationResult.monthlyTransactionVolumeAmount && {
+                expected_monthly_transaction_volume: {
+                  currency: validationResult.monthlyTransactionVolumeCurrency,
+                  amount: String(
+                    validationResult.monthlyTransactionVolumeAmount,
+                  ),
+                },
+              }),
+            },
+            has_member_holding_public_office:
+              validationResult.hasMemberHoldingPublicOffice === "YES",
+            has_prior_financial_institution_refusal:
+              validationResult.hasPriorFinancialInstitutionRefusal === "YES",
           },
+        },
+      };
+
+      console.log(
+        "Accounts update payload:",
+        JSON.stringify(updatePayload, null, 2),
+      );
+
+      let updateResponse;
+      try {
+        updateResponse = await axios.post(
+          `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/update`,
+          updatePayload,
           {
             headers: {
               "Content-Type": "application/json",
@@ -323,140 +505,63 @@ export default class AirwallexPaymentService {
         return callback(new Error(errMsg), { airwallexError });
       }
 
-      if (createResponse?.data?.id) {
-        airwallexId = createResponse.data.id;
-        await this.saveAirwallexKycAccountDetails({ accountData: createResponse.data, userId });
+      if (updateResponse?.data?.id) {
+        //Save Data in User KYC table
+        await UserKyc.upsert({
+          userId,
+          status: getUserKycStatus(updateResponse?.data?.status),
+          applicantId: updateResponse.data.id,
+        });
+
+        await this.saveAirwallexKycAccountDetails({
+          accountData: { ...updateResponse.data, userInputData: { ...validationResult, frontImagePath, backImagePath, poaImagePath, selfieImagePath } },
+          userId,
+        });
+
+        try {
+          await axios.post(
+            `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/submit`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          );
+        } catch (error) {
+          const { errMsg, airwallexError } = extractAirwallexError(error);
+          return callback(new Error(errMsg), { airwallexError });
+        }
+        
+         
+        return callback(null, { data: updateResponse.data });
       } else {
-        return callback(new Error("AIRWALLEX_ACCOUNT_CREATION_FAILED"));
+        return callback(new Error("FAILED_TO_UPDATE_CUSTOMER_ACCOUNT"));
       }
-    } else {
-      airwallexId = getData?.airwallexAccountId;
-      if (!airwallexId) {
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error submitting KYC documents:", error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  static async testModeUpdateAccountStatus(
+    { accountId, status, i18n },
+    callback,
+  ) {
+    try {
+      if (!accountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
-      
-    }
-
-    // Upload images to Airwallex and get file IDs
-    const uploadFile = async (filePath) => {
-      const form = new FormData();
-      form.append("file", fs.createReadStream(filePath));
-      try {
-        const res = await axios.post(
-          `${process.env.AIRWALLEX_FILES_API_URL}/api/v1/files/upload`,
-          form,
-          {
-            headers: {
-              ...form.getHeaders(),
-              Authorization: `Bearer ${accessToken}`,
-            },
-          },
-        );
-        return res.data.file_id;
-      } catch (error) {
-        const { errMsg, airwallexError } = extractAirwallexError(error);
-        throw { errMsg, airwallexError };
+      if (!status) {
+        return callback(new Error("ACCOUNT_STATUS_REQUIRED"));
       }
-    };
 
-    let frontFileId, backFileId, poaFileId;
-    try {
-      frontFileId = await uploadFile(frontImagePath);
-      backFileId = backImagePath ? await uploadFile(backImagePath) : null;
-      poaFileId = await uploadFile(poaImagePath);
-    } catch (uploadErr) {
-      return callback(new Error(uploadErr.errMsg), { airwallexError: uploadErr.airwallexError });
-    }
-
-    if (!frontFileId) {
-      return callback(new Error("IDENTIFICATION_FRONT_IMAGE_UPLOAD_FAILED"));
-    }
-    if (!backFileId && backImagePath) {
-      return callback(new Error("IDENTIFICATION_BACK_IMAGE_UPLOAD_FAILED"));
-    }
-    if (!poaFileId) {
-      return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
-    }
-
-    console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
-
-    const identificationPayload = (() => {
-      const type = validationResult.identificationType;
-      const base = {
-        identification_type: type,
-        issuing_country_code: validationResult.nationality,
-      };
-      if (type === "PASSPORT") {
-        return { ...base, passport: { front_file_id: frontFileId } };
-      } else if (type === "DRIVERS_LICENSE") {
-        return {
-          ...base,
-          drivers_license: {
-            front_file_id: frontFileId,
-            ...(backFileId && { back_file_id: backFileId }),
-          },
-        };
-      } else {
-        return {
-          ...base,
-          personal_id: {
-            front_file_id: frontFileId,
-            ...(backFileId && { back_file_id: backFileId }),
-          },
-        };
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
-    })();
 
-    const updatePayload = {
-      account_details: {
-        legal_entity_type: "INDIVIDUAL",
-        individual_details: {
-          first_name: validationResult.firstName,
-          last_name: validationResult.lastName,
-          date_of_birth: new Date(validationResult.dateOfBirth).toISOString().split("T")[0],
-          nationality: validationResult.nationality,
-          residential_address: {
-            address_line1: validationResult.address,
-            country_code: validationResult.country,
-            postcode: validationResult.postCode,
-            state: validationResult.state,
-            suburb: validationResult.suburb,
-          },
-          identifications: { primary: identificationPayload },
-          attachments: {
-            individual_documents: [
-              { file_id: poaFileId, tag: "PROOF_OF_ADDRESS" },
-            ],
-          },
-          account_usage: {
-            card_usage: validationResult.cardUsage,
-            collection_country_codes: validationResult.collectionCountryCode,
-            collection_from: validationResult.collectionFrom,
-            payout_country_codes: validationResult.payoutCountryCodes,
-            payout_to: validationResult.payoutTo,
-            product_reference: validationResult.productReference,
-            ...(validationResult.monthlyTransactionVolumeAmount && {
-              expected_monthly_transaction_volume: {
-                currency: validationResult.monthlyTransactionVolumeCurrency,
-                amount: String(validationResult.monthlyTransactionVolumeAmount),
-              },
-            }),
-          },
-          has_member_holding_public_office:
-            validationResult.hasMemberHoldingPublicOffice === "YES",
-          has_prior_financial_institution_refusal:
-            validationResult.hasPriorFinancialInstitutionRefusal === "YES",
-        },
-      },
-    };
-
-    console.log("Accounts update payload:", JSON.stringify(updatePayload, null, 2));
-
-    let updateResponse;
-    try {
-      updateResponse = await axios.post(
-        `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/update`,
-        updatePayload,
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/simulation/accounts/${accountId}/update_status`,
+        { next_status: status },
         {
           headers: {
             "Content-Type": "application/json",
@@ -464,35 +569,144 @@ export default class AirwallexPaymentService {
           },
         },
       );
+
+      return callback(null, { data: response.data });
     } catch (error) {
-      const { errMsg, airwallexError } = extractAirwallexError(error);
-      return callback(new Error(errMsg), { airwallexError });
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "Error updating Airwallex account status:",
+        error?.response?.data || error.message,
+      );
+      const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
+      return callback(new Error(errMsg));
     }
+  }
 
-    if (updateResponse?.data?.id) {
-      await this.saveAirwallexKycAccountDetails({ accountData: updateResponse.data, userId });
+  static async airwallexKycWebhook({ payload }, callback) {
+    console.log("Received Airwallex KYC webhook with payload:", payload);
 
-      try {
-        await axios.post(
-          `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/submit`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
-      } catch (error) {
-        const { errMsg, airwallexError } = extractAirwallexError(error);
-        return callback(new Error(errMsg), { airwallexError });
+    try {
+      const accountId = payload?.account_id;
+      const eventName = payload?.name;
+      let newStatus = null;
+      if (eventName === "account.submitted") {
+        newStatus = "SUBMITTED";
+      } else if (eventName === "account.action_required") {
+        newStatus = "ACTION_REQUIRED";
+      } else if (eventName === "account.active") {
+        newStatus = "ACTIVE";
+      } else if (eventName === "account.suspended") {
+        newStatus = "SUSPENDED";
+      }
+      if (!newStatus) {
+        console.warn("airwallexKycWebhook: unhandled event name:", eventName);
+        return callback(null, { data: payload });
       }
 
-      return callback(null, { data: updateResponse.data });
-    } else {
-      return callback(new Error("FAILED_TO_UPDATE_CUSTOMER_ACCOUNT"));
+      if (!accountId) {
+        return callback(null, { data: payload });
+      }
+
+      const kycAccount = await AirwallexKycAccount.findOne({
+        where: { airwallexAccountId: accountId },
+      });
+
+      if (!kycAccount) {
+        console.warn(
+          "airwallexKycWebhook: no AirwallexKycAccount found for accountId:",
+          accountId,
+        );
+        return callback(null, { data: payload });
+      }
+
+      const userId = kycAccount.userId;
+
+      // Update AirwallexKycAccount status only
+      await AirwallexKycAccount.update(
+        { status: newStatus },
+        { where: { airwallexAccountId: accountId } },
+      );
+
+      // Update UserKyc status
+      await UserKyc.update(
+        { status: getUserKycStatus(newStatus) },
+        { where: { userId, applicantId: accountId } },
+      );
+
+      console.log(
+        `airwallexKycWebhook: updated userId=${userId} to status=${newStatus}`,
+      );
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error processing Airwallex KYC webhook:", error);
     }
+
+    return callback(null, { data: payload });
+  }
+
+  static async savedVerifiedKycDocuments({ userId, i18n }, callback) {
+  try {
+    const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+    if (!kycAccount) {
+      return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"));
+    }
+
+    const selfieFileId = kycAccount.liveSelfieFileId;
+    const idFrontFileId =
+      kycAccount.identifications?.primary?.drivers_license?.front_file_id ||
+      kycAccount.identifications?.primary?.passport?.front_file_id ||
+      kycAccount.identifications?.primary?.personal_id?.front_file_id;
+    const idBackFileId =
+      kycAccount.identifications?.primary?.drivers_license?.back_file_id ||
+      kycAccount.identifications?.primary?.personal_id?.back_file_id;
+    
+
+    const fileIdMap = { selfieFileId, idFrontFileId, idBackFileId  };
+    const fileIds = Object.values(fileIdMap).filter(Boolean);
+
+    console.log("Fetching download links for file IDs:", fileIds);
+
+    if (fileIds.length === 0) {
+      return callback(new Error("NO_KYC_FILES_FOUND"));
+    }
+
+    const accessToken = await this.getAirWalletxToken();
+    if (!accessToken) {
+      return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+    }
+
+    const downloadLinksResponse = await axios.post(
+      `${process.env.AIRWALLEX_API_URL}/api/v1/files/download_links`,
+      { file_ids: fileIds },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${accessToken}`,
+           
+        },
+      },
+    );
+
+    // ✅ Correct response parsing
+    const files = downloadLinksResponse.data?.files || [];
+    const linkByFileId = Object.fromEntries(
+      files.map((file) => [file.file_id, { url: file.url, expiredTime: file.download_link_valid_until }]),
+    );
+
+    const downloadLinks = {
+      selfie:         selfieFileId  ? linkByFileId[selfieFileId]  || null : null,
+      idFront:        idFrontFileId ? linkByFileId[idFrontFileId] || null : null,
+      idBack:         idBackFileId  ? linkByFileId[idBackFileId]  || null : null,
+      proofOfAddress: poaFileId     ? linkByFileId[poaFileId]     || null : null,
+    };
+
+    return callback(null, { data: { downloadLinks, fileIdMap } });
+
   } catch (error) {
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-    console.error("Error submitting KYC documents:", error);
-    return callback(new Error("INTERNAL_SERVER_ERROR"));
+    console.error("Error saving verified KYC documents:", error?.response?.data || error.message);
+    return callback(new Error("FAILED_TO_SAVE_VERIFIED_KYC_DOCUMENTS"));
   }
 }
 

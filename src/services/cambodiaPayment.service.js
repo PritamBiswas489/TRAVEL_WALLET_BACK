@@ -18,6 +18,7 @@ const {
   Op,
   fn,
   col,
+  AirwallexKycAccount,
 } = db;
 
 export default class CambodiaPaymentService {
@@ -510,12 +511,69 @@ export default class CambodiaPaymentService {
       });
       return callback(null, { data: { apiResponse: createUserResponse, dbRecord: kesspayKycRecord } });
       }catch(err){
-       console.log("Error in createUser:",  err);
-       return callback(new Error('CREATE_USER_FAILED'), null);
+       return callback(new Error(err.message || 'CREATE_USER_FAILED'), null);
       }
 
   }
   static async updateKyc({ payload, userId, i18n }, callback) {
+    try{
+       const kesspayKycRecord = await KesspayKyc.findOne({
+        where: { userId: userId },
+      });
+      const airwallexKycRecord = await AirwallexKycAccount.findOne({
+        where: { userId: userId },
+      });
+      if(!airwallexKycRecord){
+        return callback(new Error("AIRWALLEX_KYC_NOT_FOUND"), null);
+      }
+      const documentFiles = [
+        {documentType: 'FRONT_SIDE', documentPath: airwallexKycRecord?.userInputData?.frontImagePath || null},
+        {documentType: 'BACK_SIDE', documentPath: airwallexKycRecord?.userInputData?.backImagePath || null},
+        {documentType: 'SELFIE', selfiePath: airwallexKycRecord?.userInputData?.selfieImagePath || null},
+      ];
+       if(Object.keys(documentFiles).length === 0){
+        return callback(new Error("KYC_DOCUMENTS_NOT_FOUND"), null);
+      }
+      console.log("KYC document files to be sent:", JSON.stringify(documentFiles));
+      console.log("KessPay User ID:", kesspayKycRecord?.kessPayUserId);
+
+      const getAccessToken = await KessPayApiService.accessToken();
+
+      if (!getAccessToken?.access_token) {
+          return callback(new Error("TOKEN_RETRIEVAL_FAILED"), null);
+      }
+      const kycUpdateResponse = await new Promise((resolve, reject) =>
+        KessPayApiService.updateKyc(
+          {
+            token: getAccessToken?.access_token,
+            data: {
+              user_id: kesspayKycRecord?.kessPayUserId,
+              document_files: documentFiles,
+            },
+            i18n,
+          },
+          (err, res) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(res);
+          }
+        )
+      );
+      if(kycUpdateResponse?.success !== true){
+          return callback(new Error('KYC_UPDATE_FAILED'), null);
+      }
+      kesspayKycRecord.kycStatus = kycUpdateResponse?.data?.status;
+      kesspayKycRecord.kycResponseData = kycUpdateResponse?.data || null;
+      await kesspayKycRecord.save();
+      return callback(null, { data: {kesspayKycRecord, kycUpdateResponse} });
+
+    }catch(err){
+      console.error("Error in updateKyc:", err);
+      return callback(new Error("KYC_UPDATE_FAILED"), null);
+    }
+  }
+  static async updateKycBk({ payload, userId, i18n }, callback) {
   
     try {
       

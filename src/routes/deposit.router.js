@@ -27,7 +27,8 @@ const kycUpload = multer({
 }).fields([
   { name: 'identificationFrontImage', maxCount: 1 },
   { name: 'identificationBackImage', maxCount: 1 },
-  { name: 'proofOfAddressImage', maxCount: 1 }
+  { name: 'proofOfAddressImage', maxCount: 1 },
+  { name: 'selfieImage', maxCount: 1 }
 ]);
 
 const router = express.Router();
@@ -369,51 +370,8 @@ router.delete("/pelecard-user-card-delete/:cardId", async (req, res) => {
 });
 
 
-/**
- * @swagger
- * /api/auth/deposit/airwallex-create-customer-account:
- *   post:
- *     summary: Create customer account in Airwallex
- *     tags:
- *       - Auth-airwallex-kyc routes
- *     security:
- *       - bearerAuth: []
- *       - refreshToken: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties: {}
- *     responses:
- *       200:
- *         description: Success - Customer account created
- */
-router.post('/airwallex-create-customer-account', async (req, res) => {
-   const response = await AirwallexPaymentController.airWallexCreateCustomerAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-   res.return(response);
-});
 
 
-/**
- * @swagger
- * /api/auth/deposit/get-and-update-airwallex-customer-account:
- *   post:
- *     summary: Update Airwallex KYC account details for the authenticated user
- *     tags:
- *       - Auth-airwallex-kyc routes
- *     security:
- *       - bearerAuth: []
- *       - refreshToken: []
- *     responses:
- *       200:
- *         description: Success - Airwallex customer account details updated
- */
-router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
-   const response = await AirwallexPaymentController.getAndUpdateAirWallexCustomerAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-   res.return(response);
-});
 
 
 
@@ -445,6 +403,9 @@ router.get('/airwallex-authorize-account/:accountId', async (req, res) => {
    const response = await AirwallexPaymentController.airWallexAuthorizeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+
 
 /**
  * @swagger
@@ -550,6 +511,10 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *                 type: string
  *                 format: binary
  *                 description: Proof of address document image
+ *               selfieImage:
+ *                 type: string
+ *                 format: binary
+ *                 description: Selfie image of the applicant
  *               cardUsage:
  *                 type: array
  *                 description: "Ways in which the account will use Airwallex borderless cards."
@@ -691,10 +656,72 @@ router.post('/airwallex-submit-kyc-documents', kycUpload, async (req, res) => {
 });
 
 
-router.post('/airwallex-create-webhook-endpoint-for-kyc', async (req, res) => {
-   const response = await AirwallexPaymentController.airwallexCreateWebhookEndpointForKyc({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+/**
+ * @swagger
+ * /api/auth/deposit/test-mode-update-account-status/{accountId}:
+ *   post:
+ *     summary: Update Airwallex account status (test mode only)
+ *     tags:
+ *       - Auth-airwallex-kyc routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: accountId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The Airwallex account ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum:
+ *                   - ACTIVE
+ *                   - ACTION_REQUIRED
+ *                   - UNDER_REVIEW
+ *                 example: ACTIVE
+ *     responses:
+ *       200:
+ *         description: Success - Account status updated
+ */
+router.post('/test-mode-update-account-status/:accountId', async (req, res) => {
+  const { accountId } = req.params;
+  const response = await AirwallexPaymentController.testModeUpdateAccountStatus({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/get-and-update-airwallex-customer-account:
+ *   post:
+ *     summary: Update Airwallex KYC account details for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Airwallex customer account details updated
+ */
+router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
+   const response = await AirwallexPaymentController.getAndUpdateAirWallexCustomerAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+
+
  
 
 export default router;
