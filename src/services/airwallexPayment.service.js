@@ -316,6 +316,7 @@ export default class AirwallexPaymentService {
       if (!getData) {
         const platformIdentifier = `AWCUST-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const email = validationResult.email;
+        const mobile = validationResult.mobile;
 
         let createResponse;
         try {
@@ -328,7 +329,7 @@ export default class AirwallexPaymentService {
                 agreed_to_terms_and_conditions: true,
                 agreed_to_biometrics_consent: true,
               },
-              primary_contact: { email },
+              primary_contact: { email, mobile },
               identifier: platformIdentifier,
             },
             {
@@ -434,7 +435,7 @@ export default class AirwallexPaymentService {
           };
         }
       })();
-
+      //Upload Payload to Airwallex to update account with KYC details and submit for verification
       const updatePayload = {
         account_details: {
           legal_entity_type: "INDIVIDUAL",
@@ -453,7 +454,7 @@ export default class AirwallexPaymentService {
               state: validationResult.state,
               suburb: validationResult.suburb,
             },
-            identifications: { primary: identificationPayload },
+            identifications: { primary: {...identificationPayload, issuing_country_code: validationResult.identificationDocumentIssueCountry } },
             attachments: {
               individual_documents: [
                 { file_id: poaFileId, tag: "PROOF_OF_ADDRESS" },
@@ -561,7 +562,7 @@ export default class AirwallexPaymentService {
 
       const response = await axios.post(
         `${process.env.AIRWALLEX_API_URL}/api/v1/simulation/accounts/${accountId}/update_status`,
-        { next_status: status },
+        { next_status: status, force: true },
         {
           headers: {
             "Content-Type": "application/json",

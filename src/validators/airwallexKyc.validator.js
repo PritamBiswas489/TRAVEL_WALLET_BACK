@@ -54,6 +54,11 @@ export const airwallexKycValidator = async (data) => {
         "string.empty": "EMAIL_REQUIRED",
         "any.required": "EMAIL_REQUIRED",
       }),
+      mobile: joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required().messages({
+        "string.pattern.base": "INVALID_MOBILE_NUMBER",
+        "string.empty": "MOBILE_REQUIRED",
+        "any.required": "MOBILE_REQUIRED",
+      }),
       dateOfBirth: joi.string().isoDate().required().messages({
         "string.isoDate": "INVALID_DATE_OF_BIRTH_FORMAT",
         "string.empty": "DATE_OF_BIRTH_REQUIRED",
@@ -89,6 +94,9 @@ export const airwallexKycValidator = async (data) => {
         "any.only": "INVALID_IDENTIFICATION_TYPE",
         "string.empty": "IDENTIFICATION_TYPE_REQUIRED",
         "any.required": "IDENTIFICATION_TYPE_REQUIRED",
+      }),
+      identificationDocumentIssueCountry: joi.string().valid(...COUNTRY_CODES).optional().default("IL").messages({
+        "any.only": "INVALID_IDENTIFICATION_DOCUMENT_ISSUE_COUNTRY",
       }),
       cardUsage: csvOrArrayOf(CARD_USAGE_VALUES).messages({
         "any.only": "INVALID_CARD_USAGE",

@@ -465,6 +465,9 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *                 type: string
  *                 format: email
  *                 example: "john.doe@example.com"
+ *               mobile:
+ *                 type: string
+ *                 example: "+972546324388"
  *               dateOfBirth:
  *                 type: string
  *                 example: "1990-01-01"
@@ -507,6 +510,13 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *                 type: string
  *                 format: binary
  *                 description: Back image of the identification document
+ *               identificationDocumentIssueCountry:
+ *                 type: string
+ *                 enum:
+ *                   - IL
+ *                 description: "Country code where the identification document was issued (IL = Israel)"
+ *                 default: IL
+ *                 example: IL
  *               proofOfAddressImage:
  *                 type: string
  *                 format: binary
