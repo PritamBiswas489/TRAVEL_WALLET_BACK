@@ -444,7 +444,7 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *   post:
  *     summary: Submit KYC documents for Airwallex account verification
  *     tags:
- *       - Auth-airwallex-kyc routes
+ *       - Auth-airwallex-kyc-wallet routes
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
@@ -668,11 +668,11 @@ router.post('/airwallex-submit-kyc-documents', kycUpload, async (req, res) => {
 
 /**
  * @swagger
- * /api/auth/deposit/test-mode-update-account-status/{accountId}:
+ * /api/auth/deposit/sandbox/update-account-status/{accountId}:
  *   post:
  *     summary: Update Airwallex account status (test mode only)
  *     tags:
- *       - Auth-airwallex-kyc routes
+ *       - Auth-airwallex-kyc-wallet routes
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
@@ -703,7 +703,7 @@ router.post('/airwallex-submit-kyc-documents', kycUpload, async (req, res) => {
  *       200:
  *         description: Success - Account status updated
  */
-router.post('/test-mode-update-account-status/:accountId', async (req, res) => {
+router.post('/sandbox/update-account-status/:accountId', async (req, res) => {
   const { accountId } = req.params;
   const response = await AirwallexPaymentController.testModeUpdateAccountStatus({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
@@ -716,7 +716,7 @@ router.post('/test-mode-update-account-status/:accountId', async (req, res) => {
  *   post:
  *     summary: Update Airwallex KYC account details for the authenticated user
  *     tags:
- *       - Auth-airwallex-kyc routes
+ *       - Auth-airwallex-kyc-wallet routes
  *     security:
  *       - bearerAuth: []
  *       - refreshToken: []
@@ -731,8 +731,113 @@ router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-get-global-accounts:
+ *   get:
+ *     summary: Get Airwallex global accounts for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Global accounts retrieved
+ */
+router.get('/airwallex-get-global-accounts', async (req, res) => {
+  const response = await AirwallexPaymentController.getGlobalAccounts({ headers: req.headers, user: req.user });
+  res.return(response);
+});
 
- 
+/**
+ * @swagger
+ * /api/auth/deposit/sandbox/add-deposit/{globalAccountId}:
+ *   post:
+ *     summary: Add a deposit to an Airwallex account (test mode only)
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: globalAccountId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The Airwallex global account ID to deposit into
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 1000
+ *                 description: The amount to deposit
+ *               payerBankname:
+ *                 type: string
+ *                 example: "Bank of Israel"
+ *                 description: Name of the payer's bank
+ *               payerCountry:
+ *                 type: string
+ *                 example: "IL"
+ *                 description: Country code of the payer
+ *               payerName:
+ *                 type: string
+ *                 example: "John Doe"
+ *                 description: Name of the payer
+ *               reference:
+ *                 type: string
+ *                 example: "REF-001"
+ *                 description: Payment reference
+ *               statementRef:
+ *                 type: string
+ *                 example: "5487287788"
+ *                 description: Statement reference number
+ *               status:
+ *                 type: string
+ *                 enum:
+ *                   - SETTLED
+ *                   - PENDING
+ *                 example: SETTLED
+ *                 description: Deposit status
+ *     responses:
+ *       200:
+ *         description: Success - Deposit added successfully
+ */
+router.post('/sandbox/add-deposit/:globalAccountId', async (req, res) => {
+  const response = await AirwallexPaymentController.sandboxAddDeposit({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/account-balance:
+ *   get:
+ *     summary: Get current Airwallex account balance
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Account balance retrieved
+ */
+router.get('/account-balance', async (req, res) => {
+  const response = await AirwallexPaymentController.getAccountBalance({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
 
 export default router;
+
 

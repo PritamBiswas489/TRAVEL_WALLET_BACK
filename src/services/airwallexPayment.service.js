@@ -842,6 +842,128 @@ export default class AirwallexPaymentService {
       throw new Error("AIRWALLEX_CUSTOMER_CREATION_FAILED");
     }
   }
+
+  static async sandboxAddDeposit({userId,  globalAccountId, amount, payerBankname, payerCountry, payerName, reference, statementRef, status }, callback) {
+    try {
+      console.log("Adding sandbox deposit with payload:", { globalAccountId, amount });
+      const parsedAmount = parseFloat(amount);
+      if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+        return callback(new Error("INVALID_AMOUNT"));
+      }
+      if (!globalAccountId) {
+        return callback(new Error("GLOBAL_ACCOUNT_ID_REQUIRED"));
+      }
+
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+       const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!kycAccount || !kycAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/simulation/deposit/create`,
+        {
+          amount: parsedAmount,
+          global_account_id: globalAccountId,
+          payer_bankname: payerBankname || "string",
+          payer_country: payerCountry || "string",
+          payer_name: payerName || "string",
+          reference: reference || "string",
+          statement_ref: statementRef || "",
+          status: status || "SETTLED",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            "x-on-behalf-of": kycAccount.airwallexAccountId,
+          },
+        },
+      );
+
+      return callback(null, { data: response.data });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error adding sandbox deposit:", error?.response?.data || error.message);
+      const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
+      return callback(new Error(errMsg));
+    }
+  }
+
+  static async getGlobalAccounts({ userId, i18n }, callback) {
+    try {
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!kycAccount || !kycAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const response = await axios.get(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/global_accounts`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-on-behalf-of": kycAccount.airwallexAccountId,
+          },
+        },
+      );
+
+      return callback(null, { data: response.data });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error fetching global accounts:", error?.response?.data || error.message);
+      const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
+      return callback(new Error(errMsg));
+    }
+  }
+  //get account balance for a specific currency and return in response  
+  static async getAccountBalance({ userId, i18n }, callback) {
+    try {
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!kycAccount || !kycAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const response = await axios.get(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/balances/current`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-on-behalf-of": kycAccount.airwallexAccountId,
+          },
+        },
+      );
+      const balanceData = {};
+      const SelectedCurrency = ["ILS"]
+      if(response.data.length > 0) {
+        response.data.forEach((balance) => {
+          if (SelectedCurrency.includes(balance.currency)) {
+            balanceData[balance.currency] = balance.available_amount;
+          }
+        });
+      }
+      return callback(null, { data: balanceData });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error fetching account balance:", error?.response?.data || error.message);
+      const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
+      return callback(new Error(errMsg));
+    }
+  }
+//==============================================================================================================================================================//
   static async createMerchantOrderIdRequestId(args, callback) {
     try {
       const { payload, userId, i18n } = args;

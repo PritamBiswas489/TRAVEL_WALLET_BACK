@@ -426,5 +426,7 @@
 	"[invalid_argument] Cannot update an account that has already been submitted (source: status)": "[invalid_argument] Cannot update an account that has already been submitted (source: status)",
 	"[field_required] ensure is true (source: customer_agreements.agreed_to_biometrics_consent)": "[field_required] ensure is true (source: customer_agreements.agreed_to_biometrics_consent)",
 	"Error: The email has already been taken.": "Error: The email has already been taken.",
-	"The email has already been taken.": "The email has already been taken."
+	"The email has already been taken.": "The email has already been taken.",
+	"GLOBAL_ACCOUNTS_FETCHED_SUCCESSFULLY": "GLOBAL_ACCOUNTS_FETCHED_SUCCESSFULLY",
+	"ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY": "ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY"
 }

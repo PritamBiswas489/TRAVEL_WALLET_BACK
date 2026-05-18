@@ -419,7 +419,7 @@ router.post('/bank-transfer-payment-webhook', async (req, res, next) => {
  * /api/front/airwallex-kyc-webhook:
  *   post:
  *     summary: Handle Airwallex KYC webhook events
- *     tags: [Auth-airwallex-kyc routes]
+ *     tags: [Auth-airwallex-kyc-wallet routes]
  *     requestBody:
  *       required: true
  *       content:

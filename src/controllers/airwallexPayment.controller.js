@@ -304,5 +304,98 @@ export default class AirwallexPaymentController {
 
       });
     }
+    static async sandboxAddDeposit(request) {
+      const {
+        payload,
+        headers: { i18n },
+        user,
+      } = request;
+      const userId = user?.id || 1;
+      const { useId, globalAccountId, amount, payerBankname, payerCountry, payerName, reference, statementRef, status } = payload;
+      return new Promise((resolve) => {
+        AirwallexPaymentService.sandboxAddDeposit(
+          { userId, globalAccountId, amount, payerBankname, payerCountry, payerName, reference, statementRef, status },
+          (err, response) => {
+            if (err) {
+              return resolve({
+                status: 400,
+                data: null,
+                error: {
+                  message: err.message || "FAILED_TO_ADD_DEPOSIT",
+                  reason: err.message,
+                },
+              });
+            }
+            return resolve({
+              status: 200,
+              data: response.data,
+              message: "Deposit added successfully",
+              error: null,
+            });
+          }
+        );
+      });
+    }
+
+  static async getGlobalAccounts(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getGlobalAccounts(
+        { userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "FAILED_TO_GET_GLOBAL_ACCOUNTS"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("GLOBAL_ACCOUNTS_FETCHED_SUCCESSFULLY"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async getAccountBalance(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAccountBalance(
+        { userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "FAILED_TO_GET_ACCOUNT_BALANCE"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
 
 }
