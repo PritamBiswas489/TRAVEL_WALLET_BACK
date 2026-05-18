@@ -427,6 +427,19 @@
 	"[field_required] ensure is true (source: customer_agreements.agreed_to_biometrics_consent)": "[field_required] ensure is true (source: customer_agreements.agreed_to_biometrics_consent)",
 	"Error: The email has already been taken.": "Error: The email has already been taken.",
 	"The email has already been taken.": "The email has already been taken.",
-	"GLOBAL_ACCOUNTS_FETCHED_SUCCESSFULLY": "GLOBAL_ACCOUNTS_FETCHED_SUCCESSFULLY",
-	"ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY": "ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY"
+	"GLOBAL_ACCOUNTS_FETCHED_SUCCESSFULLY": "Global accounts fetched successfully.",
+	"ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY": "Account balance fetched successfully.",
+	"KYC_DETAILS_FETCHED_SUCCESSFULLY": "KYC details fetched successfully.",
+	"AIRWALLEX_KYC_DETAILS_NOT_FOUND": "Airwallex KYC details not found.",
+	"ACCOUNT_STATUS_REQUIRED": "Account status is required.",
+	"AIRWALLEX_KYC_ACCOUNT_NOT_FOUND": "Airwallex KYC account not found.",
+	"NO_KYC_FILES_FOUND": "No KYC files found.",
+	"FAILED_TO_SAVE_VERIFIED_KYC_DOCUMENTS": "Failed to save verified KYC documents.",
+	"GLOBAL_ACCOUNT_ID_REQUIRED": "Global account ID is required.",
+	"FAILED_TO_GET_KYC_DETAILS": "Failed to get KYC details.",
+	"FAILED_TO_PROCESS_KYC_WEBHOOK": "Failed to process KYC webhook.",
+	"FAILED_TO_UPDATE_ACCOUNT_STATUS": "Failed to update account status.",
+	"FAILED_TO_ADD_DEPOSIT": "Failed to add deposit.",
+	"FAILED_TO_GET_GLOBAL_ACCOUNTS": "Failed to get global accounts.",
+	"FAILED_TO_GET_ACCOUNT_BALANCE": "Failed to get account balance."
 }

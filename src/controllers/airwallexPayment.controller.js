@@ -163,6 +163,39 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async getAirWallexKycDetails(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAirWallexKycDetails(
+        { userId, i18n },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_KYC_DETAILS",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("KYC_DETAILS_FETCHED_SUCCESSFULLY"),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+
   static async airWallexAuthorizeAccount(request) {
     const {
       payload,

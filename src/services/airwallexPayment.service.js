@@ -158,6 +158,29 @@ export default class AirwallexPaymentService {
       };
     }
   }
+
+  static async getAirWallexKycDetails({ userId, i18n }, callback) {
+     try{
+       const getData = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      if(!getData) {
+        return callback(new Error("AIRWALLEX_KYC_DETAILS_NOT_FOUND"));
+      }
+     // console.log("Fetched Airwallex KYC details from DB for userId:", userId, JSON.stringify(getData.toJSON(), null, 2));
+      const JSONDATA = getData.toJSON();
+      JSONDATA.proofOfAddressImage = process.env.BASE_URL + "/uploads/airWallexKyc/" + path.basename(JSONDATA.userInputData?.poaImagePath || "");
+      JSONDATA.backDocumentImage = process.env.BASE_URL + "/uploads/airWallexKyc/" + path.basename(JSONDATA.userInputData?.backImagePath || "");
+      JSONDATA.frontDocumentImage = process.env.BASE_URL + "/uploads/airWallexKyc/" + path.basename(JSONDATA.userInputData?.frontImagePath || "");
+      JSONDATA.selfieImage = process.env.BASE_URL + "/uploads/airWallexKyc/" + path.basename(JSONDATA.userInputData?.selfieImagePath || "");
+      return callback(null, { data: JSONDATA });
+
+     }catch(error) {
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+        console.error("Error fetching Airwallex KYC details:", error);
+        return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
   static async saveAirwallexKycAccountDetails({ accountData, userId }) {
     const ad = accountData?.account_details || {};
     const individual = ad?.individual_details || {};

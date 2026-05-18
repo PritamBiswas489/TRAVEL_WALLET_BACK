@@ -730,6 +730,25 @@ router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/get-airwallex-kyc-details:
+ *   get:
+ *     summary: Get Airwallex KYC details for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Airwallex KYC details retrieved
+ */
+router.get('/get-airwallex-kyc-details', async (req, res) => {
+  const response = await AirwallexPaymentController.getAirWallexKycDetails({ headers: req.headers, user: req.user });
+  res.return(response);
+});
+
 
 /**
  * @swagger
