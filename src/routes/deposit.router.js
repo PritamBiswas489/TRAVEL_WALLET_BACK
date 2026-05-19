@@ -666,6 +666,8 @@ router.post('/airwallex-submit-kyc-documents', kycUpload, async (req, res) => {
 });
 
 
+
+
 /**
  * @swagger
  * /api/auth/deposit/sandbox/update-account-status/{accountId}:
@@ -706,6 +708,12 @@ router.post('/airwallex-submit-kyc-documents', kycUpload, async (req, res) => {
 router.post('/sandbox/update-account-status/:accountId', async (req, res) => {
   const { accountId } = req.params;
   const response = await AirwallexPaymentController.testModeUpdateAccountStatus({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+router.get('/retrieve-rfi', async (req, res) => {
+  const response = await AirwallexPaymentController.retrieveRfi({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
 

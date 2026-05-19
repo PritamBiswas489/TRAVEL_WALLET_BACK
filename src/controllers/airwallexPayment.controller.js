@@ -129,6 +129,8 @@ export default class AirwallexPaymentController {
     });
   }
 
+ 
+
   static async getAndUpdateAirWallexCustomerAccount(request) {
     const {
       headers: { i18n },

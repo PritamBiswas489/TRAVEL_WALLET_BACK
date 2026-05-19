@@ -11,6 +11,7 @@ import UserService from "./user.service.js";
 import { codeChallenge } from "../libraries/utility.js";
 import { airwallexKycValidator } from "../validators/airwallexKyc.validator.js";
 import { getUserKycStatus } from "../libraries/utility.js"; 
+ 
 
 const { Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount, UserKyc } = db;
 
@@ -429,7 +430,7 @@ export default class AirwallexPaymentService {
       if (!poaFileId) {
         return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
       }
-
+     
       console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
 
       const identificationPayload = (() => {
@@ -439,7 +440,7 @@ export default class AirwallexPaymentService {
           issuing_country_code: validationResult.nationality,
         };
         if (type === "PASSPORT") {
-          return { ...base, passport: { front_file_id: frontFileId } };
+          return { ...base, passport: { front_file_id:  frontFileId } };
         } else if (type === "DRIVERS_LICENSE") {
           return {
             ...base,
@@ -525,6 +526,7 @@ export default class AirwallexPaymentService {
           },
         );
       } catch (error) {
+        console.error("Error updating Airwallex account with KYC details:", error);
         const { errMsg, airwallexError } = extractAirwallexError(error);
         return callback(new Error(errMsg), { airwallexError });
       }
@@ -551,6 +553,7 @@ export default class AirwallexPaymentService {
             },
           );
         } catch (error) {
+          console.error("Error submitting Airwallex account for KYC verification:", error);
           const { errMsg, airwallexError } = extractAirwallexError(error);
           return callback(new Error(errMsg), { airwallexError });
         }
@@ -566,6 +569,7 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
+ 
   static async testModeUpdateAccountStatus(
     { accountId, status, i18n },
     callback,
@@ -582,10 +586,10 @@ export default class AirwallexPaymentService {
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
-
+       
       const response = await axios.post(
         `${process.env.AIRWALLEX_API_URL}/api/v1/simulation/accounts/${accountId}/update_status`,
-        { next_status: status, force: true },
+        { next_status: status, force: false },
         {
           headers: {
             "Content-Type": "application/json",
@@ -982,6 +986,72 @@ export default class AirwallexPaymentService {
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error("Error fetching account balance:", error?.response?.data || error.message);
+      const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
+      return callback(new Error(errMsg));
+    }
+  }
+  static async transferAirwallexConnectedAccount(payload, callback) {
+    try {
+      const {
+        fromWalletId,
+        toWalletId,
+        amount,
+        currency,
+        uuid,
+      } = payload;
+
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const fromAirWallexAccount = await AirwallexKycAccount.findOne({ where: { userId: fromWalletId } });
+      if (!fromAirWallexAccount || !fromAirWallexAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const toAirWallexAccount = await AirwallexKycAccount.findOne({ where: { userId: toWalletId } });
+      if (!toAirWallexAccount || !toAirWallexAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const fromAccountId = fromAirWallexAccount.airwallexAccountId;
+      const toAccountId = toAirWallexAccount.airwallexAccountId;
+
+      console.log(`Initiating transfer from Airwallex account ${fromAccountId} to ${toAccountId} for amount ${amount} ${currency}`);
+
+      let response;
+      try {
+        response = await axios.post(
+          `${process.env.AIRWALLEX_API_URL}/api/v1/connected_account_transfers/create`,
+          {
+            request_id: uuid,
+            reference: 'travelmoney-transfer',
+            amount: parseFloat(amount),
+            currency,
+            reason: "travel",
+            destination: toAccountId,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+              "x-on-behalf-of": fromAccountId,
+              "x-api-version": "2024-09-27",
+            },
+          },
+        );
+      } catch (error) {
+        const errData = error?.response?.data;
+        console.error("Airwallex connected account transfer failed:", errData || error.message);
+        const errMsg = errData?.message || errData?.code || "CONNECTED_ACCOUNT_TRANSFER_FAILED";
+        return callback(new Error(errMsg));
+      }
+
+      return callback(null, { data: response.data });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error transferring to Airwallex connected account:", error?.response?.data || error.message);
       const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
       return callback(new Error(errMsg));
     }
