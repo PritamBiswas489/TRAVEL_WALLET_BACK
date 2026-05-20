@@ -10,7 +10,8 @@ import WalletService from "./wallet.service.js";
 import UserService from "./user.service.js";
 import { codeChallenge } from "../libraries/utility.js";
 import { airwallexKycValidator } from "../validators/airwallexKyc.validator.js";
-import { getUserKycStatus } from "../libraries/utility.js"; 
+import { getUserKycStatus } from "../libraries/utility.js";
+import { AIRWALLEX_TRANSFER_STATUS } from "../config/airwallexTransferStatus.js";
  
 
 const { Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount, UserKyc } = db;
@@ -952,6 +953,115 @@ export default class AirwallexPaymentService {
     }
   }
   //get account balance for a specific currency and return in response  
+  static async getBalanceHistoryPage({ accessToken, connectedAccountId, currency, page, pageSize, fromPostAt, toPostAt }) {
+    const params = { page_size: pageSize || 100 };
+    if (page !== undefined && page !== null) params.page = page;
+    if (currency) params.currency = currency;
+    if (fromPostAt) params.from_post_at = fromPostAt;
+    if (toPostAt) params.to_post_at = toPostAt;
+
+    const response = await axios.get(
+      `${process.env.AIRWALLEX_API_URL}/api/v1/balances/history`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "x-on-behalf-of": connectedAccountId,
+        },
+        params,
+      },
+    );
+    
+    return response.data;
+  }
+
+  static async getTransactionHistory({ userId, currency, fromPostAt, toPostAt, page, pageSize, i18n }, callback) {
+    const RESERVE_TYPES = [
+      'PAYMENT_RESERVE_HOLD',
+      'PAYMENT_RESERVE_RELEASE',
+      'HOLD',
+      'HOLD_RELEASE',
+      'ISSUING_AUTHORISATION_HOLD',
+      'ISSUING_AUTHORISATION_RELEASE',
+    ];
+    try {
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error('AIRWALLEX_TOKEN_NOT_GENERATED'));
+      }
+
+      const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!kycAccount || !kycAccount.airwallexAccountId) {
+        return callback(new Error('AIRWALLEX_ACCOUNT_NOT_FOUND'));
+      }
+
+      const connectedAccountId = kycAccount.airwallexAccountId;
+
+      // Single-page request
+      if (page !== undefined && page !== null) {
+        const result = await this.getBalanceHistoryPage({
+          accessToken,
+          connectedAccountId,
+          currency,
+          fromPostAt,
+          toPostAt,
+          page,
+          pageSize: pageSize || 100,
+        });
+        const enrichedItems = (result.items || []).map((item) => {
+          const statusInfo = AIRWALLEX_TRANSFER_STATUS[item.transaction_type] || {};
+          return {
+            ...item,
+            transaction_global_type: statusInfo.type || null,
+            transaction_global_type_text: statusInfo.text || null,
+            transaction_global_type_description: statusInfo.description || null,
+          };
+        });
+        return callback(null, { data: { ...result, items: enrichedItems } });
+      }
+
+      // Full history with automatic pagination
+      const allItems = [];
+      let cursor = '0';
+      let hasMore = true;
+
+      while (hasMore) {
+        const result = await this.getBalanceHistoryPage({
+          accessToken,
+          connectedAccountId,
+          currency,
+          page: cursor,
+          pageSize: pageSize || 100,
+        });
+
+        const filtered = (result.items || []).filter(
+          (item) => !RESERVE_TYPES.includes(item.transaction_type),
+        ).map((item) => {
+          const statusInfo = AIRWALLEX_TRANSFER_STATUS[item.transaction_type] || {};
+          return {
+            ...item,
+            transaction_global_type: statusInfo.type || null,
+            transaction_global_type_text: statusInfo.text || null,
+            transaction_global_type_description: statusInfo.description || null,
+          };
+        });
+        allItems.push(...filtered);
+
+        if (result.has_more && result.page_after) {
+          cursor = result.page_after;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return callback(null, { data: { total: allItems.length, items: allItems } });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === 'true' && Sentry.captureException(error);
+      console.error('Error fetching transaction history:', error?.response?.data || error.message);
+      const errMsg = error?.response?.data?.message || 'INTERNAL_SERVER_ERROR';
+      return callback(new Error(errMsg));
+    }
+  }
+
   static async getAccountBalance({ userId, i18n }, callback) {
     try {
       const accessToken = await this.getAirWalletxToken();

@@ -865,6 +865,59 @@ router.get('/account-balance', async (req, res) => {
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-transaction-history:
+ *   get:
+ *     summary: Get Airwallex transaction history for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: currency
+ *         schema:
+ *           type: string
+ *           example: ILS
+ *         description: Filter by currency (e.g. ILS, USD)
+ *       - in: query
+ *         name: page_size
+ *         schema:
+ *           type: integer
+ *           default: 100
+ *           example: 100
+ *         description: Number of records per page (default 100)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *           example: "0"
+ *         description: Pagination cursor. Set to "0" for full history beyond the 7-day default. Omit for automatic full-history pagination.
+ *       - in: query
+ *         name: from_post_at
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Start date filter by post date (ISO8601, inclusive)
+ *       - in: query
+ *         name: to_post_at
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: End date filter by post date (ISO8601, exclusive)
+ *     responses:
+ *       200:
+ *         description: Success - Transaction history retrieved
+ */
+router.get('/airwallex-transaction-history', async (req, res) => {
+  const response = await AirwallexPaymentController.getTransactionHistory({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
 export default router;
 
 

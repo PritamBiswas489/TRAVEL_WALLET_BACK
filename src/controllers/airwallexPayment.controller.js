@@ -433,4 +433,45 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async getTransactionHistory(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id;
+    const { currency, from_post_at, to_post_at, page, page_size } = payload || {};
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getTransactionHistory(
+        {
+          userId,
+          i18n,
+          currency,
+          fromPostAt: from_post_at,
+          toPostAt: to_post_at,
+          page,
+          pageSize: page_size ? parseInt(page_size, 10) : undefined,
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || 'FAILED_TO_GET_TRANSACTION_HISTORY'),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__('TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY'),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
 }

@@ -443,5 +443,9 @@
 	"FAILED_TO_GET_GLOBAL_ACCOUNTS": "Failed to get global accounts.",
 	"FAILED_TO_GET_ACCOUNT_BALANCE": "Failed to get account balance.",
 	"[invalid_argument] FILE_NOT_FOUND: NTZiN2NkNWUtYmUxNC00NTE2LTllNGMtZTNjNzU0ZGU2ZmE1LHwsaG9uZ2tvbmcsfCxBaXJ3YWxsZXgtbG9nby5wbmdfMTY0Nzk5NTgwNTIzNw (source: file_id)": "[invalid_argument] FILE_NOT_FOUND: NTZiN2NkNWUtYmUxNC00NTE2LTllNGMtZTNjNzU0ZGU2ZmE1LHwsaG9uZ2tvbmcsfCxBaXJ3YWxsZXgtbG9nby5wbmdfMTY0Nzk5NTgwNTIzNw (source: file_id)",
-	"TESTING_ERROR": "TESTING_ERROR"
+	"TESTING_ERROR": "TESTING_ERROR",
+	"Admin permissions required": "Admin permissions required",
+	"TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY": "TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY",
+	"Invalid page: 1": "Invalid page: 1",
+	"page_size should be greater than minimum page size: 10": "page_size should be greater than minimum page size: 10"
 }
