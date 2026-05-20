@@ -6,6 +6,8 @@ const { Op, User, TransferRequests, WalletTransaction, UserWallet } = db;
 import { handleCallback } from "../libraries/utility.js";
 import NotificationService from "./notification.service.js";
 import moment from "moment";
+import { v4 as uuidv4 } from "uuid"; 
+import AirwallexPaymentService from "./airwallexPayment.service.js";
 
 export default class TransferRequestService {
   static async executeTransferRequest(
@@ -72,6 +74,7 @@ export default class TransferRequestService {
           amount: amount,
           message: message || null,
           status: "pending",
+          uuid: uuidv4(),
         };
       const deviceLocationLatLng = deviceLocation || "";
       if (deviceLocationLatLng) {
@@ -185,128 +188,66 @@ static async acceptRejectTransferRequest(
     }
 
     if (status === "accepted") {
-      const receiverUserDetails = await UserService.getUserDetails(
-        transferRequest.senderId
-      ); // sender will receive money
-      const senderUserDetails = await UserService.getUserDetails(
-        transferRequest.receiverId
-      ); // request receiver will send money
+       
 
-      // 🔒 Lock sender wallet row to prevent race conditions
-      let senderWallet = await UserWallet.findOne({
-        where: {
-          userId: senderUserDetails.id,
-          currency: transferRequest.currency,
-        },
-        transaction: tran,
-        lock: tran.LOCK.UPDATE,
-      });
+      const idWhoWillReceiveMoney = transferRequest.senderId;  //transfer request senderId
+      const idWhoWillSendMoney = transferRequest.receiverId; //transfer request receiverId
 
-      if (!senderWallet) {
-        await tran.rollback();
-        return callback(
-          new Error("YOU_HAVE_NO_WALLET_FOR_REQUEST_CURRENCY"),
-          null
-        );
-      }
-      if (senderWallet.status !== "active" || senderWallet.locked === true) {
-        await tran.rollback();
-        return callback(new Error("CANT_SEND_MONEY"), null);
-      }
-      if (
-        parseFloat(senderWallet.balance) < parseFloat(transferRequest.amount)
-      ) {
-        await tran.rollback();
-        return callback(new Error("INSUFFICIENT_BALANCE"), null);
-      }
+      const amount = transferRequest.amount;
+      const currency = transferRequest.currency;
 
-      const senderOldBalance = parseFloat(senderWallet.balance);
-      const newSenderBalance =
-        senderOldBalance - parseFloat(transferRequest.amount);
+      
 
-      // 🔒 Lock receiver wallet row
-      let receiverWallet = await UserWallet.findOne({
-        where: {
-          userId: receiverUserDetails.id,
-          currency: transferRequest.currency,
-        },
-        transaction: tran,
-        lock: tran.LOCK.UPDATE,
-      });
 
-      const oldReceiverBalance = receiverWallet
-        ? parseFloat(receiverWallet.balance)
-        : 0;
-      const newReceiverBalance =
-        parseFloat(transferRequest.amount) +
-        (receiverWallet ? parseFloat(receiverWallet.balance) : 0);
+       const airwallexBalance = await new Promise((resolve, reject) => {
+              AirwallexPaymentService.getAccountBalance(
+                { userId: idWhoWillSendMoney, i18n },
+                (err, result) => {
+                  if (err) return reject(err);
+                  resolve(result?.data);
+                },
+              );
+            });
 
-      if (!receiverWallet) {
-        receiverWallet = await UserWallet.create(
-          {
-            userId: receiverUserDetails.id,
-            currency: transferRequest.currency,
-            balance: 0,
-          },
-          { transaction: tran }
-        );
-      }
+        
 
-      // Update balances atomically
-      await senderWallet.update(
-        { balance: newSenderBalance },
-        { transaction: tran }
-      );
+        const availableBalance = parseFloat(airwallexBalance?.[currency] ?? 0);
 
-      await receiverWallet.update(
-        { balance: newReceiverBalance },
-        { transaction: tran }
-      );
-      const cty = { status: "approved" };
-      const deviceLocationLatLng = deviceLocation || "";
-      if (deviceLocationLatLng) {
-        const [latitude, longitude] = deviceLocationLatLng.split(",");
-        cty.receiverLatitude = parseFloat(latitude);
-        cty.receiverLongitude = parseFloat(longitude);
-      }
-      await transferRequest.update(
-        cty,
-        { transaction: tran }
-      );
+        if (availableBalance < parseFloat(amount)) {
+          await tran.rollback();
+          return callback(new Error("INSUFFICIENT_FUNDS"), null);
+        }
 
-      const receiverWalletTransaction = await WalletTransaction.create(
-        {
-          userId: receiverUserDetails.id,
-          walletId: receiverWallet.id,
-          type: "credit",
-          paymentAmt: transferRequest.amount,
-          paymentCurrency: transferRequest.currency,
-          oldWalletBalance: oldReceiverBalance,
-          newWalletBalance: newReceiverBalance,
-          transferRequestId: transferRequest.id,
-          description: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_CREDITED", locale: "en" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
-          description_he: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_CREDITED", locale: "he" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
-          status: "completed",
-        },
-        { transaction: tran }
-      );
+        const transferAirWallex = await new Promise((resolve, reject) => {
+          AirwallexPaymentService.transferAirwallexConnectedAccount(
+            {
+              fromWalletId: idWhoWillSendMoney,
+              toWalletId: idWhoWillReceiveMoney,
+              amount: amount,
+              currency: currency,
+              uuid: transferRequest.uuid, // Pass the transfer UUID for idempotency
+              reference:"Travelmoney-transfer-request"
+            },
+            (err, result) => {
+              if (err) return reject(err);
+              resolve(result?.data);
+            },
+          );
+        });
 
-      const senderWalletTransaction = await WalletTransaction.create(
-        {
-          userId: senderUserDetails.id,
-          walletId: senderWallet.id,
-          type: "debit",
-          paymentAmt: transferRequest.amount,
-          paymentCurrency: transferRequest.currency,
-          oldWalletBalance: senderOldBalance,
-          newWalletBalance: newSenderBalance,
-          transferRequestId: transferRequest.id,
-          description: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_DEBITED", locale: "en" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
-          description_he: i18n.__({ phrase: "TRANSFER_REQUEST_ACCEPTED_DEBITED", locale: "he" }, { amount: transferRequest.amount, currency: transferRequest.currency, receiverName: receiverUserDetails.name, receiverPhoneNumber: receiverUserDetails.phoneNumber, senderName: senderUserDetails.name, senderPhoneNumber: senderUserDetails.phoneNumber }),
-          status: "completed",
-        },
-        { transaction: tran }
-      );
+        const cty = {
+          status: "approved",
+          airWallexSubmitData: transferAirWallex,
+        };
+        const deviceLocationLatLng = deviceLocation || "";
+        if (deviceLocationLatLng) {
+          const [latitude, longitude] = deviceLocationLatLng.split(",");
+          cty.receiverLatitude = parseFloat(latitude);
+          cty.receiverLongitude = parseFloat(longitude);
+        }
+        await transferRequest.update(cty, { transaction: tran });
+
+     
 
       await tran.commit();
 
@@ -319,25 +260,11 @@ static async acceptRejectTransferRequest(
         i18n
       );
 
-      const receiverWalletWhoGetAmt = await UserWallet.findOne({
-        where: {
-          userId: receiverUserDetails.id,
-          currency: transferRequest.currency,
-        },
-      });
-      const senderWalletWhoSendAmt = await UserWallet.findOne({
-        where: {
-          userId: senderUserDetails.id,
-          currency: transferRequest.currency,
-        },
-      });
+      
 
       return callback(null, {
         data: {
-          receiverWalletTransaction,
-          senderWalletTransaction,
-          receiverWalletWhoGetAmt,
-          senderWalletWhoSendAmt,
+          transferAirWallex,
           transferRequest: {
             ...transferRequest.toJSON(),
             status: "approved",

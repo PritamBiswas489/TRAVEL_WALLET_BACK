@@ -447,5 +447,8 @@
 	"Admin permissions required": "Admin permissions required",
 	"TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY": "TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY",
 	"Invalid page: 1": "Invalid page: 1",
-	"page_size should be greater than minimum page size: 10": "page_size should be greater than minimum page size: 10"
+	"page_size should be greater than minimum page size: 10": "page_size should be greater than minimum page size: 10",
+	"TEST_ERROR": "TEST_ERROR",
+	"id is invalid": "id is invalid",
+	"TRANSFER_DETAILS_FETCHED_SUCCESSFULLY": "TRANSFER_DETAILS_FETCHED_SUCCESSFULLY"
 }

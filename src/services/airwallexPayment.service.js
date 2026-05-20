@@ -14,7 +14,7 @@ import { getUserKycStatus } from "../libraries/utility.js";
 import { AIRWALLEX_TRANSFER_STATUS } from "../config/airwallexTransferStatus.js";
  
 
-const { Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount, UserKyc } = db;
+const { Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount, UserKyc, Transfer, TransferRequests } = db;
 
 export default class AirwallexPaymentService {
   static async getAirWalletxToken() {
@@ -431,6 +431,7 @@ export default class AirwallexPaymentService {
       if (!poaFileId) {
         return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
       }
+      //frontFileId = "NTZiN2NkNWUtYmUxNC00NTE2LTllNGMtZTNjNzU0ZGU2ZmE1LHwsaG9uZ2tvbmcsfCxBaXJ3YWxsZXgtbG9nby5wbmdfMTY0Nzk5NTgwNTIzNw";
      
       console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
 
@@ -513,6 +514,18 @@ export default class AirwallexPaymentService {
         "Accounts update payload:",
         JSON.stringify(updatePayload, null, 2),
       );
+
+      // Save curl command to file for debugging
+      try {
+        const curlCmd = [
+          `curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/update" \\`,
+          `  -H "Content-Type: application/json" \\`,
+          `  -H "Authorization: Bearer ${accessToken}" \\`,
+          `  -d '${JSON.stringify(updatePayload)}'`,
+        ].join('\n');
+        const curlFilePath = path.resolve('airwallex-kyc-update-curl.txt');
+        fs.writeFileSync(curlFilePath, `# Generated: ${new Date().toISOString()}\n\n${curlCmd}\n`);
+      } catch (_) { /* non-blocking */ }
 
       let updateResponse;
       try {
@@ -1108,6 +1121,7 @@ export default class AirwallexPaymentService {
         amount,
         currency,
         uuid,
+        reference
       } = payload;
 
       const accessToken = await this.getAirWalletxToken();
@@ -1136,7 +1150,7 @@ export default class AirwallexPaymentService {
           `${process.env.AIRWALLEX_API_URL}/api/v1/connected_account_transfers/create`,
           {
             request_id: uuid,
-            reference: 'travelmoney-transfer',
+            reference: reference,
             amount: parseFloat(amount),
             currency,
             reason: "travel",
@@ -1165,6 +1179,78 @@ export default class AirwallexPaymentService {
       const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
       return callback(new Error(errMsg));
     }
+  }
+  static async getAirwallexTransferById(payload, callback) {
+    try {
+      const { transferId, userId } = payload;
+      
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+      const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!kycAccount || !kycAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+      console.log("Fetching Airwallex transfer details for transferId:", transferId);
+      console.log(`Using Airwallex account ${kycAccount.airwallexAccountId} for user ${userId} to fetch transfer details`);
+
+      const response = await axios.get(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/transfers/${transferId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            "x-on-behalf-of": kycAccount.airwallexAccountId,
+          },
+        }
+      );
+
+      return callback(null, { data: response.data });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error fetching Airwallex transfer by ID:", error?.response?.data || error.message);
+      const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
+      return callback(new Error(errMsg));
+    }
+  }
+
+  static async airwallexConnectedTransferWebhook(payload, callback) {
+     
+       if (payload?.data?.request_id) {
+         console.log(
+           "Received webhook for transfer with request_id:",
+           payload.data.request_id,
+         );
+         if (payload.data.reference === "Travelmoney-transfer-request") {
+           console.log(
+             "Received webhook for transfer request with reference 'Travelmoney-transfer-request':",
+             payload,
+           );
+           TransferRequests.update(
+             {
+               airWallexSubmitData: payload.data,
+               airWallexWebhookData: payload,
+             },
+             { where: { uuid: payload.data.request_id } },
+           );
+         }
+         if (payload.data.reference === "Travelmoney-transfer") {
+           console.log(
+             "Received webhook for transfer with reference 'Travelmoney-transfer':",
+             payload,
+           );
+           Transfer.update(
+             {
+               airWallexSubmitData: payload.data,
+               airWallexWebhookData: payload,
+             },
+             { where: { uuid: payload.data.request_id } },
+           );
+         }
+       }
+       callback(null, { data: payload });
+
   }
 //==============================================================================================================================================================//
   static async createMerchantOrderIdRequestId(args, callback) {

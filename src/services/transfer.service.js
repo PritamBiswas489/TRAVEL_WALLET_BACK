@@ -350,9 +350,7 @@ export default class TransferService {
           a_ct.receiverLatitude = parseFloat(latitude);
           a_ct.receiverLongitude = parseFloat(longitude);
         }
-
         //transfer amount from sender to receiver wallet in airwallex
-
         const transferAirWallex = await new Promise((resolve, reject) => {
           AirwallexPaymentService.transferAirwallexConnectedAccount(
             {
@@ -361,6 +359,7 @@ export default class TransferService {
               amount: transfer.amount,
               currency: transfer.currency,
               uuid: transfer.uuid, // Pass the transfer UUID for idempotency
+              reference:"Travelmoney-transfer"
             },
             (err, result) => {
               if (err) return reject(err);

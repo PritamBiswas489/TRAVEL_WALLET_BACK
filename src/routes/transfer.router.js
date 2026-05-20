@@ -287,69 +287,6 @@ router.post("/crypto/accept-reject-transfer", async (req, res, next) => {
 
 /**
  * @swagger
- * /api/auth/transfer/sandbox/airwallex/execute-transfer:
- *   post:
- *     tags:
- *       - Auth-Transfer routes
- *     summary: Sandbox - Execute an Airwallex connected account transfer
- *     security:
- *       - bearerAuth: []
- *       - refreshToken: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               airwallex_transfer_id:
- *                 type: string
- *                 description: Airwallex transfer ID
- *               status:
- *                 type: string
- *                 description: Status of the transfer
- *                 enum:
- *                   - PROCESSING
- *                   - SENT
- *                   - PAID
- *                   - FAILED
- *                   - CANCELLED
- *                   - OVERDUE
- *                 default: PROCESSING
- *             required:
- *               - airwallex_transfer_id
- *               - status
- *     responses:
- *       200:
- *         description: Airwallex transfer executed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *       400:
- *         description: Invalid request data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- */
-router.post("/sandbox/airwallex/execute-transfer", async (req, res, next) => {
-    const response = await TransferController.sandboxExecuteAirwallexTransfer({ headers: req.headers, user: req.user, payload: req.body });
-    res.return(response);
-});
-
-/**
- * @swagger
  * /api/auth/transfer/reject-transfer-by-sender:
  *   post:
  *     tags:

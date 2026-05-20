@@ -918,6 +918,34 @@ router.get('/airwallex-transaction-history', async (req, res) => {
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/get-airwallex-transfer-by-id/{transferId}:
+ *   get:
+ *     summary: Get an Airwallex transfer by transfer ID
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: transferId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The Airwallex transfer ID to retrieve
+ *     responses:
+ *       200:
+ *         description: Success - Transfer details retrieved
+ */
+router.get('/get-airwallex-transfer-by-id/:transferId', async (req, res) => {
+  const response = await AirwallexPaymentController.getAirwallexTransferById({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
 export default router;
 
 

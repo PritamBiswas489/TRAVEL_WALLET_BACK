@@ -13,6 +13,11 @@ export default function TransferRequests(sequelize, DataTypes) {
         type: DataTypes.BIGINT,
         allowNull: false,
       },
+      uuid: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        unique: true,
+      },
       receiverId: {
         type: DataTypes.BIGINT,
         allowNull: false,
@@ -54,6 +59,16 @@ export default function TransferRequests(sequelize, DataTypes) {
       receiverLongitude: {
         type: DataTypes.TEXT,
         allowNull: true,
+      },
+       airWallexSubmitData: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: null,
+      },
+      airWallexWebhookData: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: null,
       },
     },
     {

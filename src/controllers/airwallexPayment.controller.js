@@ -473,5 +473,66 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async getAirwallexTransferById(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id;
+    const { transferId } = payload || {};
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAirwallexTransferById(
+        {
+          userId,
+          transferId
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || 'FAILED_TO_GET_TRANSFER_DETAILS'),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__('TRANSFER_DETAILS_FETCHED_SUCCESSFULLY'),
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async airwallexConnectedTransferWebhook(request) {
+    const { payload } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.airwallexConnectedTransferWebhook(
+        payload,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_CONNECTED_TRANSFER_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Connected transfer webhook processed successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
 
 }

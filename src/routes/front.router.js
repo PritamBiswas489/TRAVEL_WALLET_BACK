@@ -437,6 +437,28 @@ router.post('/airwallex-kyc-webhook', async (req, res, next) => {
 
 });
 
+/**
+ * @swagger
+ * /api/front/airwallex-connected-transfer-webhook:
+ *   post:
+ *     summary: Handle Airwallex connected account transfer webhook events
+ *     tags: [Auth-airwallex-kyc-wallet routes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload sent by Airwallex connected account transfer webhook
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+router.post('/airwallex-connected-transfer-webhook', async (req, res, next) => {
+   const response = await AirwallexPaymentController.airwallexConnectedTransferWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
 
 /**
  * @swagger
