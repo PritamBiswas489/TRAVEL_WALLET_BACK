@@ -226,7 +226,8 @@ static async acceptRejectTransferRequest(
               amount: amount,
               currency: currency,
               uuid: transferRequest.uuid, // Pass the transfer UUID for idempotency
-              reference:"Travelmoney-transfer-request"
+              reference:"Travelmoney-transfer-request",
+              i18n,
             },
             (err, result) => {
               if (err) return reject(err);

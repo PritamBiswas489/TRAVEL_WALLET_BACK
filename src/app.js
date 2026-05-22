@@ -44,6 +44,8 @@ const publicDir =
 const app = express();
 
 
+ 
+
 app.use(express.static(publicDir));
 
 app.use((req, res, next) => {

@@ -359,7 +359,8 @@ export default class TransferService {
               amount: transfer.amount,
               currency: transfer.currency,
               uuid: transfer.uuid, // Pass the transfer UUID for idempotency
-              reference:"Travelmoney-transfer"
+              reference:"Travelmoney-transfer",
+              i18n,
             },
             (err, result) => {
               if (err) return reject(err);

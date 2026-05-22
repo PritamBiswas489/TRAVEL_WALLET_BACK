@@ -1,0 +1,26 @@
+{
+  "id": "d0615a92-f9e2-4273-b91b-5fbadc68335e_deposit.settled",
+  "name": "deposit.settled",
+  "account_id": "acct_aRqzhZHHPhCeRBVGmbjleA",
+  "data": {
+    "amount": 211,
+    "created_at": 1779464340494,
+    "currency": "ILS",
+    "fee": {
+      "amount": 0,
+      "currency": "ILS"
+    },
+    "global_account_id": "6ff30efc-2598-484c-8ee9-ac4339a74292",
+    "id": "d0615a92-f9e2-4273-b91b-5fbadc68335e",
+    "payer": {
+      "name": "John Doe"
+    },
+    "provider_transaction_id": "5487287788",
+    "reference": "REF-001",
+    "settled_at": 1779464342138,
+    "status": "SETTLED",
+    "type": "BANK_TRANSFER"
+  },
+  "created_at": "2026-05-22T15:39:02+0000",
+  "version": "2024-06-14"
+}

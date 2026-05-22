@@ -918,6 +918,47 @@ router.get('/airwallex-transaction-history', async (req, res) => {
 
 
 
+
+/**
+ * @swagger
+ * /api/auth/deposit/wallet-transaction-history:
+ *   get:
+ *     summary: Get wallet transaction history for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of records per page
+ *       - in: query
+ *         name: filter
+ *         schema:
+ *           type: string
+ *           example: sent
+ *         description: Filter transactions by type (e.g. sent, received)
+ *     responses:
+ *       200:
+ *         description: Success - Wallet transaction history retrieved
+ */
+router.get('/wallet-transaction-history', async (req, res) => {
+  const response = await AirwallexPaymentController.getWalletTransactionHistory({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
 /**
  * @swagger
  * /api/auth/deposit/get-airwallex-transfer-by-id/{transferId}:
@@ -944,6 +985,25 @@ router.get('/get-airwallex-transfer-by-id/:transferId', async (req, res) => {
   res.return(response);
 });
 
+
+/**
+ * @swagger
+ * /api/auth/deposit/update-user-transaction-history-table:
+ *   post:
+ *     summary: Update user transaction history table from Airwallex
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - User transaction history table updated
+ */
+router.post("/update-user-transaction-history-table", async (req, res) => {
+  const response = await AirwallexPaymentController.updateUserTransactionHistoryTable({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
 
 
 export default router;

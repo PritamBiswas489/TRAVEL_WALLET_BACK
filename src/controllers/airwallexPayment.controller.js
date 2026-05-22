@@ -129,8 +129,6 @@ export default class AirwallexPaymentController {
     });
   }
 
- 
-
   static async getAndUpdateAirWallexCustomerAccount(request) {
     const {
       headers: { i18n },
@@ -180,9 +178,7 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "FAILED_TO_GET_KYC_DETAILS",
-                ),
+                message: i18n.__(err.message || "FAILED_TO_GET_KYC_DETAILS"),
                 reason: err.message,
               },
             });
@@ -193,7 +189,7 @@ export default class AirwallexPaymentController {
             message: i18n.__("KYC_DETAILS_FETCHED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -233,7 +229,7 @@ export default class AirwallexPaymentController {
       );
     });
   }
-   
+
   static async airwallexKycWebhook(request) {
     const { payload } = request;
     return new Promise((resolve) => {
@@ -303,7 +299,7 @@ export default class AirwallexPaymentController {
             message: "Account status updated successfully",
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -334,43 +330,62 @@ export default class AirwallexPaymentController {
             message: "Verified KYC documents saved successfully",
             error: null,
           });
-        }
-        );
-
-      });
-    }
-    static async sandboxAddDeposit(request) {
-      const {
-        payload,
-        headers: { i18n },
-        user,
-      } = request;
-      const userId = user?.id || 1;
-      const { useId, globalAccountId, amount, payerBankname, payerCountry, payerName, reference, statementRef, status } = payload;
-      return new Promise((resolve) => {
-        AirwallexPaymentService.sandboxAddDeposit(
-          { userId, globalAccountId, amount, payerBankname, payerCountry, payerName, reference, statementRef, status },
-          (err, response) => {
-            if (err) {
-              return resolve({
-                status: 400,
-                data: null,
-                error: {
-                  message: err.message || "FAILED_TO_ADD_DEPOSIT",
-                  reason: err.message,
-                },
-              });
-            }
+        },
+      );
+    });
+  }
+  static async sandboxAddDeposit(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    const {
+      useId,
+      globalAccountId,
+      amount,
+      payerBankname,
+      payerCountry,
+      payerName,
+      reference,
+      statementRef,
+      status,
+    } = payload;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.sandboxAddDeposit(
+        {
+          userId,
+          globalAccountId,
+          amount,
+          payerBankname,
+          payerCountry,
+          payerName,
+          reference,
+          statementRef,
+          status,
+        },
+        (err, response) => {
+          if (err) {
             return resolve({
-              status: 200,
-              data: response.data,
-              message: "Deposit added successfully",
-              error: null,
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_ADD_DEPOSIT",
+                reason: err.message,
+              },
             });
           }
-        );
-      });
-    }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Deposit added successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
 
   static async getGlobalAccounts(request) {
     const {
@@ -387,7 +402,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message || "FAILED_TO_GET_GLOBAL_ACCOUNTS"),
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_GLOBAL_ACCOUNTS",
+                ),
                 reason: err.message,
               },
             });
@@ -417,7 +434,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message || "FAILED_TO_GET_ACCOUNT_BALANCE"),
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_ACCOUNT_BALANCE",
+                ),
                 reason: err.message,
               },
             });
@@ -428,7 +447,7 @@ export default class AirwallexPaymentController {
             message: i18n.__("ACCOUNT_BALANCE_FETCHED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -440,7 +459,8 @@ export default class AirwallexPaymentController {
       payload,
     } = request;
     const userId = user?.id;
-    const { currency, from_post_at, to_post_at, page, page_size } = payload || {};
+    const { currency, from_post_at, to_post_at, page, page_size } =
+      payload || {};
     return new Promise((resolve) => {
       AirwallexPaymentService.getTransactionHistory(
         {
@@ -458,7 +478,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message || 'FAILED_TO_GET_TRANSACTION_HISTORY'),
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_TRANSACTION_HISTORY",
+                ),
                 reason: err.message,
               },
             });
@@ -466,7 +488,7 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__('TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY'),
+            message: i18n.__("TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY"),
             error: null,
           });
         },
@@ -485,7 +507,7 @@ export default class AirwallexPaymentController {
       AirwallexPaymentService.getAirwallexTransferById(
         {
           userId,
-          transferId
+          transferId,
         },
         (err, response) => {
           if (err) {
@@ -493,7 +515,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message || 'FAILED_TO_GET_TRANSFER_DETAILS'),
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_TRANSFER_DETAILS",
+                ),
                 reason: err.message,
               },
             });
@@ -501,10 +525,10 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__('TRANSFER_DETAILS_FETCHED_SUCCESSFULLY'),
+            message: i18n.__("TRANSFER_DETAILS_FETCHED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -519,7 +543,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_PROCESS_CONNECTED_TRANSFER_WEBHOOK",
+                message:
+                  err.message || "FAILED_TO_PROCESS_CONNECTED_TRANSFER_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -528,6 +553,106 @@ export default class AirwallexPaymentController {
             status: 200,
             data: response.data,
             message: "Connected transfer webhook processed successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async updateUserTransactionHistoryTable(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.updateUserTransactionHistoryTable(
+        { userId },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_UPDATE_TRANSACTION_HISTORY",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("TRANSACTION_HISTORY_UPDATED_SUCCESSFULLY"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async getWalletTransactionHistory(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id;
+    const { page, limit, filter } = payload || {};
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getWalletTransactionHistory(
+        {
+          userId,
+          page,
+          limit,
+          filter,
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_WALLET_TRANSACTION_HISTORY",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("WALLET_TRANSACTION_HISTORY_FETCHED_SUCCESSFULLY"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async handleDepositWebhook(request) {
+    const { payload } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleDepositWebhook(
+        payload,
+        (err, response) => {
+
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_DEPOSIT_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Deposit webhook processed successfully",
             error: null,
           });
         }
