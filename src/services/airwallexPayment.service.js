@@ -1686,7 +1686,13 @@ export default class AirwallexPaymentService {
             },
           ],
         });
-      return callback(null, { data: { total: count, transactions: rows } });
+        const formattedRows = rows ? rows.map((row) => {
+          const item = row.toJSON();
+          item.transactionStatus = item.additionalDetails?.jsonData?.data?.status || null;
+          return item;
+        }) : [];
+
+      return callback(null, { data: { total: count, transactions: formattedRows } });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error("Error fetching wallet transaction history:", error);

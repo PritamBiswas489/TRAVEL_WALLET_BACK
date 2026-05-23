@@ -946,8 +946,14 @@ router.get('/airwallex-transaction-history', async (req, res) => {
  *         name: filter
  *         schema:
  *           type: string
- *           example: sent
- *         description: Filter transactions by type (e.g. sent, received)
+ *           enum:
+ *             - all
+ *             - sent
+ *             - received
+ *             - topup
+ *           default: all
+ *           example: all
+ *         description: Filter transactions by type
  *     responses:
  *       200:
  *         description: Success - Wallet transaction history retrieved
