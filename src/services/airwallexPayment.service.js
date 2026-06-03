@@ -15,13 +15,14 @@ import { AIRWALLEX_TRANSFER_STATUS } from "../config/airwallexTransferStatus.js"
  
 
 const { sequelize, Op, User, WalletAirwallexPayments, AirwallexCustomers, AirwallexKycAccount, UserKyc, Transfer, TransferRequests, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails } = db;
-
+const REFRESH_TIMEOUT = 5000; // 5 seconds
 export default class AirwallexPaymentService {
   static async getAirWalletxToken() {
     const apiKey = process.env.AIRWALLEX_API_KEY;
     const clientId = process.env.AIRWALLEX_CLIENT_ID;
     const apiUrl = process.env.AIRWALLEX_API_URL;
     const accountId = process.env.AIRWALLEX_ACCOUNT_ID;
+     
 
     const res = await axios.post(
       `${apiUrl}/api/v1/authentication/login`,
@@ -986,7 +987,7 @@ export default class AirwallexPaymentService {
       );
       setTimeout(() => {
         this.updateUserTransactionHistoryTable({ userId }, () => {});
-      }, 20000);
+      }, REFRESH_TIMEOUT);
       AirwallexUserTransactionAdditionalDetails.create({
         sourceId: response.data.id,
         appTransactionType: "TOPUP",
@@ -1290,13 +1291,13 @@ export default class AirwallexPaymentService {
           { userId: fromWalletId },
           () => {},
         );
-      }, 20000);
+      },  REFRESH_TIMEOUT);
       setTimeout(() => {
         this.updateUserTransactionHistoryTable(
           { userId: toWalletId },
           () => {},
         );
-      }, 20000);
+      },  REFRESH_TIMEOUT);
 
       const senderUserDetails = await UserService.getUserDetails(fromWalletId);
       const receiverUserDetails = await UserService.getUserDetails(toWalletId);
@@ -1665,7 +1666,7 @@ export default class AirwallexPaymentService {
           sourceType: "TRANSFER",
           transactionType: "DC_CREDIT",
         };
-      } else if (filter === "topup") {
+      } else if (filter === "topup") { 
         whereClause = {
           ...whereClause,
           sourceType: "DEPOSIT",
@@ -1699,4 +1700,79 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
+
+  static async getAdminAirwallexWalletBalance(args, callback) {
+    try{
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+      const response = await axios.get(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/balances/current`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      const checkingCurrency = ["ILS"];
+
+      const balanceData = {};
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        response.data.forEach((balance) => {
+          if (checkingCurrency.includes(balance.currency)) {
+            balanceData[balance.currency] = balance.available_amount;
+          }
+        });
+      }
+      return callback(null, { data: balanceData });
+    }catch(error){
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error fetching admin Airwallex wallet balance:", error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+
+    }
+  }
+
+  static async testTransferFromChildAccountToParentAccount(args, callback) {
+    try{
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+      const childAccountId = args.child_account_id;
+      const transferAmount = args.amount;
+      const parentAccountId = process.env.AIRWALLEX_ACCOUNT_ID;
+
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/connected_account_transfers/create`,
+        {
+          request_id: `TEST-TRANSFER-${Date.now()}`,
+          reference: "Test transfer from child to parent",
+          amount: parseFloat(transferAmount),
+          currency: "ILS",
+          reason: "travel",
+          destination: parentAccountId,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            "x-on-behalf-of": childAccountId,
+            "x-api-version": "2024-09-27",
+          },
+        },
+      );
+      return callback(null, { data: response.data });
+    }catch(error){
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error testing transfer from child account to parent account:", error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+
+  }
+   
+
+   
 }

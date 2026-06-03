@@ -9,6 +9,7 @@ import CronTrackService from "../services/crontrack.service.js";
 import FeedbackService from "../services/feedbackService.js";
 import SuggestionService from "../services/suggestionService.js";
 import BugReportService from "../services/bugReportService.js";
+import  AirWallexPaymentService from "../services/airwallexPayment.service.js";
 import moment from "moment";
 const {
   User,
@@ -66,7 +67,7 @@ export default class AdminController {
       }
       const isPasswordValid = await compareHashedStr(
         payload.password,
-        adminUser.password
+        adminUser.password,
       );
       if (!isPasswordValid) {
         return {
@@ -270,7 +271,7 @@ export default class AdminController {
       Object.values(payload).forEach((setting) => {
         InterestRatesService.addInterestRate(
           setting.payment_number,
-          setting.interest_rate
+          setting.interest_rate,
         );
       });
       return {
@@ -335,7 +336,7 @@ export default class AdminController {
       const faq = await FaqService.addFaq(
         payload.question,
         payload.answer,
-        payload.order
+        payload.order,
       );
       if (faq.ERROR) {
         return {
@@ -950,7 +951,7 @@ export default class AdminController {
           },
         ],
       });
-       return {
+      return {
         status: 200,
         data: response.rows,
         pagination: {
@@ -979,7 +980,6 @@ export default class AdminController {
       user,
     } = request;
 
-
     try {
       const { page = 1, limit = 10 } = payload;
       const offset = (page - 1) * limit;
@@ -1001,7 +1001,7 @@ export default class AdminController {
           },
         ],
       });
-       return {
+      return {
         status: 200,
         data: response.rows,
         pagination: {
@@ -1023,12 +1023,11 @@ export default class AdminController {
   }
 
   static async getCambodiaPaymentList(request) {
-     const {
+    const {
       payload,
       headers: { i18n },
       user,
     } = request;
-
 
     try {
       const { page = 1, limit = 10 } = payload;
@@ -1051,7 +1050,7 @@ export default class AdminController {
           },
         ],
       });
-       return {
+      return {
         status: 200,
         data: response.rows,
         pagination: {
@@ -1070,5 +1069,72 @@ export default class AdminController {
         error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
+  }
+
+  static async getAdminAirwallexWalletBalance(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    return new Promise((resolve) => {
+      AirWallexPaymentService.getAdminAirwallexWalletBalance(
+        {},
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "ERROR_FETCHING_WALLET_BALANCE",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("AIRWALLEX_WALLET_BALANCE_FETCHED_SUCCESSFULLY"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async testTransferFromChildAccountToParentAccount(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    return new Promise((resolve) => {
+      AirWallexPaymentService.testTransferFromChildAccountToParentAccount(
+        payload,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "ERROR_PERFORMING_TEST_TRANSFER",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("TEST_TRANSFER_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
   }
 }

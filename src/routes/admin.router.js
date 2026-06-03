@@ -835,4 +835,78 @@ router.get('/cambodia-payment-list', async (req, res, next) => {
     }));
 });
 
+
+/**
+ * @swagger
+ * /api/admin/admin-airwallex-wallet-balance:
+ *   get:
+ *     summary: Get admin Airwallex wallet balance
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Retrieved Airwallex wallet balance
+ *       400:
+ *         description: Bad Request - Invalid parameters
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/admin-airwallex-wallet-balance', async (req, res, next) => {
+    res.return(await AdminController.getAdminAirwallexWalletBalance({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+/**
+ * @swagger
+ * /api/admin/test-transfer-from-child-account-to-parent-account:
+ *   post:
+ *     summary: Test transfer from child account to parent account
+ *     tags:
+ *       - Admin routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - child_account_id
+ *               - amount
+ *             properties:
+ *               child_account_id:
+ *                 type: string
+ *                 example: "ca_abc123"
+ *                 description: The ID of the child account to transfer from
+ *               amount:
+ *                 type: number
+ *                 format: float
+ *                 example: 100.00
+ *                 description: Amount to transfer
+ *     responses:
+ *       200:
+ *         description: Success - Transfer from child account to parent account completed
+ *       400:
+ *         description: Bad Request - Invalid or missing child_account_id
+ *       500:
+ *         description: Internal Server Error
+ */
+router.post('/test-transfer-from-child-account-to-parent-account', async (req, res, next) => {
+    res.return(await AdminController.testTransferFromChildAccountToParentAccount({
+        payload: { ...req.params, ...req.query, ...req.body },
+        headers: req.headers,
+        user: req.user,
+    }));
+});
+
+ 
+
 export default router;
