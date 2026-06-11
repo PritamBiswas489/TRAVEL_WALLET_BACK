@@ -1,0 +1,63 @@
+# Generated: 2026-06-11T09:47:32.098Z
+{
+  "id": "2bff50b8-cc97-49ca-996e-4b64be72492e",
+  "name": "charge.pending",
+  "account_id": "acct_dQ94Ow9BOa2bWhbfWBRm6g",
+  "data": {
+    "amount": 10,
+    "created_at": "2026-06-11T09:47:30+0000",
+    "currency": "ILS",
+    "fee": 0,
+    "id": "ch_rihbU77vNuytKGnzZbR6TQ",
+    "reason": "travel",
+    "reference": "QR_CODE_PAYMENT",
+    "request_id": "dfa25895-9631-467b-9bcd-8c240d099ae5",
+    "source": "acct_aRqzhZHHPhCeRBVGmbjleA",
+    "status": "PENDING",
+    "updated_at": "2026-06-11T09:47:30+0000"
+  },
+  "created_at": "2026-06-11T09:47:30+0000",
+  "version": "2024-06-14"
+}
+# Generated: 2026-06-11T09:47:33.724Z
+{
+  "id": "e991b56d-1de9-4837-a1d7-bd1b8006d1ee",
+  "name": "charge.new",
+  "account_id": "acct_dQ94Ow9BOa2bWhbfWBRm6g",
+  "data": {
+    "amount": 10,
+    "created_at": "2026-06-11T09:47:29+0000",
+    "currency": "ILS",
+    "fee": 0,
+    "id": "ch_rihbU77vNuytKGnzZbR6TQ",
+    "reason": "travel",
+    "reference": "QR_CODE_PAYMENT",
+    "request_id": "dfa25895-9631-467b-9bcd-8c240d099ae5",
+    "source": "acct_aRqzhZHHPhCeRBVGmbjleA",
+    "status": "NEW",
+    "updated_at": "2026-06-11T09:47:29+0000"
+  },
+  "created_at": "2026-06-11T09:47:30+0000",
+  "version": "2024-06-14"
+}
+# Generated: 2026-06-11T09:47:34.698Z
+{
+  "id": "178b3cf7-0d79-4f36-b13b-80964d1bd1a2",
+  "name": "charge.settled",
+  "account_id": "acct_dQ94Ow9BOa2bWhbfWBRm6g",
+  "data": {
+    "amount": 10,
+    "created_at": "2026-06-11T09:47:30+0000",
+    "currency": "ILS",
+    "fee": 0,
+    "id": "ch_rihbU77vNuytKGnzZbR6TQ",
+    "reason": "travel",
+    "reference": "QR_CODE_PAYMENT",
+    "request_id": "dfa25895-9631-467b-9bcd-8c240d099ae5",
+    "source": "acct_aRqzhZHHPhCeRBVGmbjleA",
+    "status": "SETTLED",
+    "updated_at": "2026-06-11T09:47:31+0000"
+  },
+  "created_at": "2026-06-11T09:47:31+0000",
+  "version": "2024-06-14"
+}

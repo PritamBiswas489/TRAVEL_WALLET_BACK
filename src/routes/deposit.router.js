@@ -994,6 +994,142 @@ router.get('/get-airwallex-transfer-by-id/:transferId', async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/deposit/testing/airwallex-transfer-amount-connected-account-to-platform-account:
+ *   post:
+ *     summary: Test transfer between Airwallex connected accounts
+ *     description: Transfers funds from one Airwallex connected account to another using the authenticated user context.
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               accountId:
+ *                 type: string
+ *                 description: Airwallex account ID to use for the transfer
+ *               amount:
+ *                 type: number
+ *                 description: Amount to transfer
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Success - Transfer created
+ */
+router.post('/testing/airwallex-transfer-amount-connected-account-to-platform-account', async (req, res) => {
+  const response = await AirwallexPaymentController.testModeTransferBetweenConnectedAccounts({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+    
+});
+
+
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-qr-payment-transfer-to-platform-wallet:
+ *   post:
+ *     summary: Transfer QR payment amount to platform wallet
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: Amount to transfer
+ *                 example: 100
+ *               paymentCountry:
+ *                 type: string
+ *                 default: "th"
+ *                 description: ISO country code for the payment source country
+ *     responses:
+ *       200:
+ *         description: Success - QR payment transferred to platform wallet
+ */
+router.post('/airwallex-qr-payment-transfer-to-platform-wallet',async (req, res) => {
+  const response = await AirwallexPaymentController.airwallexQrPaymentTransferToPlatformWallet({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-qr-payment-refund-from-platform-wallet-to-connected-account:
+ *   post:
+ *     summary: Refund QR payment from platform wallet to connected account
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: QR payment transfer identifier
+ *     responses:
+ *       200:
+ *         description: Success - QR payment refunded to connected account
+ */
+router.post('/airwallex-qr-payment-refund-from-platform-wallet-to-connected-account', async (req, res) => {
+  const response = await AirwallexPaymentController.airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-qr-payment-details:
+ *   get:
+ *     summary: Get Airwallex QR payment details
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: QR payment identifier
+ *     responses:
+ *       200:
+ *         description: Success - QR payment details retrieved
+ */
+router.get('/airwallex-qr-payment-details', async (req, res) => {
+  const response = await AirwallexPaymentController.getAirwallexQrPaymentDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
+/**
+ * @swagger
  * /api/auth/deposit/update-user-transaction-history-table:
  *   post:
  *     summary: Update user transaction history table from Airwallex
@@ -1010,6 +1146,13 @@ router.post("/update-user-transaction-history-table", async (req, res) => {
   const response = await AirwallexPaymentController.updateUserTransactionHistoryTable({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
+
+
+
+
+
+
+
 
 
 export default router;

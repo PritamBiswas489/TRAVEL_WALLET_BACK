@@ -42,6 +42,10 @@ export default function ThaiPayments(sequelize, DataTypes) {
         allowNull: false,
         defaultValue: 0,
       },
+      airwallex_tran_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
       memo:{
         type: DataTypes.STRING,
         allowNull: true,

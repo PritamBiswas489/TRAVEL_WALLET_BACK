@@ -150,9 +150,10 @@ export default class ThaiPaymentService {
       const { walletCurrency, expenseCatId, paymentParams,  } = payload;
       const latitude = payload.latitude || null;
       const longitude = payload.longitude || null;
-      const amount = paymentParams.amount;
+      const amount = (paymentParams.amount);
       const qrCode = payload.qrCode || null;
       const memo = payload.memo || null;
+      const airwallexTranId = payload.airwallexTranId || null;
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
       });
@@ -167,65 +168,22 @@ export default class ThaiPaymentService {
         await tran.rollback();
         return callback(new Error("INVALID_AMOUNT"), null);
       }
-      const userWallet = await UserWallet.findOne({
-        where: {
-          userId: userId,
-          currency: walletCurrency,
-        },
-        lock: tran.LOCK.UPDATE,
-        transaction: tran,
-      });
-
-      if (!userWallet) {
+      if(!airwallexTranId){
         await tran.rollback();
-        return callback(
-          new Error("USER_WALLET_NOT_FOUND_FOR_SELECTED_CURRENCY"),
-          null,
-        );
+        return callback(new Error("MISSING_AIRWALLEX_TRANSFER_ID"), null);
       }
-      const userWalletBalance = parseFloat(userWallet.balance || 0); // balance in selected currency
-      const convertActualPaymentAmountToSelectedCurrency = await new Promise(
-        (resolve, reject) => {
-          CurrencyService.currencyConverterPaymentCurToWalletCur(
-            "THB",
-            walletCurrency,
-            amount,
-            (err, res) => {
-              if (err) {
-                console.error("Currency conversion error:", err);
-                process.env.SENTRY_ENABLED === "true" &&
-                  Sentry.captureException(
-                    new Error(
-                      "Currency conversion failed during buy expense in Thai Payment Service",
-                    ),
-                  );
-                reject(err);
-              } else {
-                resolve(res);
-              }
-            },
-          );
-        },
-      );
-      const actualPaymentAmountToSelectedCurrency = parseFloat(
-        convertActualPaymentAmountToSelectedCurrency.data
-          .converted_amount_with_delta_percentage,
-      );
-      if (userWalletBalance < actualPaymentAmountToSelectedCurrency) {
-        await tran.rollback();
-        return callback(new Error("INSUFFICIENT_WALLET_BALANCE"), null);
-      }
-
+      
       const insertedPayment = await ThaiPayments.create(
         {
           user_id: userId,
           query_params: paymentParams,
           wallet_currency: walletCurrency,
-          wallet_payment_amt: actualPaymentAmountToSelectedCurrency,
+          wallet_payment_amt: parseFloat(amount),
           expense_cat_id: expenseCatId,
           qr_code: qrCode,
           memo: memo,
           amount: amount,
+          airwallex_tran_id: airwallexTranId,
           latitude,
           longitude,
         },
@@ -245,57 +203,8 @@ export default class ThaiPaymentService {
       }
       insertedPayment.transfer_query_response = result;
       await insertedPayment.save({ transaction: tran });
-
-      const oldWalletBalance = userWalletBalance;
-      const newWalletBalance = parseFloat(
-        (userWalletBalance - actualPaymentAmountToSelectedCurrency).toFixed(6)
-      );
-      userWallet.balance = newWalletBalance;
-      await userWallet.save({ transaction: tran });
-
-      // Log the wallet transaction
-       const walletTransaction = await WalletTransaction.create(
-          {
-            userId: userId,
-            walletId: userWallet.id,
-            type: "debit",
-            paymentAmt: actualPaymentAmountToSelectedCurrency,
-            paymentCurrency: walletCurrency,
-            oldWalletBalance: oldWalletBalance,
-            newWalletBalance: newWalletBalance,
-            thaiPaymentId: insertedPayment.id,
-            description: headers.i18n.__(
-              {
-                phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL",
-                locale: "en",
-              },
-              {
-                amount: actualPaymentAmountToSelectedCurrency,
-                currency: walletCurrency,
-                merchantName:result?.receiverNameEn || "Merchant from thailand",
-                merchantCity:"Thailand",
-                expenseCatName,
-              }
-            ),
-            description_he: headers.i18n.__(
-              {
-                phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL",
-                locale: "he",
-              },
-              {
-                amount: actualPaymentAmountToSelectedCurrency,
-                currency: walletCurrency,
-                merchantName:result?.receiverNameEn || "Merchant from thailand",
-                merchantCity:"Thailand",
-                expenseCatName,
-              }
-            ),
-            status: "completed",
-          },
-          { transaction: tran }
-        );
       await tran.commit();
-      return callback(null, { data: { payment: insertedPayment, transaction: walletTransaction } });
+      return callback(null, { data: { payment: insertedPayment } });
     } catch (e) {
       console.error("Error during transfer processing:", e);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
@@ -347,86 +256,24 @@ export default class ThaiPaymentService {
       if (!confirmResult) {
         return callback(new Error("TRANSFER_CONFIRMATION_FAILED"));
       }
-      
       if (
         confirmResult.data?.code === "0000" ||
         confirmResult.data?.code === "00"
       ) {
         paymentRecord.payment_status = "confirmed";
+         paymentRecord.confirmation_data = confirmResult;
+         await paymentRecord.save();
+         const pt = paymentRecord.toJSON(); 
+         return callback(null, {
+          data: { ...pt , amountInUserWalletCurrency: pt.wallet_payment_amt, walletCurrency: pt.wallet_currency, createdAt: pt.created_at },
+        });
       } else {
         paymentRecord.payment_status = "failed";
-        const tran = await db.sequelize.transaction();
-         const expenseDet = await ExpensesCategories.findOne({
-            where: { id: paymentRecord.expense_cat_id },
-          });
-          const expenseCatName = expenseDet?.title || "General Expense";
-          const userWallet = await UserWallet.findOne({
-            where: {
-              userId: paymentRecord.user_id,
-              currency: paymentRecord.wallet_currency,
-            },
-            lock: tran.LOCK.UPDATE,
-            transaction: tran,
-          });
-          if(userWallet){
-            const oldWalletBalance = parseFloat(userWallet.balance || 0);
-            const amountInUserWalletCurrency =
-                parseFloat(paymentRecord.wallet_payment_amt) || 0;
-            const newWalletBalance = parseFloat(
-                (oldWalletBalance + amountInUserWalletCurrency).toFixed(6)
-            );
-            userWallet.balance = newWalletBalance;
-            await userWallet.save({ transaction: tran });
-
-
-            await WalletTransaction.create(
-            {
-              userId: paymentRecord.user_id,
-              walletId: userWallet.id,
-              type: "credit",
-              paymentAmt: amountInUserWalletCurrency,
-              paymentCurrency: paymentRecord.wallet_currency,
-              oldWalletBalance,
-              newWalletBalance,
-              thaiPaymentId: paymentRecord.id,
-              description: headers.i18n.__(
-                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED2", locale: "en" },
-                {
-                  amount: amountInUserWalletCurrency,
-                  currency: paymentRecord.wallet_currency,
-                  merchantName: paymentRecord.transfer_query_response?.receiverNameEn || "Merchant from thailand",
-                  merchantCity: "Thailand",
-                  expenseCatName,
-                }
-              ),
-              description_he: headers.i18n.__(
-                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED2", locale: "he" },
-                {
-                  amount: amountInUserWalletCurrency,
-                  currency: paymentRecord.wallet_currency,
-                  merchantName: paymentRecord.transfer_query_response?.receiverNameEn || "Merchant from thailand",
-                  merchantCity: "Thailand",
-                  expenseCatName,
-                }
-              ),
-              status: "completed",
-            },
-            { transaction: tran }
-          );
-          await tran.commit();
-          }
-
-
+        paymentRecord.confirmation_data = confirmResult;
+        await paymentRecord.save();
+        return callback(new Error("TRANSFER_CONFIRMATION_FAILED"));
       }
-      paymentRecord.confirmation_data = confirmResult;
-      await paymentRecord.save();
-
-      const pt = paymentRecord.toJSON(); 
-       
-      return callback(null, {
-        data: { ...pt , amountInUserWalletCurrency: pt.wallet_payment_amt, walletCurrency: pt.wallet_currency, createdAt: pt.created_at },
-         
-      });
+     
     } catch (e) {
       console.error("Error during transfer confirmation:", e);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);

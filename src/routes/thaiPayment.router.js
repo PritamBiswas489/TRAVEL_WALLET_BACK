@@ -138,12 +138,18 @@ router.post('/crypto/get-payment-query-data', async (req, res) => {
  *                 type: string
  *                 description: Memo for the payment
  *                 example: "Demo payment"
+ *               airwallexTranId:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Airwallex transfer ID
+ *                 default: null
+ *                 example: null
  *               paymentParams:
  *                 type: object
  *                 description: Payment parameters
  *                 example:
  *                   walletId: "400130009610393"
- *                   amount: 178.22
+ *                   amount: 100.50
  *                   receiverType: "BILLERID"
  *                   receiverValue: "010753600037405"
  *                   billReference1: "000002200660777"

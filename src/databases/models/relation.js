@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -94,6 +94,9 @@ const relation = (db) => {
 
   ThaiPayments.belongsTo(ExpensesCategories, { foreignKey: "expense_cat_id", as: "expenseCategory" });
   ExpensesCategories.hasMany(ThaiPayments, { foreignKey: "expense_cat_id", as: "thaiPayments" });
+
+  ThaiPayments.belongsTo(AirwallexQrCodeTransaction, { foreignKey: "airwallex_tran_id", as: "airwallexQrCodeTransaction" });
+  AirwallexQrCodeTransaction.hasMany(ThaiPayments, { foreignKey: "airwallex_tran_id", as: "thaiPayments" });
 
   ThaiPayments.belongsTo(User, { foreignKey: "user_id", as: "user" });
   User.hasMany(ThaiPayments, { foreignKey: "user_id", as: "thaiPayments" });

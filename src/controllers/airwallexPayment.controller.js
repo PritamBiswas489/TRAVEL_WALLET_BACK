@@ -559,6 +559,44 @@ export default class AirwallexPaymentController {
       );
     });
   }
+
+  static async testModeTransferBetweenConnectedAccounts(request) {
+      const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.testModeTransferBetweenConnectedAccounts(
+        {
+          userId,
+          payload,
+          i18n,
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_TRANSFER_BETWEEN_CONNECTED_ACCOUNTS",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("TRANSFER_BETWEEN_CONNECTED_ACCOUNTS_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
   static async updateUserTransactionHistoryTable(request) {
     const {
       headers: { i18n },
@@ -653,6 +691,145 @@ export default class AirwallexPaymentController {
             status: 200,
             data: response.data,
             message: "Deposit webhook processed successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async airwallexQrPaymentTransferToPlatformWallet(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.airwallexQrPaymentTransferToPlatformWallet(
+        {
+          userId,
+          payload,
+          i18n,
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_TRANSFER_TO_PLATFORM_WALLET",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("TRANSFER_TO_PLATFORM_WALLET_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+   
+  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount(
+        {
+          userId,
+          payload,
+          i18n,
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT_SUCCESSFUL"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async getAirwallexQrPaymentDetails(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+    const userId = user?.id;
+    const { id } = payload || {};
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAirwallexQrPaymentDetails(
+        {
+          userId,
+          chargeId: id,
+        },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_GET_QR_PAYMENT_DETAILS",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("QR_PAYMENT_DETAILS_FETCHED_SUCCESSFULLY"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async handleAirwallexChargesWebhook(request) {
+    const { payload } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleAirwallexChargesWebhook(
+        payload,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_AIRWALLEX_CHARGES_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Airwallex charges webhook processed successfully",
             error: null,
           });
         }
