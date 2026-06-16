@@ -8,6 +8,7 @@ import PisoPayApiService from "./pisoPayApi.service.js";
 import UserService from "./user.service.js";
 import CurrencyService from "./currency.service.js";
 import { getCalculateP2MOrP2PFromQRCode } from "../libraries/utility.js";
+import AirwallexPaymentService from "./airwallexPayment.service.js";
 import { where } from "sequelize";
 const {
   PisoPayTransactionInfos,
@@ -17,8 +18,11 @@ const {
   PisopyPaymentErrorLogs,
   Op,
   fn,
-  col
+  col,
+  AirwallexQrCodeTransaction
 } = db;
+
+
  
 
 
@@ -58,6 +62,7 @@ export default class PhilippinesPaymentService {
           latitude: paymentData.latitude,
           longitude: paymentData.longitude,
           is_fixed_price: paymentData.is_fixed_price,
+          airwallex_tran_id: paymentData.airwallex_tran_id,
         },
         { transaction }
       );
@@ -95,72 +100,32 @@ export default class PhilippinesPaymentService {
       await record.save();
 
       if (["Failed", "Cancelled"].includes(statusValue)) {
-        console.log(
-          `Handling ${statusValue.toLowerCase()} transaction for:`,
-          transaction_info_code
-        );
+         
         const tran = await db.sequelize.transaction();
         try {
-          // throw new Error("Simulated error to test refund logic");
-          //refund wallet
-          const expenseDet = await ExpensesCategories.findOne({
-            where: { id: record.expenseCatId },
-          });
-          const expenseCatName = expenseDet?.title || "General Expense";
+          
+          console.log("========== pisopay callback for failed/cancelled transaction ==========");
+          console.log("Transaction info code:", transaction_info_code);
 
-          const userWallet = await UserWallet.findOne({
-            where: {
-              userId: record.userId,
-              currency: record.walletCurrency,
-            },
-            lock: tran.LOCK.UPDATE,
-            transaction: tran,
-          });
-          if (!userWallet) throw new Error("USER_WALLET_NOT_FOUND");
+          const getAirwallexTransactionId = record?.airwallex_tran_id;
+           //process refund
+          if(getAirwallexTransactionId){
 
-          const oldWalletBalance = parseFloat(userWallet.balance || 0);
-          const amountInUserWalletCurrency =
-            parseFloat(record.amountInUserWalletCurrency) || 0;
-          const newWalletBalance = parseFloat(
-            (oldWalletBalance + amountInUserWalletCurrency).toFixed(6)
-          );
-          userWallet.balance = newWalletBalance;
-          await userWallet.save({ transaction: tran });
-
-          await WalletTransaction.create(
-            {
-              userId: record.userId,
-              walletId: userWallet.id,
-              type: "credit",
-              paymentAmt: amountInUserWalletCurrency,
-              paymentCurrency: record.walletCurrency,
-              oldWalletBalance,
-              newWalletBalance,
-              pisoPayTransactionId: record.id,
-              description: i18n.__(
-                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED2", locale: "en" },
-                {
-                  amount: amountInUserWalletCurrency,
-                  currency: record.walletCurrency,
-                  merchantName: record.merchantName,
-                  merchantCity: record.merchantCity,
-                  expenseCatName,
-                }
-              ),
-              description_he: i18n.__(
-                { phrase: "EXPENSE_PAYMENT_TRANSACTION_FAILED2", locale: "he" },
-                {
-                  amount: amountInUserWalletCurrency,
-                  currency: record.walletCurrency,
-                  merchantName: record.merchantName,
-                  merchantCity: record.merchantCity,
-                  expenseCatName,
-                }
-              ),
-              status: "completed",
-            },
-            { transaction: tran }
-          );
+            AirwallexPaymentService.airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({
+              userId: record?.userId,
+              payload: { id: getAirwallexTransactionId },
+              i18n,
+            }, (err, result) => {
+              if (err) {
+                console.error("Error in refunding QR payment:", err);
+              } else {
+                console.log("Refund successful:", result);
+              }
+            });
+          }
+          
+          
+            
           await tran.commit();
           console.log(
             "Refunded wallet for failed/cancelled transaction:",
@@ -199,6 +164,16 @@ export default class PhilippinesPaymentService {
       const expenseCatId = payload?.expenseCatId || 1;
       const memo = payload?.memo || "Expense payment";
       const is_fixed_price = payload?.is_fixed_price;
+      const airwallex_tran_id = payload?.airwallex_tran_id;
+
+      const airwallexTransaction = await AirwallexQrCodeTransaction.findOne({
+        where: { id: airwallex_tran_id },
+      });
+      if (!airwallexTransaction) {
+        callback(new Error("AIRWALLEX_TRANSACTION_NOT_FOUND"), null);
+        await tran.rollback();
+        return;
+      }
 
       const expenseDet = await ExpensesCategories.findOne({
         where: { id: expenseCatId },
@@ -222,67 +197,6 @@ export default class PhilippinesPaymentService {
         return callback(new Error("MISSING_QR_CODE"), null);
       }
 
-      const userWallet = await UserWallet.findOne({
-        where: {
-          userId: userId,
-          currency: walletCurrency,
-        },
-        lock: tran.LOCK.UPDATE,
-        transaction: tran,
-      });
-
-      if (!userWallet) {
-        await tran.rollback();
-        return callback(
-          new Error("USER_WALLET_NOT_FOUND_FOR_SELECTED_CURRENCY"),
-          null
-        );
-      }
-
-      const userWalletBalance = parseFloat(userWallet.balance || 0); // balance in selected currency
-      const convertActualPaymentAmountToSelectedCurrency = await new Promise(
-        (resolve, reject) => {
-          CurrencyService.currencyConverterPaymentCurToWalletCur(
-            "PHP",
-            walletCurrency,
-            amount,
-            (err, res) => {
-              if (err) {
-                console.error("Currency conversion error:", err);
-                process.env.SENTRY_ENABLED === "true" &&
-                  Sentry.captureException(
-                    new Error(
-                      "Currency converstion failed during buy expense in Pisopay"
-                    )
-                  );
-                reject(err);
-              } else {
-                resolve(res);
-              }
-            }
-          );
-        }
-      );
-      const actualPaymentAmountToSelectedCurrency = parseFloat(
-        convertActualPaymentAmountToSelectedCurrency.data
-          .converted_amount_with_delta_percentage
-      );
-      if (userWalletBalance < actualPaymentAmountToSelectedCurrency) {
-        await tran.rollback();
-        return callback(new Error("INSUFFICIENT_WALLET_BALANCE"), null);
-      }
-      console.log({
-        amount,
-        actualPaymentAmountToSelectedCurrency,
-        walletCurrency,
-        userWalletBalance,
-      });
-      const oldWalletBalance = userWalletBalance;
-      const newWalletBalance = parseFloat(
-        (userWalletBalance - actualPaymentAmountToSelectedCurrency).toFixed(6)
-      );
-      userWallet.balance = newWalletBalance;
-      await userWallet.save({ transaction: tran });
 
       const responseToken = await PisoPayApiService.login();
       if (!responseToken?.token) {
@@ -299,16 +213,7 @@ export default class PhilippinesPaymentService {
           ? expenseDet.title
           : "General Expense";
 
-        console.log(
-          "Proceeding with expense payment. Actual payment amount in PHP:",
-          amount,
-          "which is",
-          actualPaymentAmountToSelectedCurrency,
-          walletCurrency,
-          "User wallet balance:",
-          userWalletBalance,
-          walletCurrency
-        );
+        
         //initiate pisopay transaction
         const initiatePisoPayTransaction = await new Promise(
           (resolve, reject) => {
@@ -335,64 +240,40 @@ export default class PhilippinesPaymentService {
           userId,
           expenseCatId,
           memo,
-          amountInUserWalletCurrency: actualPaymentAmountToSelectedCurrency,
+          amountInUserWalletCurrency: airwallexTransaction.amount,
           walletCurrency,
           merchantName,
           merchantCity,
           qrCodeType,
           latitude: payload?.latitude ?? null,
+          airwallex_tran_id,
           longitude: payload?.longitude ?? null,
           is_fixed_price,
         });
         //track transaction
         const trackedTransaction = await this.trackTransaction(dt, tran);
         const pisoPayTransactionId = trackedTransaction.id;
-
-        //record wallet transaction
-        const walletTransaction = await WalletTransaction.create(
-          {
-            userId: userId,
-            walletId: userWallet.id,
-            type: "debit",
-            paymentAmt: actualPaymentAmountToSelectedCurrency,
-            paymentCurrency: walletCurrency,
-            oldWalletBalance: oldWalletBalance,
-            newWalletBalance: newWalletBalance,
-            pisoPayTransactionId: pisoPayTransactionId,
-            description: i18n.__(
-              {
-                phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL",
-                locale: "en",
-              },
-              {
-                amount: actualPaymentAmountToSelectedCurrency,
-                currency: walletCurrency,
-                merchantName,
-                merchantCity,
-                expenseCatName,
-              }
-            ),
-            description_he: i18n.__(
-              {
-                phrase: "EXPENSE_PAYMENT_TRANSACTION_SUCCESSFUL",
-                locale: "he",
-              },
-              {
-                amount: actualPaymentAmountToSelectedCurrency,
-                currency: walletCurrency,
-                merchantName,
-                merchantCity,
-                expenseCatName,
-              }
-            ),
-            status: "completed",
-          },
-          { transaction: tran }
-        );
-
         await tran.commit();
+
+        //fetch transaction details with category and airwallex details to return in response
+        const pisoPayTransactionDetails = await PisoPayTransactionInfos.findOne({
+          where: { id: pisoPayTransactionId },
+          include: [
+            {
+              model: ExpensesCategories,
+              as: "expenseCategory",
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            },
+            {
+              model: AirwallexQrCodeTransaction,
+              as: "airwallexQrCodeTransaction",
+              attributes: { exclude: ["createdAt", "updatedAt"] },
+            }
+          ],
+        });
+
         return callback(null, {
-          data: { trackedTransaction, walletTransaction },
+          data: { trackTransaction: pisoPayTransactionDetails },
         });
         // Proceed with the expense payment logic using response
       } catch (err) {

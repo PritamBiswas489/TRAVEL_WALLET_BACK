@@ -142,7 +142,17 @@ export default function PisoPayTransactionInfos(sequelize, DataTypes) {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
-      }
+      },
+      airwallex_tran_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "airwallex_qr_code_transaction",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
     },
     {
       tableName: "pisopy_transaction_infos",

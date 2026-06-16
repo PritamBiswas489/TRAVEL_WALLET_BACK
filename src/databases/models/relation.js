@@ -98,6 +98,9 @@ const relation = (db) => {
   ThaiPayments.belongsTo(AirwallexQrCodeTransaction, { foreignKey: "airwallex_tran_id", as: "airwallexQrCodeTransaction" });
   AirwallexQrCodeTransaction.hasMany(ThaiPayments, { foreignKey: "airwallex_tran_id", as: "thaiPayments" });
 
+  PisoPayTransactionInfos.belongsTo(AirwallexQrCodeTransaction, { foreignKey: "airwallex_tran_id", as: "airwallexQrCodeTransaction" });
+  AirwallexQrCodeTransaction.hasMany(PisoPayTransactionInfos, { foreignKey: "airwallex_tran_id", as: "pisopayTransactions" });
+
   ThaiPayments.belongsTo(User, { foreignKey: "user_id", as: "user" });
   User.hasMany(ThaiPayments, { foreignKey: "user_id", as: "thaiPayments" });
 

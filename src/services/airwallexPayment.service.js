@@ -1916,8 +1916,8 @@ export default class AirwallexPaymentService {
       const  { amount , paymentCountry} = payload;
       let tramsferAmt = parseFloat(amount);
       
-      const validCountries = ["th"];
-      const currencies = {"th": "THB", "il": "ILS"};
+      const validCountries = ["th",'ph'];
+      const currencies = {"th": "THB", "ph": "PHP"};
       if(!validCountries.includes(paymentCountry)){
         return callback(new Error("INVALID_PAYMENT_COUNTRY"));
       }
@@ -1989,7 +1989,7 @@ export default class AirwallexPaymentService {
         const postata = {
             request_id: requestId,
             reference: 'QR_CODE_PAYMENT',
-            amount,
+            amount: tramsferAmt,
             currency: 'ILS',
             reason: payload?.reason || "travel",
             source: connectedAccountId,
@@ -2031,8 +2031,7 @@ export default class AirwallexPaymentService {
     }
   }
   static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({userId, payload, i18n}, callback) {
-    console.log("Initiating QR payment refund from platform wallet to connected account for userId:", userId);
-    console.log("Refund payload:", payload);
+
     try{
       const id = payload?.id;
       if(!id){

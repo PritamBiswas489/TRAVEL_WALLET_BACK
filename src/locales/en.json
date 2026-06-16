@@ -464,5 +464,6 @@
 	"QR_TRANSACTION_NOT_SETTLED": "QR_TRANSACTION_NOT_SETTLED",
 	"Account cannot be found.": "Account cannot be found.",
 	"REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT_SUCCESSFUL": "REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT_SUCCESSFUL",
-	"Currency conversion failed": "Currency conversion failed"
+	"Currency conversion failed": "Currency conversion failed",
+	"actualPaymentAmountToSelectedCurrency is not defined": "actualPaymentAmountToSelectedCurrency is not defined"
 }

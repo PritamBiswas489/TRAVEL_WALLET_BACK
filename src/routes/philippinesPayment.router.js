@@ -218,6 +218,12 @@ router.post('/remittance-initiate-transaction', async (req, res, next) => {
  *                 type: boolean
  *                 default: false
  *                 description: Whether the price is fixed
+ *               airwallex_tran_id:
+ *                 type: string
+ *                 nullable: true
+ *                 default: null
+ *                 example: null
+ *                 description: AirWallex transaction ID (optional)
  *             required:
  *               - walletCurrency
  *               - amount
@@ -226,6 +232,7 @@ router.post('/remittance-initiate-transaction', async (req, res, next) => {
  *               - merchantName
  *               - merchantCity
  *               - is_fixed_price
+ *               - airwallex_tran_id
  *     responses:
  *       200:
  *         description: Expense bought successfully
