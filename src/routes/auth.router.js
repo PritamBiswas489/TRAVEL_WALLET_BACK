@@ -18,6 +18,7 @@ import { default as bugReportRouter } from './bugReport.router.js';
 import { default as  favouriteQrCodeRouter} from './favouriteQrCode.router.js';
 import { default as bankTransferRouter } from './bankTransfer.router.js';
 import { default as thaiPaymentRouter } from './thaiPayment.router.js';
+import { default as virtualCardRouter } from './virtualCard.router.js';
 
 
 
@@ -46,4 +47,5 @@ router.use('/bug-reports', bugReportRouter);
 router.use('/favourite', favouriteQrCodeRouter);
 router.use('/bank-transfer', bankTransferRouter);
 router.use('/ipps', thaiPaymentRouter);
+router.use('/virtual-card', virtualCardRouter);
 export default router;

@@ -101,7 +101,16 @@ app.use(
 );
 // app.options("*", cors());
 app.use(compression());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        frameSrc: ["'self'", "https://airwallex.com", "https://*.airwallex.com"],
+      },
+    },
+  })
+);
 app.use(locales);
 app.use((req, res, next) => {
    const defaultHeaders = {

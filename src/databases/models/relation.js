@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -140,6 +140,15 @@ const relation = (db) => {
 
   AirwallexKycAccount.belongsTo(User, { foreignKey: "userId", as: "user" });
   User.hasMany(AirwallexKycAccount, { foreignKey: "userId", as: "airwallexKycAccounts" });
+
+  AirwallexCardholder.belongsTo(User, { foreignKey: "userId", as: "user" });
+  User.hasOne(AirwallexCardholder, { foreignKey: "userId", as: "airwallexCardholders" });
+
+  AirwallexUserDebitCards.belongsTo(User, { foreignKey: "userId", as: "user" });
+  User.hasMany(AirwallexUserDebitCards, { foreignKey: "userId", as: "airwallexUserDebitCards" });
+
+  AirwallexUserDebitCards.belongsTo(AirwallexCardholder, { foreignKey: "cardholderId", targetKey: "cardholderId", as: "cardholder" });
+  AirwallexCardholder.hasMany(AirwallexUserDebitCards, { foreignKey: "cardholderId", sourceKey: "cardholderId", as: "debitCards" });
 
   AirwallexUserTransactionHistory.hasOne(AirwallexUserTransactionAdditionalDetails, { foreignKey: "sourceId", sourceKey: "apiSource", as: "additionalDetails" });
   AirwallexUserTransactionAdditionalDetails.belongsTo(AirwallexUserTransactionHistory, { foreignKey: "sourceId", targetKey: "apiSource", as: "transactionHistory" });
