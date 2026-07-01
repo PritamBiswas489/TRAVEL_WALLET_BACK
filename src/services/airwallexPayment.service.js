@@ -15,6 +15,7 @@ import { AIRWALLEX_TRANSFER_STATUS } from "../config/airwallexTransferStatus.js"
 import CurrencyService from "./currency.service.js";
 import NotificationService from "./notification.service.js";
 import { verifyAirwallexSignature } from "../libraries/utility.js";
+import { get } from "http";
 
 
 const {
@@ -165,11 +166,27 @@ export default class AirwallexPaymentService {
 
   static async getAirWallexKycDetails({ userId, i18n }, callback) {
     try {
-      const getData = await AirwallexKycAccount.findOne({
+      let getData = await AirwallexKycAccount.findOne({
         where: { userId },
       });
       if (!getData) {
         return callback(new Error("AIRWALLEX_KYC_DETAILS_NOT_FOUND"));
+      }
+      if(getData?.status === 'SUBMITTED'){
+        console.log("Action required: Fetching latest Airwallex KYC details for userId:", userId);
+        await new Promise((resolve, reject) => {
+          this.getAndUpdateAirWallexCustomerAccount({ userId, i18n }, (error, result) => {
+            if (error) {
+              console.error("Error fetching and updating Airwallex KYC details:", error);
+            }else{
+              console.log("Successfully fetched and updated Airwallex KYC details:", result);
+            }
+            resolve(); // Resolve the promise regardless of success or failure
+          });
+        });
+        getData = await AirwallexKycAccount.findOne({
+          where: { userId },
+        });
       }
       // console.log("Fetched Airwallex KYC details from DB for userId:", userId, JSON.stringify(getData.toJSON(), null, 2));
       const JSONDATA = getData.toJSON();
