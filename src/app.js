@@ -1,3 +1,4 @@
+import "../instrument.js"; 
 import "./config/environment.js";
 
 import express, { Router, json, urlencoded } from "express";
@@ -16,7 +17,7 @@ import multer from "multer";
 import customReturn from "./middlewares/responseBuilder.js";
 import locales from "./middlewares/locales.js";
 
-import { initializeSentry } from "./config/sentry.config.js";
+ 
 
 // import "./cron/index.js"
 
@@ -80,11 +81,7 @@ app.use((req, res, next) => {
   next();
 });
 
-if (SENTRY_ENABLED === "true") {
-  (async () => {
-    await initializeSentry(SENTRY_DSN);
-  })();
-}
+ 
 app.use(
   cors({
     origin: true,
