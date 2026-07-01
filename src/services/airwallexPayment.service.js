@@ -1477,7 +1477,21 @@ export default class AirwallexPaymentService {
     }
   }
 
-  static async airwallexConnectedTransferWebhook(payload, callback) {
+  static async airwallexConnectedTransferWebhook(payload, headers, callback) {
+
+    const timestamp = headers['x-timestamp'];
+    const signature = headers['x-signature'];
+
+    const rawBody = JSON.stringify(payload).toString('utf8')
+    const secret = process.env.AIRWALLEX_TRANSFER_CONNECTED_ACC_WEBHOOK_SECRET;
+
+    if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+      console.error('Connected transfer webhook signature verification failed');
+      return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+    }
+    console.log("======================================================")
+    console.log("Connected transfer webhook signature verified successfully");
+
     let useId = null;
     if (payload?.data?.request_id) {
       console.log(
@@ -1660,8 +1674,20 @@ export default class AirwallexPaymentService {
 
   }
 
-  static async handleAirwallexChargesWebhook(payload, callback) {
+  static async handleAirwallexChargesWebhook(payload, headers, callback) {
     try {
+      const timestamp = headers['x-timestamp'];
+      const signature = headers['x-signature'];
+      const rawBody = JSON.stringify(payload).toString('utf8');
+      const secret = process.env.AIRWALLEX_CHARGE_WEBHOOK_SECRET;
+
+      if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+        console.error('Charges webhook signature verification failed');
+        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+      }
+      console.log("======================================================")
+      console.log("Charges webhook signature verified successfully");
+
       if (payload?.data?.request_id) {
         if (payload.data.reference === "QR_CODE_PAYMENT") {
           const get = await AirwallexQrCodeTransaction.findOne({

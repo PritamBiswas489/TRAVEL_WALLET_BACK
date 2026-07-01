@@ -533,10 +533,10 @@ export default class AirwallexPaymentController {
     });
   }
   static async airwallexConnectedTransferWebhook(request) {
-    const { payload } = request;
+    const { payload , headers} = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.airwallexConnectedTransferWebhook(
-        payload,
+        payload, headers,
         (err, response) => {
           if (err) {
             return resolve({
@@ -811,10 +811,10 @@ export default class AirwallexPaymentController {
   }
 
   static async handleAirwallexChargesWebhook(request) {
-    const { payload } = request;
+    const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleAirwallexChargesWebhook(
-        payload,
+        payload, headers,
         (err, response) => {
           if (err) {
             return resolve({
