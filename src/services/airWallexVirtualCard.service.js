@@ -361,12 +361,12 @@ export default class AirWallexVirtualCardSerivice {
     }
 
     static async getSensitiveDetails({ userId, payload }, callback) {
-       
+
         console.log('getSensitiveDetails called with userId:', userId, 'and payload:', payload);
         try {
             // Check card exists for this user
             const card = await AirwallexUserDebitCards.findOne({
-                where: {  cardId: payload.cardId }
+                where: { cardId: payload.cardId }
             });
             if (!card) {
                 return callback(new Error("CARD_NOT_FOUND"), null);
@@ -388,7 +388,7 @@ export default class AirWallexVirtualCardSerivice {
 
             const apiUrl = process.env.AIRWALLEX_API_URL;
 
-            // Step 1: Create PAN token instead of directly fetching sensitive details
+            // Step 1: Create PAN token
             const response = await fetch(`${apiUrl}/api/v1/issuing/pantokens/create`, {
                 method: 'POST',
                 headers: {
@@ -400,31 +400,17 @@ export default class AirWallexVirtualCardSerivice {
                     card_id: payload.cardId
                 })
             });
-            const curlCmd = [
-                `curl -X POST "${apiUrl}/api/v1/issuing/pantokens/create" \\`,
-                `  -H "Content-Type: application/json" \\`,
-                `  -H "Authorization: Bearer ${accessToken}" \\`,
-                `  -H "x-on-behalf-of: ${getAirwallexKycAccount.airwallexAccountId}" \\`,
-                `  -d '{"card_id": "${payload.cardId}"}'`
-            ].join('\n');
-            const curlFilePath = path.resolve("airwallex-pan-token-create.txt");
-            fs.writeFileSync(
-                curlFilePath,
-                '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
-            );
 
             if (!response.ok) {
                 const errorResponse = await response.json();
                 return callback(new Error(`PAN token creation failed: ${errorResponse.message}`), null);
             }
 
-
-
             const { token, expires_at } = await response.json();
             console.log('PAN token created successfully:', { token, expires_at });
-            console.log('PAN token fetched, expires at:', expires_at);
 
-            // Step 2: Build the secure iframe URL to return to React Native
+
+            // Step 2: Build hash with ONLY allowlisted CSS properties
             const hash = {
                 token: token,
                 langKey: 'en',
@@ -432,7 +418,6 @@ export default class AirWallexVirtualCardSerivice {
                     '.details': {
                         backgroundColor: '#2a2a2a',
                         color: 'white',
-                        borderRadius: '20px',
                         fontFamily: 'Arial'
                     },
                     '.details__row': {
@@ -448,15 +433,15 @@ export default class AirWallexVirtualCardSerivice {
                     '.details__button svg': { color: 'white' }
                 }
             };
+
             const hashURI = encodeURIComponent(JSON.stringify(hash));
-            const iframeURL = `https://airwallex.com/issuing/pci/v2/${payload.cardId}/details#${hashURI}`;
-
-            return callback(null, `<iframe src="${iframeURL}" width="100%" height="400px" style="border:none;"></iframe>`);
-
+            const iframeURL = `${process.env.AIRWALLEX_DOMAIN}/issuing/pci/v2/${payload.cardId}/details#${hashURI}`;
+            return callback(null, { iframeURL, expires_at });
         } catch (error) {
             process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
             return callback(error, null);
         }
+
     }
 
 

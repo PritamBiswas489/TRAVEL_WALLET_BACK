@@ -212,6 +212,11 @@ export default function AirwallexKycAccount(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: {},
       },
+      webhookData: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       tableName: 'airwallex_kyc_account',

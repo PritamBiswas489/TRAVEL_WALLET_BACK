@@ -101,16 +101,7 @@ app.use(
 );
 // app.options("*", cors());
 app.use(compression());
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        frameSrc: ["'self'", "https://airwallex.com", "https://*.airwallex.com"],
-      },
-    },
-  })
-);
+app.use(helmet());
 app.use(locales);
 app.use((req, res, next) => {
    const defaultHeaders = {
@@ -169,6 +160,13 @@ const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
       }
     : {},
   logging: false,
+});
+
+
+
+app.use((req, res, next) => {
+  console.log("Incoming request path:", req.path, req.method);
+  next();
 });
 
 app.use(bodyParser.json({ limit: "500mb" }));

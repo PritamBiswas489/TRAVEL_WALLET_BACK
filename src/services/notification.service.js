@@ -1,12 +1,14 @@
 import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
-const { Notification, Op, User } = db;
+const { Notification, Op, User , AirwallexKycAccount} = db;
 import PushNotificationService from "./pushNotification.service.js";
 import TransferService from "./transfer.service.js";
 import { getcurrencySymbols } from "../libraries/utility.js";
 import TransferRequestService from "./transferRequest.service.js";
 import moment from "moment";
+import il8n from "../config/i18.config.js";
+ 
 
 export default class NotificationService {
   static async walletTransferNotification(transferId, i18n) {
@@ -802,6 +804,54 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
     } catch (error) {
       console.error("Error fetching pending transfer notifications:", error);
       return null;
+    }
+
+  }
+  static async sendKycStatusNotification(accountId){
+    console.log("Account id", accountId);
+    
+    try{
+      const kycAccount = await AirwallexKycAccount.findOne({ where: { airwallexAccountId: accountId } });
+      if(!kycAccount){
+        console.error("KYC Account not found for id:", accountId);
+        return;
+      }
+      const userId = kycAccount.userId;
+      const user = await User.findByPk(userId);
+      if(!user){
+        console.error("User not found for id:", userId);
+        return;
+      }
+      const language = user.language || "he";
+      const status = kycAccount.status;
+      const messageTitle =  il8n.__({ phrase: "KYC_STATUS_UPDATE_TITLE", locale: language });
+      const messageBody = il8n.__({ phrase: "KYC_STATUS_UPDATE_BODY", locale: language }, { status });
+      const notificationData = await Notification.create({
+        userId,
+        type: "KYC_STATUS_UPDATE",
+        title: messageTitle,
+        message: messageBody,
+        metadata: { accountId, status },
+      });
+      PushNotificationService.sendNotification(
+        {
+          userId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            accountId: String(accountId),
+            action: "KYC_STATUS_UPDATE",
+            status,
+            notificationId: String(notificationData.id),
+          },
+        },
+        (err, res) => {
+          if (err) console.error("Error sending push notification:", err);
+          else console.log("Push notification sent successfully:", res);
+        }
+      );
+    }catch(error){
+      console.error("Error sending KYC status notification:", error);
     }
 
   }

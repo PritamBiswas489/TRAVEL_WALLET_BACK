@@ -13,10 +13,12 @@ import { airwallexKycValidator } from "../validators/airwallexKyc.validator.js";
 import { getUserKycStatus } from "../libraries/utility.js";
 import { AIRWALLEX_TRANSFER_STATUS } from "../config/airwallexTransferStatus.js";
 import CurrencyService from "./currency.service.js";
+import NotificationService from "./notification.service.js";
+import { verifyAirwallexSignature } from "../libraries/utility.js";
 
 
-const { 
-  sequelize, 
+const {
+  sequelize,
   Op,
   User,
   WalletAirwallexPayments,
@@ -122,26 +124,15 @@ export default class AirwallexPaymentService {
     try {
       const accressToken = await this.getAirWalletxToken();
       if (!accressToken) {
-        return {
-          status: 400,
-          data: null,
-          error: {
-            message: i18n.__("AIRWALLEX_TOKEN_NOT_GENERATED"),
-          },
-        };
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
       const getData = await AirwallexKycAccount.findOne({
         where: { userId },
       });
       if (!getData || !getData.airwallexAccountId) {
-        return {
-          status: 404,
-          data: null,
-          error: {
-            message: i18n.__("AIRWALLEX_ACCOUNT_NOT_FOUND"),
-          },
-        };
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
+
       const response = await axios.get(
         `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${getData.airwallexAccountId}`,
         {
@@ -151,6 +142,9 @@ export default class AirwallexPaymentService {
           },
         },
       );
+
+
+
       if (response?.data?.id) {
         await this.saveAirwallexKycAccountDetails({
           accountData: response.data,
@@ -165,14 +159,7 @@ export default class AirwallexPaymentService {
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error("Error updating Airwallex customer account:", error);
-      return {
-        status: 500,
-        data: null,
-        error: {
-          message: i18n.__("INTERNAL_SERVER_ERROR"),
-          reason: error.message,
-        },
-      };
+      return callback(new Error(error?.message || "INTERNAL_SERVER_ERROR"));
     }
   }
 
@@ -210,89 +197,147 @@ export default class AirwallexPaymentService {
     }
   }
   static async saveAirwallexKycAccountDetails({ accountData, userId }) {
-    const ad = accountData?.account_details || {};
-    const individual = ad?.individual_details || {};
-    const customerAgreements = accountData?.customer_agreements || {};
-    const termsAndConditions = customerAgreements?.terms_and_conditions || {};
-    const primaryContact = accountData?.primary_contact || {};
+    try {
+      const ad = accountData?.account_details || {};
+      const individual = ad?.individual_details || {};
+      const customerAgreements = accountData?.customer_agreements || {};
+      const termsAndConditions = customerAgreements?.terms_and_conditions || {};
+      const primaryContact = accountData?.primary_contact || {};
 
-    const mappedData = {
-      userId,
-      // top-level
-      airwallexAccountId: accountData?.id || null,
-      identifier: accountData?.identifier || null,
-      nickname: accountData?.nickname || null,
-      status: accountData?.status || null,
-      viewType: accountData?.view_type || null,
+      const checkObjectOrArrayOrString = (value) => {
+        if (value === null || value === undefined || value === "") {
+          return null;
+        }
 
-      // account_details — legal entity
-      legalEntityId: ad?.legal_entity_id || null,
-      legalEntityIdentifier: ad?.legal_entity_identifier || null,
-      legalEntityType: ad?.legal_entity_type || null,
+        return typeof value === "object"
+          ? JSON.stringify(value)
+          : value;
+      };
 
-      // account_details.attachments
-      additionalFiles: ad?.attachments?.additional_files ?? [],
 
-      // account_details.individual_details
-      firstName: individual?.first_name || null,
-      firstNameEnglish: individual?.first_name_english || null,
-      lastName: individual?.last_name || null,
-      lastNameEnglish: individual?.last_name_english || null,
-      middleName: individual?.middle_name || null,
-      middleNameEnglish: individual?.middle_name_english || null,
-      dateOfBirth: individual?.date_of_birth || null,
-      employer: individual?.employer || null,
-      estimatedMonthlyIncome: individual?.estimated_monthly_income || null,
-      hasMemberHoldingPublicOffice:
-        individual?.has_member_holding_public_office ?? null,
-      hasPriorFinancialInstitutionRefusal:
-        individual?.has_prior_financial_institution_refusal ?? null,
-      liveSelfieFileId: individual?.live_selfie_file_id || null,
-      nationality: individual?.nationality || null,
-      occupation: individual?.occupation || null,
-      otherNames: individual?.other_names || null,
-      personId: individual?.person_id || null,
-      phoneNumber: individual?.phone_number || null,
-      photoHoldingIdentificationFileId:
-        individual?.photo_holding_identification_file_id || null,
-      residentialAddress: individual?.residential_address || null,
-      residentialAddressEnglish:
-        individual?.residential_address_english || null,
-      identifications: individual?.identifications ?? {},
-      accountUsage: individual?.account_usage ?? {},
-      individualDocuments: individual?.attachments?.individual_documents ?? [],
 
-      // business / trustee
-      businessDetails: ad?.business_details || null,
-      businessPersonDetails: ad?.business_person_details ?? [],
-      trusteeDetails: ad?.trustee_details || null,
+      const mappedData = {
+        userId,
 
-      // customer_agreements
-      agreedToDataUsage: customerAgreements?.agreed_to_data_usage ?? null,
-      agreedToTermsAndConditions:
-        customerAgreements?.agreed_to_terms_and_conditions ?? null,
-      serviceAgreementType: termsAndConditions?.service_agreement_type || null,
-      deviceData: termsAndConditions?.device_data ?? {},
+        // Top-level
+        airwallexAccountId: checkObjectOrArrayOrString(accountData?.id) ?? null,
+        identifier: checkObjectOrArrayOrString(accountData?.identifier) ?? null,
+        nickname: checkObjectOrArrayOrString(accountData?.nickname) ?? null,
+        status: checkObjectOrArrayOrString(accountData?.status) ?? null,
+        viewType: checkObjectOrArrayOrString(accountData?.view_type) ?? null,
 
-      // primary_contact
-      primaryContactEmail: primaryContact?.email || null,
-      primaryContactIdentityFiles:
-        primaryContact?.attachments?.identity_files ?? [],
+        // account_details — legal entity
+        legalEntityId: checkObjectOrArrayOrString(ad?.legal_entity_id) ?? null,
+        legalEntityIdentifier:
+          checkObjectOrArrayOrString(ad?.legal_entity_identifier) ?? null,
+        legalEntityType:
+          checkObjectOrArrayOrString(ad?.legal_entity_type) ?? null,
 
-      // Airwallex-side timestamp
-      airwallexCreatedAt: accountData?.created_at || null,
-      userInputData: accountData?.userInputData || null, // store raw user input data for reference
-    };
+        // JSONB
+        additionalFiles: ad?.attachments?.additional_files ?? [],
 
-    const existing = await AirwallexKycAccount.findOne({
-      where: { airwallexAccountId: mappedData.airwallexAccountId },
-    });
+        // individual_details
+        firstName: checkObjectOrArrayOrString(individual?.first_name) ?? null,
+        firstNameEnglish:
+          checkObjectOrArrayOrString(individual?.first_name_english) ?? null,
+        lastName: checkObjectOrArrayOrString(individual?.last_name) ?? null,
+        lastNameEnglish:
+          checkObjectOrArrayOrString(individual?.last_name_english) ?? null,
+        middleName: checkObjectOrArrayOrString(individual?.middle_name) ?? null,
+        middleNameEnglish:
+          checkObjectOrArrayOrString(individual?.middle_name_english) ?? null,
 
-    if (existing) {
-      await existing.update(mappedData);
-      return existing;
-    } else {
-      return await AirwallexKycAccount.create(mappedData);
+        // DATEONLY
+        dateOfBirth: individual?.date_of_birth ?? null,
+
+        employer: checkObjectOrArrayOrString(individual?.employer) ?? null,
+        estimatedMonthlyIncome:
+          checkObjectOrArrayOrString(individual?.estimated_monthly_income) ?? null,
+
+        // BOOLEAN
+        hasMemberHoldingPublicOffice:
+          individual?.has_member_holding_public_office ?? null,
+        hasPriorFinancialInstitutionRefusal:
+          individual?.has_prior_financial_institution_refusal ?? null,
+
+        liveSelfieFileId:
+          checkObjectOrArrayOrString(individual?.live_selfie_file_id) ?? null,
+        nationality: checkObjectOrArrayOrString(individual?.nationality) ?? null,
+        occupation: checkObjectOrArrayOrString(individual?.occupation) ?? null,
+
+        // JSONB
+        otherNames: individual?.other_names ?? null,
+
+        personId: checkObjectOrArrayOrString(individual?.person_id) ?? null,
+        phoneNumber: checkObjectOrArrayOrString(individual?.phone_number) ?? null,
+        photoHoldingIdentificationFileId:
+          checkObjectOrArrayOrString(
+            individual?.photo_holding_identification_file_id
+          ) ?? null,
+
+        // JSONB / TEXT
+        residentialAddress: individual?.residential_address ?? null,
+        residentialAddressEnglish:
+          checkObjectOrArrayOrString(
+            individual?.residential_address_english
+          ) ?? null,
+
+        identifications: individual?.identifications ?? {},
+        accountUsage: individual?.account_usage ?? {},
+        individualDocuments:
+          individual?.attachments?.individual_documents ?? [],
+
+        // business
+        businessDetails: ad?.business_details ?? null,
+        businessPersonDetails: ad?.business_person_details ?? [],
+        trusteeDetails: ad?.trustee_details ?? null,
+
+        // customer_agreements
+        agreedToDataUsage:
+          customerAgreements?.agreed_to_data_usage ?? null,
+        agreedToTermsAndConditions:
+          customerAgreements?.agreed_to_terms_and_conditions ?? null,
+        agreedToBiometricsConsent:
+          customerAgreements?.agreed_to_biometrics_consent ?? null,
+
+        serviceAgreementType:
+          checkObjectOrArrayOrString(
+            termsAndConditions?.service_agreement_type
+          ) ?? null,
+
+        deviceData: termsAndConditions?.device_data ?? {},
+
+        // primary_contact
+        primaryContactEmail:
+          checkObjectOrArrayOrString(primaryContact?.email) ?? null,
+        primaryContactIdentityFiles:
+          primaryContact?.attachments?.identity_files ?? [],
+
+        // DATE
+        airwallexCreatedAt: accountData?.created_at ?? null,
+
+        // JSONB
+        userInputData: accountData?.userInputData ?? {},
+      };
+
+
+
+      const existing = await AirwallexKycAccount.findOne({
+        where: { airwallexAccountId: mappedData.airwallexAccountId },
+      });
+
+      if (existing) {
+        await existing.update(mappedData);
+        return existing;
+      } else {
+        return await AirwallexKycAccount.create(mappedData);
+      }
+    } catch (error) {
+
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      //console.error("Error saving Airwallex KYC account details:", error?.message);
+      throw error;
+
     }
   }
   static async airwallexSubmitKycDocuments(
@@ -302,12 +347,12 @@ export default class AirwallexPaymentService {
     try {
       const [validError, validationResult] =
         await airwallexKycValidator(payload);
-      console.log("KYC validation result:", validationResult);
+      //.log("KYC validation result:", validationResult);
       if (validError) {
         return callback(new Error(validError?.error?.message));
       }
-      console.log("Validated KYC data:", validationResult);
-      console.log("Received files for KYC submission:", files);
+      //console.log("Validated KYC data:", validationResult);
+      //console.log("Received files for KYC submission:", files);
 
       if (!files?.identificationFrontImage?.path) {
         return callback(new Error("IDENTIFICATION_FRONT_IMAGE_REQUIRED"));
@@ -348,7 +393,7 @@ export default class AirwallexPaymentService {
           ]
             .filter(Boolean)
             .join(" ");
-          console.error("Airwallex API Error:", error.response.data);
+          //console.error("Airwallex API Error:", error.response.data);
           return {
             errMsg,
             airwallexError: { code, message, source, trace_id, details },
@@ -459,7 +504,7 @@ export default class AirwallexPaymentService {
       }
       //frontFileId = "NTZiN2NkNWUtYmUxNC00NTE2LTllNGMtZTNjNzU0ZGU2ZmE1LHwsaG9uZ2tvbmcsfCxBaXJ3YWxsZXgtbG9nby5wbmdfMTY0Nzk5NTgwNTIzNw";
 
-      console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
+      //console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
 
       const identificationPayload = (() => {
         const type = validationResult.identificationType;
@@ -542,10 +587,10 @@ export default class AirwallexPaymentService {
         },
       };
 
-      console.log(
-        "Accounts update payload:",
-        JSON.stringify(updatePayload, null, 2),
-      );
+      // console.log(
+      //   "Accounts update payload:",
+      //   JSON.stringify(updatePayload, null, 2),
+      // );
 
       // Save curl command to file for debugging
       try {
@@ -630,7 +675,7 @@ export default class AirwallexPaymentService {
       }
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("Error submitting KYC documents:", error);
+      console.error("Error submitting KYC documents:", error.message);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
@@ -675,8 +720,21 @@ export default class AirwallexPaymentService {
     }
   }
 
-  static async airwallexKycWebhook({ payload }, callback) {
+  static async airwallexKycWebhook({ payload, headers }, callback) {
     console.log("Received Airwallex KYC webhook with payload:", payload);
+    const timestamp = headers['x-timestamp'];
+    const signature = headers['x-signature'];
+
+    const rawBody = JSON.stringify(payload).toString('utf8')
+    const secret = process.env.AIRWALLEX_KYC_WEBHOOK_SECRET;
+
+
+    if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+      console.error('Webhook signature verification failed');
+      return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+    }
+    console.log("======================================================")
+    console.log("Webhook signature verified successfully");
 
     try {
       const accountId = payload?.account_id;
@@ -713,10 +771,18 @@ export default class AirwallexPaymentService {
       }
 
       const userId = kycAccount.userId;
+      const existingWebhookData = Array.isArray(kycAccount.webhookData)
+        ? kycAccount.webhookData
+        : [];
 
       // Update AirwallexKycAccount status only
       await AirwallexKycAccount.update(
-        { status: newStatus },
+        { status: newStatus ,
+          webhookData: [
+            payload,
+            ...existingWebhookData 
+          ] 
+      },
         { where: { airwallexAccountId: accountId } },
       );
 
@@ -725,6 +791,8 @@ export default class AirwallexPaymentService {
         { status: getUserKycStatus(newStatus) },
         { where: { userId, applicantId: accountId } },
       );
+      //========== send push notification to user =================//
+      NotificationService.sendKycStatusNotification(accountId);
 
       console.log(
         `airwallexKycWebhook: updated userId=${userId} to status=${newStatus}`,
@@ -1187,7 +1255,7 @@ export default class AirwallexPaymentService {
   }
 
   static async getAccountBalance({ userId, i18n }, callback) {
-     
+
     try {
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
@@ -1437,15 +1505,15 @@ export default class AirwallexPaymentService {
           { where: { uuid: payload.data.request_id } },
         );
       }
-      if(payload.data.reference === "QR_PAYMMENT_REFUND"){
+      if (payload.data.reference === "QR_PAYMMENT_REFUND") {
         console.log(
           "Received webhook for transfer with reference 'QR_PAYMMENT_REFUND':",
           payload,
         );
-        const get  = await AirwallexQrCodeTransaction.findOne({
+        const get = await AirwallexQrCodeTransaction.findOne({
           where: { id: payload.data.request_id },
         });
-        if(get){
+        if (get) {
           useId = get.userId;
           get.refundWebhookData = [payload.data, ...(get.refundWebhookData || [])];
           get.refundStatus = payload.data.status;
@@ -1563,38 +1631,38 @@ export default class AirwallexPaymentService {
 
   static async handleAirwallexChargesWebhook(payload, callback) {
     try {
-      if(payload?.data?.request_id){
-        if(payload.data.reference === "QR_CODE_PAYMENT"){
-          const get  = await AirwallexQrCodeTransaction.findOne({
+      if (payload?.data?.request_id) {
+        if (payload.data.reference === "QR_CODE_PAYMENT") {
+          const get = await AirwallexQrCodeTransaction.findOne({
             where: { id: payload.data.request_id },
           });
-          if(get){
-            if(get.chargeStatus!== 'SETTLED'){
-               get.chargeStatus = payload.data.status;
-               get.chargeWebhookData = [payload.data, ...(get.chargeWebhookData || [])];
-               await get.save();
-               console.log("Updated QR code transaction with new webhook data and status:", get.id, get.chargeStatus);
+          if (get) {
+            if (get.chargeStatus !== 'SETTLED') {
+              get.chargeStatus = payload.data.status;
+              get.chargeWebhookData = [payload.data, ...(get.chargeWebhookData || [])];
+              await get.save();
+              console.log("Updated QR code transaction with new webhook data and status:", get.id, get.chargeStatus);
 
 
-               const getAirwallexUserTransactionAdditionalDetails = await AirwallexUserTransactionAdditionalDetails.findOne({
-                  where: { sourceId: payload.data.id },
-                });
-                if (getAirwallexUserTransactionAdditionalDetails) {
-                  AirwallexUserTransactionAdditionalDetails.update(
-                    {
-                      jsonData: payload,
-                    },
-                    { where: { sourceId: payload.data.id } },
-                  );
-                }
+              const getAirwallexUserTransactionAdditionalDetails = await AirwallexUserTransactionAdditionalDetails.findOne({
+                where: { sourceId: payload.data.id },
+              });
+              if (getAirwallexUserTransactionAdditionalDetails) {
+                AirwallexUserTransactionAdditionalDetails.update(
+                  {
+                    jsonData: payload,
+                  },
+                  { where: { sourceId: payload.data.id } },
+                );
+              }
 
-               setTimeout(() => {
-              this.updateUserTransactionHistoryTable(
-                { userId: get.userId },
-                () => { },
-              );
-            }, REFRESH_TIMEOUT);
-               return callback(null, { data: payload });
+              setTimeout(() => {
+                this.updateUserTransactionHistoryTable(
+                  { userId: get.userId },
+                  () => { },
+                );
+              }, REFRESH_TIMEOUT);
+              return callback(null, { data: payload });
             }
           }
         }
@@ -1910,15 +1978,15 @@ export default class AirwallexPaymentService {
     }
 
   }
-  static async airwallexQrPaymentTransferToPlatformWallet({userId, payload, i18n}, callback) {
-     
-    try{
-      const  { amount , paymentCountry} = payload;
+  static async airwallexQrPaymentTransferToPlatformWallet({ userId, payload, i18n }, callback) {
+
+    try {
+      const { amount, paymentCountry } = payload;
       let tramsferAmt = parseFloat(amount);
-      
-      const validCountries = ["th",'ph'];
-      const currencies = {"th": "THB", "ph": "PHP"};
-      if(!validCountries.includes(paymentCountry)){
+
+      const validCountries = ["th", 'ph'];
+      const currencies = { "th": "THB", "ph": "PHP" };
+      if (!validCountries.includes(paymentCountry)) {
         return callback(new Error("INVALID_PAYMENT_COUNTRY"));
       }
 
@@ -1945,30 +2013,30 @@ export default class AirwallexPaymentService {
           );
         },
       );
-       tramsferAmt = parseFloat(
+      tramsferAmt = parseFloat(
         convertActualPaymentAmountToSelectedCurrency.data
           .converted_amount_with_delta_percentage,
       );
-  
-    
-    const getAccountBa = await new Promise((resolve, reject) => {
+
+
+      const getAccountBa = await new Promise((resolve, reject) => {
         this.getAccountBalance({ userId: userId, i18n }, (err, result) => {
           if (err) return resolve({});
           resolve(result?.data || {});
         });
       }) || {};
       const currentBalance = getAccountBa?.ILS || 0;
-      if(currentBalance <= 0){
+      if (currentBalance <= 0) {
         return callback(new Error("AIRWALLEX_BALANCE_FETCH_ERROR"));
       }
-      if(tramsferAmt > currentBalance){
+      if (tramsferAmt > currentBalance) {
         return callback(new Error("INSUFFICIENT_BALANCE"));
       }
-      
+
       const airWallexAccont = await AirwallexKycAccount.findOne({
-          where: { userId: userId },
+        where: { userId: userId },
       });
-      if(!airWallexAccont){
+      if (!airWallexAccont) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
       const connectedAccountId = airWallexAccont.airwallexAccountId;
@@ -1983,76 +2051,76 @@ export default class AirwallexPaymentService {
         paymentCountry: paymentCountry || "th",
         status: "PENDING",
       });
-      if(createInitialRecord?.id){
+      if (createInitialRecord?.id) {
         console.log("Created initial QR transaction record with ID:", createInitialRecord.id);
         const requestId = createInitialRecord?.id;
         const postata = {
-            request_id: requestId,
-            reference: 'QR_CODE_PAYMENT',
-            amount: tramsferAmt,
-            currency: 'ILS',
-            reason: payload?.reason || "travel",
-            source: connectedAccountId,
-       };
-       const response = await axios.post(
-        `${process.env.AIRWALLEX_API_URL}/api/v1/charges/create`,
-        postata,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+          request_id: requestId,
+          reference: 'QR_CODE_PAYMENT',
+          amount: tramsferAmt,
+          currency: 'ILS',
+          reason: payload?.reason || "travel",
+          source: connectedAccountId,
+        };
+        const response = await axios.post(
+          `${process.env.AIRWALLEX_API_URL}/api/v1/charges/create`,
+          postata,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
           },
-        },
-      );
-      if(response?.data?.id){
-        createInitialRecord.chargeId = response.data.id;
-        createInitialRecord.chargeStatus = response.data.status || "PENDING";
-        createInitialRecord.chargeWebhookData = [...(createInitialRecord.chargeWebhookData || []), response.data];
-        await createInitialRecord.save();
-        console.log("Updated QR transaction record with charge ID and status:", response.data.id, response.data.status);
+        );
+        if (response?.data?.id) {
+          createInitialRecord.chargeId = response.data.id;
+          createInitialRecord.chargeStatus = response.data.status || "PENDING";
+          createInitialRecord.chargeWebhookData = [...(createInitialRecord.chargeWebhookData || []), response.data];
+          await createInitialRecord.save();
+          console.log("Updated QR transaction record with charge ID and status:", response.data.id, response.data.status);
 
 
-        AirwallexUserTransactionAdditionalDetails.create({
+          AirwallexUserTransactionAdditionalDetails.create({
             sourceId: response.data.id,
             appTransactionType: "QR_CODE_PAYMENT",
             description: "Qr code payment",
             description_he: "תשלום בקוד QR",
-        });
-        return callback(null, { data: createInitialRecord });    
-      }else{
-        return callback(new Error("QR_TRANSACTION_CREATION_FAILED"));
-      }
-      }else{
+          });
+          return callback(null, { data: createInitialRecord });
+        } else {
+          return callback(new Error("QR_TRANSACTION_CREATION_FAILED"));
+        }
+      } else {
         return callback(new Error("QR_TRANSACTION_RECORD_CREATION_FAILED"));
       }
-    }catch(error){
+    } catch (error) {
       console.error("Error in airwallexQrPaymentTransferToPlatformWallet", error?.message || error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({userId, payload, i18n}, callback) {
+  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({ userId, payload, i18n }, callback) {
 
-    try{
+    try {
       const id = payload?.id;
-      if(!id){
+      if (!id) {
         return callback(new Error("INVALID_QR_TRANSACTION_ID"));
       }
       const getTransaction = await AirwallexQrCodeTransaction.findOne({
         where: { id },
       });
-      if(!getTransaction){
+      if (!getTransaction) {
         return callback(new Error("QR_TRANSACTION_NOT_FOUND"));
       }
-      if(getTransaction.chargeStatus !== "SETTLED"){
+      if (getTransaction.chargeStatus !== "SETTLED") {
         return callback(new Error("QR_TRANSACTION_NOT_SETTLED"));
       }
-      if(getTransaction.refundStatus !== 'none'){
+      if (getTransaction.refundStatus !== 'none') {
         return callback(new Error("QR_TRANSACTION_ALREADY_REFUNDED"));
       }
-     const airWallexAccont = await AirwallexKycAccount.findOne({
+      const airWallexAccont = await AirwallexKycAccount.findOne({
         where: { userId: getTransaction.userId },
       });
-      if(!airWallexAccont){
+      if (!airWallexAccont) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
       const connectedAccountId = airWallexAccont.airwallexAccountId;
@@ -2082,47 +2150,47 @@ export default class AirwallexPaymentService {
         },
       );
       console.log("Refund transfer response from Airwallex:", response.data);
-      if(response?.data?.id){
+      if (response?.data?.id) {
         getTransaction.refundStatus = response.data.status || "PENDING";
         getTransaction.refundId = response.data.id;
         getTransaction.refundWebhookData = [...(getTransaction.refundWebhookData || []), response.data];
         await getTransaction.save();
         AirwallexUserTransactionAdditionalDetails.create({
-            sourceId: response.data.id,
-            appTransactionType: "QR_PAYMENT_REFUND",
-            description: "Refund for QR code payment",
-            description_he: "החזר עבור תשלום בקוד QR",
+          sourceId: response.data.id,
+          appTransactionType: "QR_PAYMENT_REFUND",
+          description: "Refund for QR code payment",
+          description_he: "החזר עבור תשלום בקוד QR",
         });
         console.log("Updated QR transaction record with refund ID and status:", response.data.id, response.data.status);
         return callback(null, { data: getTransaction });
 
-      }else{
+      } else {
         return callback(new Error("QR_PAYMENT_REFUND_FAILED"));
       }
-    }catch(error){
+    } catch (error) {
       console.error("Error in airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount", error?.message || error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  
+
   static async getAirwallexQrPaymentDetails({ userId, chargeId }, callback) {
     console.log("Fetching QR payment details for chargeId:", chargeId);
     console.log("UserId for fetching QR payment details:", userId);
-    try{
+    try {
       const get = await AirwallexQrCodeTransaction.findOne({
         where: { id: chargeId },
       });
-      if(get){
+      if (get) {
         return callback(null, { data: get });
-      }else{
+      } else {
         return callback(new Error("QR_TRANSACTION_NOT_FOUND"));
       }
-    }catch(error){
+    } catch (error) {
       console.error("Error in getAirwallexQrPaymentDetails", error?.message || error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-   
+
 
 
 

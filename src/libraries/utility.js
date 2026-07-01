@@ -297,4 +297,19 @@ export const getUserKycStatus = (status) => {
 }
 
 
+export function verifyAirwallexSignature(rawBody, timestamp, signature, secret) {
+  // Step 1: Concatenate timestamp + raw body
+  const valueToDigest = timestamp + rawBody;
+
+  // Step 2: Compute HMAC-SHA256 using your webhook secret
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(valueToDigest)
+    .digest('hex');
+
+  // Step 3: Compare signatures
+  return expectedSignature === signature;
+}
+
+
 

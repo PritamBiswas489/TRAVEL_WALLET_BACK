@@ -476,5 +476,9 @@
 	"SAVE_ALL_CARD_IN_RECORD_FAILED": "SAVE_ALL_CARD_IN_RECORD_FAILED",
 	"GET_ALL_CARD_IN_RECORD_SUCCESSFULLY": "GET_ALL_CARD_IN_RECORD_SUCCESSFULLY",
 	"GET_SENSATIVE_DETAILS_FAILED": "GET_SENSATIVE_DETAILS_FAILED",
-	"GET_SENSATIVE_DETAILS_SUCCESSFULLY": "GET_SENSATIVE_DETAILS_SUCCESSFULLY"
+	"GET_SENSATIVE_DETAILS_SUCCESSFULLY": "GET_SENSATIVE_DETAILS_SUCCESSFULLY",
+	"KYC_STATUS_UPDATE_TITLE": "KYC status updated successfully.",
+	"KYC_STATUS_UPDATE_BODY": "Your KYC status has been updated to {{status}}. Please check your account for more details.",
+	"[invalid_argument] With the current account status, only primary_contact.email and primary_contact.mobile can be updated. (source: status)": "[invalid_argument] With the current account status, only primary_contact.email and primary_contact.mobile can be updated. (source: status)",
+	"string violation: residentialAddressEnglish cannot be an array or an object": "string violation: residentialAddressEnglish cannot be an array or an object"
 }

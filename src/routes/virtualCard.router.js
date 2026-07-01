@@ -165,30 +165,7 @@ router.get('/get-all-card-in-record', async (req, res, next) => {
  */
 router.get('/get-sensitive-details/:cardId', async (req, res, next) => {
   const response = await VirtualCardController.getSensitiveDetails({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.params, ...req.query }, cardId: req.params.cardId });
-  const escapeHtml = (value = '') => value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-
-  const htmlBody = typeof response === 'string'
-    ? response
-    : `<pre>${escapeHtml(JSON.stringify(response, null, 2))}</pre>`;
-  const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Card Details</title>
-  </head>
-  <body>
-    ${htmlBody}
-  </body>
-</html>`;
-
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  return res.status(200).send(html);
+  res.return(response);
 });
 
 export default router;

@@ -1,7 +1,7 @@
-# Generated: 2026-06-24T12:46:10.406Z
+# Generated: 2026-06-24T12:57:24.734Z
 
 curl -X POST "https://api-demo.airwallex.com/api/v1/issuing/pantokens/create" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJraWQiOiJjNDRjODVkMDliMDc0NmNlYTIwZmI4NjZlYzI4YWY3ZSIsImFsZyI6IkhTMjU2In0.eyJ0eXBlIjoiY2xpZW50IiwiZGMiOiJISyIsImRhdGFfY2VudGVyX3JlZ2lvbiI6IkhLIiwiYWNjb3VudF9pZCI6ImU5OThiMWEwLThiMzAtNGRhYi04NjMzLTA4OTZjZjA2NjI5ZiIsImFwaV92ZXJzaW9uIjoiMjAyNC0wNi0xNCIsInBlcm1pc3Npb25zIjpbInI6YXd4Oio6KiIsInc6YXd4Oio6KiJdLCJ0aWVyIjoiUyIsInJhdGVfbGltaXQiOmZhbHNlLCJzdWIiOiIwZmUwNDJjNi0xM2I1LTQ2YjktYTZjYS0wYjBkZWJkOGExNDciLCJleHAiOjE3ODIzMDY5NjgsImlhdCI6MTc4MjMwNTE2OCwianRpIjoiNzlhNzc0MmQtZmVjYy00MjZiLWJmZTItOWRlZGNkZjZjOGMyIn0.U-CBmUEBnq5IBo-E76ftmghkRfgzkRIKfMul2xOVecA" \
+  -H "Authorization: Bearer eyJraWQiOiJjNDRjODVkMDliMDc0NmNlYTIwZmI4NjZlYzI4YWY3ZSIsImFsZyI6IkhTMjU2In0.eyJ0eXBlIjoiY2xpZW50IiwiZGMiOiJISyIsImRhdGFfY2VudGVyX3JlZ2lvbiI6IkhLIiwiYWNjb3VudF9pZCI6ImU5OThiMWEwLThiMzAtNGRhYi04NjMzLTA4OTZjZjA2NjI5ZiIsImFwaV92ZXJzaW9uIjoiMjAyNC0wNi0xNCIsInBlcm1pc3Npb25zIjpbInI6YXd4Oio6KiIsInc6YXd4Oio6KiJdLCJ0aWVyIjoiUyIsInJhdGVfbGltaXQiOmZhbHNlLCJzdWIiOiIwZmUwNDJjNi0xM2I1LTQ2YjktYTZjYS0wYjBkZWJkOGExNDciLCJleHAiOjE3ODIzMDc2NDIsImlhdCI6MTc4MjMwNTg0MiwianRpIjoiNGM0NjM5MGUtZTU1MS00YjIzLTgwOGUtM2E3NjEwOTk2MzYzIn0.FcMvrqav9CrMEfxn2-dT2lOnu2NvLlhy1iEGY8fvLwQ" \
   -H "x-on-behalf-of: acct_aRqzhZHHPhCeRBVGmbjleA" \
-  -d '{"card_id": "a815c019-84d0-4588-9d9f-abcd502b37f6"}'
+  -d '{"card_id": "6a3d2e64-210c-4ad7-9b37-27364beef60d"}'

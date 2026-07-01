@@ -428,5 +428,7 @@
 	"FAILED_TO_UPDATE_ACCOUNT_STATUS": "עדכון סטטוס חשבון נכשל.",
 	"FAILED_TO_ADD_DEPOSIT": "הוספת פיקדון נכשלה.",
 	"FAILED_TO_GET_GLOBAL_ACCOUNTS": "אחזור חשבונות גלובליים נכשל.",
-	"FAILED_TO_GET_ACCOUNT_BALANCE": "אחזור יתרת חשבון נכשל."
+	"FAILED_TO_GET_ACCOUNT_BALANCE": "אחזור יתרת חשבון נכשל.",
+	"KYC_STATUS_UPDATE_TITLE": "סטטוס KYC עודכן",
+	"KYC_STATUS_UPDATE_BODY": "סטטוס ה-KYC שלך עודכן ל-{{status}}. אנא בדוק את חשבונך לפרטים נוספים."
 }
