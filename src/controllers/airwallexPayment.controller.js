@@ -671,10 +671,10 @@ export default class AirwallexPaymentController {
     });
   }
   static async handleDepositWebhook(request) {
-    const { payload } = request;
+    const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleDepositWebhook(
-        payload,
+        payload, headers, 
         (err, response) => {
 
           if (err) {

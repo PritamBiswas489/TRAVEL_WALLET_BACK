@@ -1561,8 +1561,22 @@ export default class AirwallexPaymentService {
     }
     callback(null, { data: payload });
   }
-  static async handleDepositWebhook(payload, callback) {
+  static async handleDepositWebhook(payload, headers, callback) {
     try {
+
+      const timestamp = headers['x-timestamp'];
+      const signature = headers['x-signature'];
+      const rawBody = JSON.stringify(payload).toString('utf8');
+      const secret = process.env.AIRWALLEX_DEPOSIT_WEBHOOK_SECRET;
+
+      if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+        console.error('Deposit webhook signature verification failed');
+        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+      }
+      console.log("======================================================")
+      console.log("Deposit webhook signature verified successfully");
+
+
       if (payload?.data?.id) {
         AirwallexUserTransactionAdditionalDetails.update(
           {
