@@ -836,5 +836,57 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async handleCardHolderWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleCardHolderWebhook(
+        payload, headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_CARDHOLDER_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Cardholder webhook processed successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async handleDebitCardWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleDebitCardWebhook(
+        payload, headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_DEBIT_CARD_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Debit card webhook processed successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
 
 }

@@ -34,9 +34,10 @@ export default class AirWallexVirtualCardSerivice {
         return res?.data?.token || null;
     }
     static async airwallexCreateIndividualCardholder({ userId, payload }, callback) {
+        console.log('airwallexCreateIndividualCardholder called with userId:', userId, 'and payload:', payload);
         try {
             const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            console.log('getAirwallexKycAccount', getAirwallexKycAccount);
+            //console.log('getAirwallexKycAccount', getAirwallexKycAccount);
             if (getAirwallexKycAccount.status === 'ACTIVE') {
                 const chhecking = await AirwallexCardholder.findOne({ where: { userId } });
                 if (chhecking) {
@@ -44,6 +45,7 @@ export default class AirWallexVirtualCardSerivice {
                 }
                 console.log("========================================================");
                 const userKycinputData = getAirwallexKycAccount.userInputData;
+                console.log("Creating individual cardholder for userId:", userId, "with KYC input data:", userKycinputData);
                 const body = {
                     type: 'INDIVIDUAL',
                     email: userKycinputData.email,
@@ -65,6 +67,8 @@ export default class AirWallexVirtualCardSerivice {
                         express_consent_obtained: 'yes',
                     },
                 };
+                console.log("Creating individual cardholder with payload:", body);
+                
                 const accessToken = await this.getAirWalletxToken();
 
                 if (!accessToken) {
@@ -144,7 +148,7 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
             }
             const apiUrl = process.env.AIRWALLEX_API_URL;
-            const response = await fetch(`${apiUrl}/api/v1/issuing/cardholders?email=john.doe@example.com&page_num=0&page_size=100`, {
+            const response = await fetch(`${apiUrl}/api/v1/issuing/cardholders?page_num=0&page_size=100`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
@@ -203,7 +207,9 @@ export default class AirWallexVirtualCardSerivice {
             }
             const deleteResult = await response.json();
             console.log('Cardholder deleted:', deleteResult);
+            AirwallexCardholder.destroy({ where: { cardholderId: payload.cardHolderId } });
             return callback(null, deleteResult);
+            
         } catch (error) {
             process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
             return callback(error, null);
@@ -211,6 +217,7 @@ export default class AirWallexVirtualCardSerivice {
 
     }
     static async airwallexCreateVirtualCard({ userId, payload }, callback) {
+        console.log('airwallexCreateVirtualCard called with userId:', userId, 'and payload:', payload);
         try {
             const getCardholder = await AirwallexCardholder.findOne({ where: { userId } });
             if (!getCardholder) {
@@ -295,6 +302,7 @@ export default class AirWallexVirtualCardSerivice {
     }
 
     static async saveAllCardInRecord({ userId }, callback) {
+        console.log('saveAllCardInRecord called with userId:', userId);
         try {
             const getCardholder = await AirwallexCardholder.findOne({ where: { userId } });
             if (!getCardholder) {

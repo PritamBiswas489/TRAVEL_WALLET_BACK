@@ -511,6 +511,53 @@ router.post('/airwallex-payment-webhook', async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/front/cardholder-webhook:
+ *   post:
+ *     summary: Handle Airwallex cardholder webhook events
+ *     tags: [Auth-airwallex-kyc-wallet routes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload sent by Airwallex cardholder webhook
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+
+router.post('/cardholder-webhook', async (req, res, next) => {
+   const response = await AirwallexPaymentController.handleCardHolderWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/front/airwallex-debit-card-webhook:
+ *   post:
+ *     summary: Handle Airwallex debit card webhook events
+ *     tags: [Auth-airwallex-kyc-wallet routes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payload sent by Airwallex debit card webhook
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+router.post('/airwallex-debit-card-webhook', async (req, res, next) => {
+   const response = await AirwallexPaymentController.handleDebitCardWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+
+/**
+ * @swagger
  * /api/front/airwallex-deposit-webhook:
  *   post:
  *     summary: Handle Airwallex deposit webhook events

@@ -16,6 +16,7 @@ import CurrencyService from "./currency.service.js";
 import NotificationService from "./notification.service.js";
 import { verifyAirwallexSignature } from "../libraries/utility.js";
 import { get } from "http";
+import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 
 
 const {
@@ -30,7 +31,8 @@ const {
   TransferRequests,
   AirwallexUserTransactionHistory,
   AirwallexUserTransactionAdditionalDetails,
-  AirwallexQrCodeTransaction
+  AirwallexQrCodeTransaction,
+  AirwallexCardholder
 } = db;
 const REFRESH_TIMEOUT = 5000; // 5 seconds
 export default class AirwallexPaymentService {
@@ -333,9 +335,10 @@ export default class AirwallexPaymentService {
         // DATE
         airwallexCreatedAt: accountData?.created_at ?? null,
 
-        // JSONB
-        userInputData: accountData?.userInputData ?? {},
       };
+      if(accountData?.userInputData){
+        mappedData.userInputData = accountData?.userInputData;
+      }
 
 
 
@@ -809,7 +812,13 @@ export default class AirwallexPaymentService {
         { where: { userId, applicantId: accountId } },
       );
       //========== send push notification to user =================//
-      NotificationService.sendKycStatusNotification(accountId);
+      try{
+         NotificationService.sendKycStatusNotification(accountId);
+
+      }catch(err){
+        // console.error("Error sending KYC status notification:", err);
+      }
+     
 
       console.log(
         `airwallexKycWebhook: updated userId=${userId} to status=${newStatus}`,
@@ -1606,6 +1615,15 @@ export default class AirwallexPaymentService {
             console.log("Reloading transaction history for userId:", kycAccount.userId);
             this.updateUserTransactionHistoryTable({ userId: kycAccount.userId }, () => { });
           }
+          //======== Start generate card holder =====//
+          AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder({ userId: kycAccount.userId, payload:{} }, (err, result) => {
+            if (err) {
+              console.error("Error creating Airwallex cardholder:", err.message);
+            } else {
+              console.log("Airwallex cardholder created successfully:", result.data);
+            }
+          });
+          //======== End generate card holder =====//
         }
         console.log("Received deposit webhook with payload:", payload);
       }
@@ -2246,6 +2264,100 @@ export default class AirwallexPaymentService {
       console.error("Error in getAirwallexQrPaymentDetails", error?.message || error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
+  }
+  static async handleCardHolderWebhook(payload, headers, callback) {
+    try {
+      const timestamp = headers['x-timestamp'];
+      const signature = headers['x-signature'];
+      const rawBody = JSON.stringify(payload).toString('utf8');
+      const secret = process.env.AIRWALLEX_CARD_HOLDER_WEBHOOk_SECRET;
+
+      if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+        console.error('❌ Card holder webhook signature verification failed');
+        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+      }
+      console.log("======================================================")
+      console.log("✅ Card holder webhook signature verified successfully");
+
+      console.log("📥 Received card holder webhook payload:", payload);
+      console.log("🔍 Checking for cardholder_id in the payload data:", payload?.data?.cardholder_id);
+      if (payload?.data?.cardholder_id) {
+        const getCardHolder = await AirwallexCardholder.findOne({
+          where: { cardholderId: payload.data.cardholder_id },
+        });
+        if (getCardHolder) {
+          getCardHolder.webhookData = [payload.data, ...(getCardHolder.webhookData || [])];
+          getCardHolder.status = payload.data.status || getCardHolder.status;
+          await getCardHolder.save();
+          console.log("📝 Updated card holder record with new webhook data and status:", getCardHolder.cardholderId, getCardHolder.status);
+          if(getCardHolder.status === "READY" && getCardHolder.firstVirtualCardApplied === false) {
+            console.log("🚀 Card holder is READY and firstVirtualCardApplied is false. Creating Airwallex virtual card for userId:", getCardHolder.userId);
+            AirWallexVirtualCardSerivice.airwallexCreateVirtualCard({ userId: getCardHolder.userId, payload:{} }, (err, result) => {
+              if (err) {
+                console.error("❌ Error creating Airwallex virtual card:", err.message);
+              } else {
+                getCardHolder.firstVirtualCardApplied = true;
+                getCardHolder.save();
+                console.log("✅ Airwallex virtual card created successfully:", result.data);
+              }
+            });
+          }
+        } else {
+          console.log("⚠️ No matching card holder found for cardholder_id:", payload.data.cardholder_id);
+        }
+        
+
+
+      }
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("❌ Error handling card holder webhook:", error?.message || error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+    return callback(null, { data: payload });
+  }
+  static async handleDebitCardWebhook(payload, headers, callback) {
+    try {
+      const timestamp = headers['x-timestamp'];
+      const signature = headers['x-signature'];
+      const rawBody = JSON.stringify(payload).toString('utf8');
+      const secret = process.env.AIRWALLEX_DEBIT_CARD_WEBHOOK_SECRET;
+
+      if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+        console.error('❌ Debit card webhook signature verification failed');
+        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+      }
+      console.log("======================================================")
+      console.log("✅ Debit card webhook signature verified successfully");
+
+      console.log("📥 Received debit card webhook payload:", payload);
+      // Add your logic to handle the debit card webhook payload here
+      if(payload?.account_id){
+        const getKycAccount = await AirwallexKycAccount.findOne({
+          where: { airwallexAccountId: payload.account_id },
+        });
+        if(getKycAccount){
+           const userid = getKycAccount.userId;
+           console.log("🔍 Found KYC account for account_id:", payload.account_id, "with userId:", userid);
+           // You can add more logic here to update the user's transaction history or perform other actions based on the webhook payload
+           AirWallexVirtualCardSerivice.saveAllCardInRecord({ userId: userid }, (err, result) => {
+            if (err) {
+              console.error("❌ Error saving card records:", err.message);
+            } else {
+              console.log("✅ Card records saved successfully for userId:", userid);
+            }
+          });
+        }
+           
+      }
+      
+
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("❌ Error handling debit card webhook:", error?.message || error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+    return callback(null, { data: payload });
   }
 
 

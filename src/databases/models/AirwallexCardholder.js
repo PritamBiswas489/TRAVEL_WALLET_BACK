@@ -69,6 +69,16 @@ export default function AirwallexCardholder(sequelize, DataTypes) {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
+			webhookData: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+				defaultValue: null,
+			},
+			firstVirtualCardApplied: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: false,
+			},
 		},
 		{
 			tableName: 'airwallex_card_holders',
