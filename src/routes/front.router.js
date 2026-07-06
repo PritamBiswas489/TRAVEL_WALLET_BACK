@@ -16,6 +16,7 @@ import multer from 'multer';
 import DecodeQrCodeService from '../services/decodeQrCode.service.js';
 import BankTransferPaymentController from '../controllers/bankTransferPayment.controller.js';
 import AirwallexPaymentController from '../controllers/airwallexPayment.controller.js';
+ 
 import { countryCodes } from '../config/countries.js';
 
 router.use(trackIpAddressDeviceId);
@@ -414,73 +415,10 @@ router.post('/bank-transfer-payment-webhook', async (req, res, next) => {
 });
 
 
-/**
- * @swagger
- * /api/front/airwallex-kyc-webhook:
- *   post:
- *     summary: Handle Airwallex KYC webhook events
- *     tags: [Auth-airwallex-kyc-wallet routes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: Payload sent by Airwallex KYC webhook
- *     responses:
- *       200:
- *         description: Webhook received successfully
- */
-router.post('/airwallex-kyc-webhook', async (req, res, next) => {
-   const response = await AirwallexPaymentController.airwallexKycWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   res.return(response);
-
-});
-
-/**
- * @swagger
- * /api/front/airwallex-connected-transfer-webhook:
- *   post:
- *     summary: Handle Airwallex connected account transfer webhook events
- *     tags: [Auth-airwallex-kyc-wallet routes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: Payload sent by Airwallex connected account transfer webhook
- *     responses:
- *       200:
- *         description: Webhook received successfully
- */
-router.post('/airwallex-connected-transfer-webhook', async (req, res, next) => {
-   const response = await AirwallexPaymentController.airwallexConnectedTransferWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   res.return(response);
-});
 
 
-/**
- * @swagger
- * /api/front/airwallex-charges-webhook:
- *   post:
- *     summary: Handle Airwallex charges webhook events
- *     tags: [Auth-airwallex-kyc-wallet routes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: Payload sent by Airwallex charges webhook
- *     responses:
- *       200:
- *         description: Webhook received successfully
- */
-router.post('/airwallex-charges-webhook', async (req, res, next) => {
-   const response = await AirwallexPaymentController.handleAirwallexChargesWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   res.return(response);
-});
+
+
 
 
 /**
@@ -509,59 +447,13 @@ router.post('/airwallex-payment-webhook', async (req, res, next) => {
 });
 
 
-/**
- * @swagger
- * /api/front/cardholder-webhook:
- *   post:
- *     summary: Handle Airwallex cardholder webhook events
- *     tags: [Auth-airwallex-kyc-wallet routes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: Payload sent by Airwallex cardholder webhook
- *     responses:
- *       200:
- *         description: Webhook received successfully
- */
-
-router.post('/cardholder-webhook', async (req, res, next) => {
-   const response = await AirwallexPaymentController.handleCardHolderWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   res.return(response);
-});
-
 
 /**
  * @swagger
- * /api/front/airwallex-debit-card-webhook:
+ * /api/front/airwallex-main-global-webhook:
  *   post:
- *     summary: Handle Airwallex debit card webhook events
- *     tags: [Auth-airwallex-kyc-wallet routes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: Payload sent by Airwallex debit card webhook
- *     responses:
- *       200:
- *         description: Webhook received successfully
- */
-router.post('/airwallex-debit-card-webhook', async (req, res, next) => {
-   const response = await AirwallexPaymentController.handleDebitCardWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   res.return(response);
-});
-
-
-/**
- * @swagger
- * /api/front/airwallex-deposit-webhook:
- *   post:
- *     summary: Handle Airwallex deposit webhook events
- *     tags: [Auth-airwallex-kyc-wallet routes]
+ *     summary: Handle Airwallex main global webhook events
+ *     tags: [AirWallex-global-webhook]
  *     requestBody:
  *       required: true
  *       content:
@@ -573,9 +465,55 @@ router.post('/airwallex-debit-card-webhook', async (req, res, next) => {
  *       200:
  *         description: Webhook received successfully
  */
-router.post('/airwallex-deposit-webhook', async (req, res, next) => {
-   const response = await AirwallexPaymentController.handleDepositWebhook({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
-   res.return(response);
+router.post('/airwallex-main-global-webhook', async (req, res, next) => {
+   try{
+   const payload = { ...req.params, ...req.query, ...req.body };
+   console.log('Received Airwallex main global webhook:', payload);
+   const kycEventNames = ['account.connected', 'account.submitted', 'account.action_required', 'account.active', 'account.suspended'];
+   const depositEventNames = ['deposit.rejected', 'deposit.settled', 'deposit.reversed', 'deposit.pending'];
+   const transferEventNames = ['transfer.new', 'transfer.settled', 'transfer.pending', 'transfer.suspended', 'transfer.failed'];
+   const chargesWebhookEventNames = ['charge.new', 'charge.pending', 'charge.settled', 'charge.suspended', 'charge.failed'];
+   const cardholderWebhookEventNames = ['issuing.cardholder.pending', 'issuing.cardholder.incomplete', 'issuing.cardholder.ready', 'issuing.cardholder.disabled', 'issuing.cardholder.deleted'];
+   const debitCardWebhookEventNames = ['issuing.card.modified', 'issuing.card.pending', 'issuing.card.failed', 'issuing.card.inactive', 'issuing.card.active', 'issuing.card.lost', 'issuing.card.stolen', 'issuing.card.closed', 'issuing.card.blocked', 'issuing.card.expired', 'issuing.card.low_remaining_transaction_limit'];
+   const cardTransactionsWebhookEventNames = ['issuing.transaction.succeeded','issuing.transaction.failed'];
+   if(kycEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.airwallexKycWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+   else if(depositEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.handleDepositWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+   else if(transferEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.airwallexConnectedTransferWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+   else if(chargesWebhookEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.handleAirwallexChargesWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+   else if(cardholderWebhookEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.handleCardHolderWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+   else if(debitCardWebhookEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.handleDebitCardWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+   else if(cardTransactionsWebhookEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.handleCardTransactionsWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }
+
+   console.log('XXXXXX Received Airwallex main global webhook but event not matched:', payload);
+   return res.status(200).json({ message: 'Webhook received successfully but event not matched' });
+  }catch(error) {
+   console.error('Error handling Airwallex main global webhook:', error);
+   if (res.headersSent) {
+      return next(error);
+   }
+   return res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 router.use('/login',loginRouter)

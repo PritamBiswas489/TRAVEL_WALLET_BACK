@@ -9,6 +9,7 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import AirwallexPaymentService from "../services/airwallexPayment.service.js";
 
+
 export default class AirwallexPaymentController {
   static async createMerchantOrderIdRequestId(request) {
     const {
@@ -882,6 +883,32 @@ export default class AirwallexPaymentController {
             status: 200,
             data: response.data,
             message: "Debit card webhook processed successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async handleCardTransactionsWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleCardTransactionsWebhook(
+        payload, headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_CARD_TRANSACTIONS_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Card transactions webhook processed successfully",
             error: null,
           });
         }

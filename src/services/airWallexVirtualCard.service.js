@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
-const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards } = db;
+const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards, AirwallexCardTransactions } = db;
 
 export default class AirWallexVirtualCardSerivice {
     static async getAirWalletxToken() {
@@ -327,8 +327,11 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error(`Get cards failed: ${errorResponse.message}`), null);
             }
             const cardsData = await response.json();
+            console.log('Cards fetched:', cardsData);
+            const cardIds = [];
             if (cardsData?.items && cardsData?.items.length > 0) {
                 for (const card of cardsData.items) {
+                    cardIds.push(card.card_id);
                     const existingCard = await AirwallexUserDebitCards.findOne({ where: { cardId: card.card_id } });
                     if (!existingCard) {
                         await AirwallexUserDebitCards.create({
@@ -350,6 +353,17 @@ export default class AirWallexVirtualCardSerivice {
                         });
                     }
                 }
+            }
+            // Delete cards that are no longer present in the Airwallex response
+            if(cardIds.length > 0){
+                await AirwallexUserDebitCards.destroy({
+                    where: {
+                        userId: userId,
+                        cardId: {
+                            [db.Sequelize.Op.notIn]: cardIds,
+                        },
+                    },
+                });
             }
             return callback(null, cardsData);
         } catch (error) {
@@ -451,8 +465,278 @@ export default class AirWallexVirtualCardSerivice {
         }
 
     }
+    //update card status
+    static async updateCardStatus({ userId, payload }, callback) {
+        console.log('updateCardStatus called with userId:', userId, 'and payload:', payload);
+        try{
+            const cardId = payload.cardId;
+            const newStatus = payload?.status;
+            if(!cardId){
+                return callback(new Error("CARD_ID_NOT_PROVIDED"), null);
+            }
+            if(!newStatus || !['ACTIVE', 'INACTIVE', 'CLOSED'].includes(newStatus)){
+                return callback(new Error("INVALID_CARD_STATUS"), null);
+            }
+            const card = await AirwallexUserDebitCards.findOne({ where: { cardId, userId } });
+            if (!card) {
+                return callback(new Error("CARD_NOT_FOUND"), null);
+            }
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!getAirwallexKycAccount) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const response = await fetch(`${apiUrl}/api/v1/issuing/cards/${cardId}/update`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                },
+                body: JSON.stringify({ card_status: newStatus })
+            });
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                return callback(new Error(`Update card status failed: ${errorResponse.message}`), null);
+            }
+            const updatedCardData = await response.json();
+            if(updatedCardData?.card_status){
+                console.log("Updated card status from Airwallex: ", updatedCardData.card_status);
+                if(updatedCardData.card_status === 'CLOSED'){
+                    await AirwallexUserDebitCards.destroy({ where: { cardId, userId } });
+                    console.log("Card deleted from record as it is canceled");
+                }else{
+                    console.log("Card updated Status ", updatedCardData.card_status);
+                    card.cardStatus = updatedCardData.card_status;
+                    await card.save();
+                }
+            }
+            console.log('Card status updated successfully:', updatedCardData);
+            return callback(null, updatedCardData);
+        }catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+    //get card limit
+     
+    static async getCardLimit({ userId, payload }, callback) {
+        console.log('getCardLimit called with userId:', userId, 'and payload:', payload);
+        try {
+            const cardId = payload?.cardId || payload?.card_id;
+            if (!cardId) {
+                return callback(new Error("CARD_ID_NOT_PROVIDED"), null);
+            }
+
+            const card = await AirwallexUserDebitCards.findOne({ where: { cardId, userId } });
+            if (!card) {
+                return callback(new Error("CARD_NOT_FOUND"), null);
+            }
+
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+
+            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!getAirwallexKycAccount) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const response = await fetch(`${apiUrl}/api/v1/issuing/cards/${cardId}/limits`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                },
+            });
+
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                return callback(new Error(`Get card limit failed: ${errorResponse.message}`), null);
+            }
+
+            const limitData = await response.json();
+            return callback(null, limitData);
+        } catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+    static async updateCardLimit({ userId, payload }, callback) {
+       try{
+        const {cardId, PER_TRANSACTION, DAILY, WEEKLY, MONTHLY, ALL_TIME} = payload;
+        if(!cardId){
+            return callback(new Error("CARD_ID_NOT_PROVIDED"), null);
+        }
+        const card = await AirwallexUserDebitCards.findOne({ where: { cardId, userId } });
+        if (!card) {
+            return callback(new Error("CARD_NOT_FOUND"), null);
+        }
+        const accessToken = await this.getAirWalletxToken();
+        if (!accessToken) {
+            return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+        }
+        const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+        if (!getAirwallexKycAccount) {
+            return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+        }
+        const apiUrl = process.env.AIRWALLEX_API_URL;
+        const response = await fetch(`${apiUrl}/api/v1/issuing/cards/${cardId}/update`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+            },
+            body: JSON.stringify({
+                authorization_controls: {
+                    transaction_limits: {
+                        currency: 'USD',
+                        limits: [
+                            ...(PER_TRANSACTION ? [{ amount: PER_TRANSACTION, interval: 'PER_TRANSACTION' }] : []),
+                            ...(DAILY ? [{ amount: DAILY, interval: 'DAILY' }] : []),
+                            ...(WEEKLY ? [{ amount: WEEKLY, interval: 'WEEKLY' }] : []),
+                            ...(MONTHLY ? [{ amount: MONTHLY, interval: 'MONTHLY' }] : []),
+                            ...((ALL_TIME ) ? [{ amount: ALL_TIME , interval: 'ALL_TIME' }] : []),
+                        ],
+                    },
+                },
+            }),
+        });
+        if (!response.ok) {
+            const errorResponse = await response.json();
+            return callback(new Error(`Update card limit failed: ${errorResponse.message}`), null);
+        }
+        const updatedLimitData = await response.json();
+        console.log('Card limit updated successfully:', updatedLimitData);
+        return callback(null, updatedLimitData);
+       }catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        } 
+    }
+    static async testingCreateTransactionForTheProvidedCard({ userId, payload }, callback) {
+        console.log('testingCreateTransactionForTheProvidedCard called with userId:', userId, 'and payload:', payload);
+        try {
+            const { card_number, transaction_amount, transaction_currency, merchant_category_code, merchant_info } = payload;
+
+            if (!card_number || transaction_amount === undefined || !transaction_currency || !merchant_category_code || !merchant_info) {
+                return callback(new Error('MISSING_REQUIRED_FIELDS'), null);
+            }
+
+            const token = await this.getAirWalletxToken();
+            if (!token) {
+                return callback(new Error('AIRWALLEX_ACCESS_TOKEN_NOT_FOUND'), null);
+            }
+            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!getAirwallexKycAccount) {
+                return callback(new Error('AIRWALLEX_KYC_ACCOUNT_NOT_FOUND'), null);
+            }
 
 
+            const apiBaseUrl = process.env.AIRWALLEX_API_URL || 'https://api-demo.airwallex.com';
+            const response = await axios.post(
+                `${apiBaseUrl}/api/v1/simulation/issuing/create`,
+                {
+                    card_number,
+                    transaction_amount,
+                    transaction_currency,
+                    merchant_category_code,
+                    merchant_info,
+                    single_phase: true,
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                        'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                    },
+                },
+            );
+            console.log('Simulation transaction created successfully:', response.data);
 
+            return callback(null, response?.data || null);
+        } catch (error) {
+            process.env.SENTRY_ENABLED === 'true' && Sentry.captureException(error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'SIMULATION_TRANSACTION_FAILED';
+            return callback(new Error(errorMessage), null);
+        }
+    }
 
+    static async getCardTransactionList({ userId, payload }, callback) {
+        try{
+            const {page_num = 0, page_size = 10 } = payload;
+            const aurwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if(!aurwallexKycAccount){
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const response = await fetch(`${apiUrl}/api/v1/issuing/transactions?page_num=${page_num}&page_size=${page_size}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    'x-on-behalf-of': aurwallexKycAccount.airwallexAccountId,
+                },
+            });
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                return callback(new Error(`Get card transaction list failed: ${errorResponse.message}`), null);
+            }
+            const transactionListData = await response.json();
+            return callback(null, transactionListData);
+
+        }catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+
+    static async getUserCardTransactionList({ userId, payload }, callback) {
+        try{
+            console.log('getUserCardTransactionList called with userId:', userId, 'and payload:', payload);
+            const {limit = 20 , page = 1} = payload;
+            if(!payload?.card_ids || !Array.isArray(payload.card_ids) || payload.card_ids.length === 0){
+               const userCards = await AirwallexUserDebitCards.findAll({ where: { userId } });
+               if(!userCards || userCards.length === 0){
+                return callback(new Error("USER_HAS_NO_CARDS"), null);
+               }
+               payload.card_ids = userCards.map(card => card.cardId);
+            }
+
+            if(!payload?.card_ids || !Array.isArray(payload.card_ids) || payload.card_ids.length === 0) {
+                return callback(new Error("CARD_IDS_NOT_PROVIDED"), null);
+            }
+            const getCardtransactions = await AirwallexCardTransactions.findAndCountAll({
+                where: {
+                    cardId: {
+                        [db.Sequelize.Op.in]: payload.card_ids
+                    }
+                },
+                order: [['createdAt', 'DESC']],
+                limit: limit,
+                offset: (page - 1) * limit
+            });
+            return callback(null, {
+                total: getCardtransactions.count,
+                page: page,
+                limit: limit,
+                transactions: getCardtransactions.rows
+            });
+        }catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
 }

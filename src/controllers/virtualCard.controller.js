@@ -165,4 +165,143 @@ export default class VirtualCardController {
       })   
     });
   }
+  static async updateCardStatus({ headers, user, payload}) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.updateCardStatus({userId, payload},(error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("UPDATE_CARD_STATUS_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve(response);
+        }
+      })   
+    });
+  }
+  static async getCardLimit({ headers, user, payload}) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.getCardLimit({userId, payload},(error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("GET_CARD_LIMIT_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("GET_CARD_LIMIT_SUCCESSFULLY"),
+            error: {},
+          });
+        }
+      })   
+    });
+  }
+  static async updateCardLimit({ headers, user, payload}) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.updateCardLimit({userId, payload},(error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("UPDATE_CARD_LIMIT_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("UPDATE_CARD_LIMIT_SUCCESSFULLY"),
+            error: {},
+          });
+        }
+      })   
+    });
+  }
+  static async testingCreateTransactionForTheProvidedCard({ headers, user, payload}) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.testingCreateTransactionForTheProvidedCard({userId, payload},(error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("CREATE_TRANSACTION_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("CREATE_TRANSACTION_SUCCESSFULLY"),
+            error: {},
+          });
+        }
+      })   
+    });
+  }
+  static async getCardTransactionList({ headers, user, payload}) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.getCardTransactionList({userId, payload},(error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("GET_CARD_TRANSACTION_LIST_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("GET_CARD_TRANSACTION_LIST_SUCCESSFULLY"),
+            error: {},
+          });
+        }
+      })   
+    });
+  }
+  static async getUserCardTransactionList({ headers, user, payload}) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.getUserCardTransactionList({userId, payload},(error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("GET_USER_CARD_TRANSACTION_LIST_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("GET_USER_CARD_TRANSACTION_LIST_SUCCESSFULLY"),
+            error: {},
+          });
+        }
+      })   
+    });
+  }
 }

@@ -481,5 +481,13 @@
 	"KYC_STATUS_UPDATE_BODY": "Your KYC status has been updated to {{status}}. Please check your account for more details.",
 	"[invalid_argument] With the current account status, only primary_contact.email and primary_contact.mobile can be updated. (source: status)": "[invalid_argument] With the current account status, only primary_contact.email and primary_contact.mobile can be updated. (source: status)",
 	"string violation: residentialAddressEnglish cannot be an array or an object": "string violation: residentialAddressEnglish cannot be an array or an object",
-	"GET_CARDHOLDERS_FAILED": "GET_CARDHOLDERS_FAILED"
+	"GET_CARDHOLDERS_FAILED": "GET_CARDHOLDERS_FAILED",
+	"UPDATE_CARD_STATUS_FAILED": "UPDATE_CARD_STATUS_FAILED",
+	"CREATE_TRANSACTION_FAILED": "CREATE_TRANSACTION_FAILED",
+	"CREATE_TRANSACTION_SUCCESSFULLY": "CREATE_TRANSACTION_SUCCESSFULLY",
+	"GET_CARD_LIMIT_SUCCESSFULLY": "GET_CARD_LIMIT_SUCCESSFULLY",
+	"GET_CARD_TRANSACTION_LIST_SUCCESSFULLY": "GET_CARD_TRANSACTION_LIST_SUCCESSFULLY",
+	"DELETE_CARDHOLDER_FAILED": "DELETE_CARDHOLDER_FAILED",
+	"GET_USER_CARD_TRANSACTION_LIST_FAILED": "GET_USER_CARD_TRANSACTION_LIST_FAILED",
+	"GET_USER_CARD_TRANSACTION_LIST_SUCCESSFULLY": "GET_USER_CARD_TRANSACTION_LIST_SUCCESSFULLY"
 }
