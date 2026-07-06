@@ -422,9 +422,11 @@ export default class AirWallexVirtualCardSerivice {
                     card_id: payload.cardId
                 })
             });
+            
 
             if (!response.ok) {
                 const errorResponse = await response.json();
+                console.error('PAN token creation failed:', errorResponse);
                 return callback(new Error(`PAN token creation failed: ${errorResponse.message}`), null);
             }
 
