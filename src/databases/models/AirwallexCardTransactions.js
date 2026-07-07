@@ -12,6 +12,11 @@ export default function AirwallexCardTransactions(sequelize, DataTypes) {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
+			userId: {
+				type: DataTypes.BIGINT,
+				allowNull: true,
+				field: "user_id",
+			},
 			authCode: {
 				type: DataTypes.STRING,
 				allowNull: true,
@@ -150,6 +155,10 @@ export default function AirwallexCardTransactions(sequelize, DataTypes) {
 				{
 					name: "idx_airwallex_card_transactions_cardId",
 					fields: ["cardId"],
+				},
+				{
+					name: "idx_airwallex_card_transactions_user_id",
+					fields: ["user_id"],
 				},
 				{
 					name: "idx_airwallex_card_transactions_status_transactionDate",

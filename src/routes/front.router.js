@@ -476,6 +476,18 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
    const cardholderWebhookEventNames = ['issuing.cardholder.pending', 'issuing.cardholder.incomplete', 'issuing.cardholder.ready', 'issuing.cardholder.disabled', 'issuing.cardholder.deleted'];
    const debitCardWebhookEventNames = ['issuing.card.modified', 'issuing.card.pending', 'issuing.card.failed', 'issuing.card.inactive', 'issuing.card.active', 'issuing.card.lost', 'issuing.card.stolen', 'issuing.card.closed', 'issuing.card.blocked', 'issuing.card.expired', 'issuing.card.low_remaining_transaction_limit'];
    const cardTransactionsWebhookEventNames = ['issuing.transaction.succeeded','issuing.transaction.failed'];
+   const transactionDisputeWebhookEventNames = [
+      'issuing.transaction_dispute.created',
+      'issuing.transaction_dispute.submitted',
+      'issuing.transaction_dispute.accepted',
+      'issuing.transaction_dispute.rejected',
+      'issuing.transaction_dispute.modified',
+      'issuing.transaction_dispute.expired',
+      'issuing.transaction_dispute.canceled',
+      'issuing.transaction_dispute.won',
+      'issuing.transaction_dispute.lost'
+
+   ];
    if(kycEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.airwallexKycWebhook({ payload, headers: req.headers });
       return res.return(response);
@@ -502,6 +514,9 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
    }
    else if(cardTransactionsWebhookEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.handleCardTransactionsWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }else if(transactionDisputeWebhookEventNames.includes(payload?.name)) {
+      const response = await AirwallexPaymentController.handleTransactionDisputeWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
 

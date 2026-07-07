@@ -2385,13 +2385,23 @@ export default class AirwallexPaymentService {
       const transactionPayload = payload?.data || payload || {};
       const merchant = transactionPayload?.merchant || {};
       const riskDetails = transactionPayload?.risk_details || {};
+       
 
       if (!transactionPayload?.transaction_id || !transactionPayload?.card_id) {
         console.warn("⚠️ Missing required transaction_id or card_id in card transactions webhook payload");
         return callback(null, { data: payload });
       }
 
+      let userId = null;
+      if (payload?.account_id) {
+        const kycAccount = await AirwallexKycAccount.findOne({
+          where: { airwallexAccountId: payload.account_id },
+        });
+        userId = kycAccount?.userId || null;
+      }
+
       const mappedData = {
+        userId,
         acquiringInstitutionIdentifier: transactionPayload?.acquiring_institution_identifier || null,
         authCode: transactionPayload?.auth_code || null,
         billingAmount: transactionPayload?.billing_amount ?? null,
@@ -2445,4 +2455,5 @@ export default class AirwallexPaymentService {
     }
     return callback(null, { data: payload });
   }
+  
 }

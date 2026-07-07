@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import AirwallexPaymentService from "../services/airwallexPayment.service.js";
+import AirWallexVirtualCardSerivice from "../services/airWallexVirtualCard.service.js";
 
 
 export default class AirwallexPaymentController {
@@ -909,6 +910,32 @@ export default class AirwallexPaymentController {
             status: 200,
             data: response.data,
             message: "Card transactions webhook processed successfully",
+            error: null,
+          });
+        }
+      );
+    });
+  }
+  static async handleTransactionDisputeWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirWallexVirtualCardSerivice.handleTransactionDisputeWebhook(
+        payload, headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_PROCESS_TRANSACTION_DISPUTE_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Transaction dispute webhook processed successfully",
             error: null,
           });
         }

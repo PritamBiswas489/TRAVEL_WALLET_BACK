@@ -1,7 +1,28 @@
 import '../config/environment.js';
 import express from 'express';
+import multer from 'multer';
 import VirtualCardController from '../controllers/virtualCard.controller.js';
 const router = express.Router();
+const disputeEvidenceUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    const isImage = file.mimetype.startsWith('image/');
+    const isAllowedDocument = allowedMimeTypes.includes(file.mimetype);
+
+    if (isImage || isAllowedDocument) {
+      cb(null, true);
+      return;
+    }
+
+    cb(new Error('Only image, PDF, and document files are allowed'));
+  }
+});
 
 
 
@@ -97,6 +118,8 @@ router.post('/create-virtual-card', async (req, res, next) => {
   const response = await VirtualCardController.airwallexCreateVirtualCard({ headers: req.headers, user: req.user, payload: req.body });
   res.return(response);
 });
+
+
 
 
 /**
@@ -406,6 +429,187 @@ router.get('/card-transaction-list', async (req, res, next) => {
  */
 router.get('/user-get-card-transaction-list', async (req, res, next) => {
   const response = await VirtualCardController.getUserCardTransactionList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/virtual-card/transaction-dispute:
+ *   post:
+ *     summary: Raise a dispute for a card transaction
+ *     tags:
+ *       - Auth-airwallex-virtual-card routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               evidence_files:
+ *                 type: array
+ *                 description: Supporting evidence files for the dispute
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               notes:
+ *                 type: string
+ *                 description: Explanation for why the cardholder is disputing the transaction
+ *                 default: ''
+ *               reason:
+ *                 type: string
+ *                 description: Reason for raising the dispute
+ *                 enum:
+ *                   - SUSPECTED_FRAUD
+ *                   - UNAUTHORIZED_TRANSACTION
+ *                   - DUPLICATED_TRANSACTION
+ *                   - PAID_BY_OTHER_MEANS
+ *                   - GOODS_SERVICE_NOT_AS_DESCRIBED
+ *                   - GOODS_DAMAGED
+ *                   - GOODS_SERVICE_NOT_RECEIVED
+ *                   - REFUND_UNPROCESSED
+ *                   - GOODS_SERVICE_CANCELED
+ *                   - RECURRING_CANCELED
+ *                   - OTHER
+ *               transaction_id:
+ *                 type: string
+ *                 description: UUID of the transaction being disputed
+ *                 default: ''
+ *           encoding:
+ *             evidence_files:
+ *               style: form
+ *               explode: true
+ *     responses:
+ *       200:
+ *         description: Transaction dispute submitted successfully
+ */
+router.post('/transaction-dispute', disputeEvidenceUpload.array('evidence_files', 10), async (req, res, next) => {
+  const payload = {
+    ...req.body,
+    notes: req.body?.notes ?? '',
+    reference: req.body?.reference ?? '',
+    evidence_files: req.files?.length ? req.files : (req.body?.evidence_files ?? '')
+  };
+  const response = await VirtualCardController.transactionDispute({ headers: req.headers, user: req.user, payload });
+  res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/auth/virtual-card/transaction-dispute-update:
+ *   post:
+ *     summary: Update an existing transaction dispute
+ *     tags:
+ *       - Auth-airwallex-virtual-card routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - dispute_id
+ *             properties:
+ *               dispute_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: UUID of the dispute to update
+ *               evidence_files:
+ *                 type: array
+ *                 description: Supporting evidence files to attach
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes for the dispute update
+ *                 default: ''
+ *               reason:
+ *                 type: string
+ *                 description: Optional reason update
+ *                 enum:
+ *                   - SUSPECTED_FRAUD
+ *                   - UNAUTHORIZED_TRANSACTION
+ *                   - DUPLICATED_TRANSACTION
+ *                   - PAID_BY_OTHER_MEANS
+ *                   - GOODS_SERVICE_NOT_AS_DESCRIBED
+ *                   - GOODS_DAMAGED
+ *                   - GOODS_SERVICE_NOT_RECEIVED
+ *                   - REFUND_UNPROCESSED
+ *                   - GOODS_SERVICE_CANCELED
+ *                   - RECURRING_CANCELED
+ *                   - OTHER
+ *           encoding:
+ *             evidence_files:
+ *               style: form
+ *               explode: true
+ *     responses:
+ *       200:
+ *         description: Transaction dispute updated successfully
+ */
+router.post('/transaction-dispute-update', disputeEvidenceUpload.array('evidence_files', 10), async (req, res, next) => {
+  const payload = {
+    ...req.body,
+    notes: req.body?.notes ?? '',
+    reference: req.body?.reference ?? '',
+    evidence_files: req.files?.length ? req.files : (req.body?.evidence_files ?? '')
+  };
+  const response = await VirtualCardController.transactionDisputeUpdate({ headers: req.headers, user: req.user, payload });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/virtual-card/get-transaction-dispute-list:
+ *   get:
+ *     summary: Get transaction dispute list for authenticated user
+ *     tags:
+ *       - Auth-airwallex-virtual-card routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of records per page
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: transaction_id
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter disputes by transaction UUID
+ *     responses:
+ *       200:
+ *         description: Transaction dispute list fetched successfully
+ */
+
+
+router.get('/get-transaction-dispute-list', async (req, res, next) => {
+  const response = await VirtualCardController.getTransactionDisputeList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
 export default router;

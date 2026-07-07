@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
-const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards, AirwallexCardTransactions } = db;
+const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards, AirwallexCardTransactions, AirwallexTransactionDispute } = db;
 
 export default class AirWallexVirtualCardSerivice {
     static async getAirWalletxToken() {
@@ -738,6 +738,330 @@ export default class AirWallexVirtualCardSerivice {
             });
         }catch (error) {
             process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+
+    static async uploadDisputeEvidenceFile({ accessToken, file, notes = '', onBehalfOf }) {
+        const filesApiUrl = process.env.AIRWALLEX_FILES_API_URL || 'https://files-demo.airwallex.com';
+        const uploadUrl = `${filesApiUrl}/api/v1/files/upload${notes ? `?notes=${encodeURIComponent(notes)}` : ''}`;
+        const originalname = file?.originalname || 'evidence-file';
+        if (originalname.length > 50) {
+            throw new Error('EVIDENCE_FILE_NAME_TOO_LONG');
+        }
+        const formData = new FormData();
+        const fileBlob = new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' });
+        formData.append('file', fileBlob, originalname);
+
+        const response = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                ...(onBehalfOf ? { 'x-on-behalf-of': onBehalfOf } : {}),
+            },
+            body: formData,
+        });
+
+        const uploadResult = await response.json();
+        if (!response.ok) {
+            throw new Error(uploadResult?.message || 'EVIDENCE_FILE_UPLOAD_FAILED');
+        }
+
+        const fileId = uploadResult?.file_id;
+        if (!fileId) {
+            throw new Error('EVIDENCE_FILE_ID_NOT_FOUND');
+        }
+
+        return fileId;
+    }
+
+    // Dispute a transaction
+    static async transactionDispute({ userId, payload }, callback) {
+        console.log('transactionDispute called with userId:', userId, 'and payload:', payload);
+        try{
+            const { transaction_id, evidence_files, notes, reason , reference } = payload;
+            if(!transaction_id){
+                return callback(new Error("TRANSACTION_ID_NOT_PROVIDED"), null);
+            }
+            if(!reason){
+                return callback(new Error("DISPUTE_REASON_NOT_PROVIDED"), null);
+            }
+
+            const checkTransaction = await AirwallexCardTransactions.findOne({ where: { transactionId: transaction_id } });
+            if(!checkTransaction){
+                return callback(new Error("TRANSACTION_NOT_FOUND"), null);
+            }
+
+            const userCard = await AirwallexUserDebitCards.findOne({ where: { cardId: checkTransaction.cardId, userId } });
+            if(!userCard){
+                return callback(new Error("TRANSACTION_NOT_BELONG_TO_USER"), null);
+            }
+
+            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!getAirwallexKycAccount) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+
+            let evidenceFileIds = [];
+            if (Array.isArray(evidence_files) && evidence_files.length > 0) {
+                for (const file of evidence_files) {
+                    if (!file?.buffer) {
+                        continue;
+                    }
+                    const fileId = await this.uploadDisputeEvidenceFile({
+                        accessToken,
+                        file,
+                        notes,
+                        onBehalfOf: getAirwallexKycAccount.airwallexAccountId,
+                    });
+                    evidenceFileIds.push(fileId);
+                }
+            }
+           
+            console.log('Disputing transaction with ID:', transaction_id);
+
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const referenceId = uuidv4();
+            const disputeResponse = await fetch(`${apiUrl}/api/v1/issuing/transaction_disputes/create`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                },
+                
+                body: JSON.stringify({
+                    transaction_id,
+                    reason,
+                    notes: notes ?? '',
+                    reference: referenceId,
+                    evidence_file_ids: evidenceFileIds,
+                }),
+            });
+
+            const disputeResult = await disputeResponse.json();
+            if (!disputeResponse.ok) {
+                return callback(new Error(disputeResult?.message || 'TRANSACTION_DISPUTE_FAILED'), null);
+            }
+            if(disputeResult?.id){
+                const createRecord = await AirwallexTransactionDispute.create({
+                    userId,
+                    disputeId: disputeResult.id,
+                    transactionId: disputeResult.transaction_id,
+                    amount: disputeResult.amount,
+                    notes: disputeResult.notes,
+                    reason: disputeResult.reason,
+                    reference: disputeResult.reference,
+                    status: disputeResult.status,
+                    updatedBy: disputeResult.updated_by,
+                    created_at: disputeResult.created_at ? new Date(disputeResult.created_at) : undefined,
+                    updated_at: disputeResult.updated_at ? new Date(disputeResult.updated_at) : undefined,
+                });
+                return callback(null, createRecord);
+            }else{
+                return callback(new Error('TRANSACTION_DISPUTE_FAILED'))
+            }
+        }catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }   
+    }
+
+    static async transactionDisputeUpdate({ userId, payload }, callback) {
+        try {
+            const { dispute_id, evidence_files, notes, reason, reference } = payload;
+            if (!dispute_id) {
+                return callback(new Error("DISPUTE_ID_NOT_PROVIDED"), null);
+            }
+
+            const existingDispute = await AirwallexTransactionDispute.findOne({
+                where: { disputeId: dispute_id, userId },
+            });
+            if (!existingDispute) {
+                return callback(new Error("DISPUTE_NOT_FOUND"), null);
+            }
+
+            const checkTransaction = await AirwallexCardTransactions.findOne({
+                where: { transactionId: existingDispute.transactionId },
+            });
+            if (!checkTransaction) {
+                return callback(new Error("TRANSACTION_NOT_FOUND"), null);
+            }
+
+            const userCard = await AirwallexUserDebitCards.findOne({
+                where: { cardId: checkTransaction.cardId, userId },
+            });
+            if (!userCard) {
+                return callback(new Error("TRANSACTION_NOT_BELONG_TO_USER"), null);
+            }
+
+            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!getAirwallexKycAccount) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+
+            let evidenceFileIds = [];
+            if (Array.isArray(evidence_files) && evidence_files.length > 0) {
+                for (const file of evidence_files) {
+                    if (!file?.buffer) {
+                        continue;
+                    }
+                    const fileId = await this.uploadDisputeEvidenceFile({
+                        accessToken,
+                        file,
+                        notes,
+                        onBehalfOf: getAirwallexKycAccount.airwallexAccountId,
+                    });
+                    evidenceFileIds.push(fileId);
+                }
+            }
+
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const updatePayload = {
+                notes: notes ?? '',
+                reason,
+                reference,
+                evidence_file_ids: evidenceFileIds,
+                request_id: uuidv4(),
+            };
+
+            const disputeResponse = await fetch(
+                `${apiUrl}/api/v1/issuing/transaction_disputes/${dispute_id}/update`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                    },
+                    body: JSON.stringify(updatePayload),
+                }
+            );
+
+            let disputeResult = {};
+            try {
+                disputeResult = await disputeResponse.json();
+            } catch (_err) {
+                disputeResult = {};
+            }
+
+            if (!disputeResponse.ok) {
+                return callback(new Error(disputeResult?.message || 'TRANSACTION_DISPUTE_UPDATE_FAILED'), null);
+            }
+
+            const updatedRecord = await existingDispute.update({
+                transactionId: disputeResult.transaction_id || existingDispute.transactionId,
+                amount: disputeResult.amount ?? existingDispute.amount,
+                notes: disputeResult.notes ?? (notes ?? existingDispute.notes),
+                reason: disputeResult.reason ?? (reason ?? existingDispute.reason),
+                reference: disputeResult.reference ?? (reference || existingDispute.reference),
+                status: disputeResult.status ?? existingDispute.status,
+                updatedBy: disputeResult.updated_by ?? existingDispute.updatedBy,
+                updated_at: disputeResult.updated_at ? new Date(disputeResult.updated_at) : new Date(),
+            });
+
+            return callback(null, updatedRecord);
+        } catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+
+    static async getTransactionDisputeList({ userId, payload }, callback) {
+        try {
+            const page = Math.max(parseInt(payload?.page, 10) || 1, 1);
+            const limit = Math.max(parseInt(payload?.limit, 10) || 20, 1);
+            const where = { userId };
+
+            if (payload?.transaction_id) {
+                where.transactionId = payload.transaction_id;
+            }
+
+            const disputes = await AirwallexTransactionDispute.findAndCountAll({
+                where,
+                order: [["id", "DESC"]],
+                limit,
+                offset: (page - 1) * limit,
+            });
+
+            return callback(null, {
+                total: disputes.count,
+                page,
+                limit,
+                total_pages: Math.ceil(disputes.count / limit),
+                disputes: disputes.rows,
+            });
+        } catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+
+    static async handleTransactionDisputeWebhook(payload, headers, callback) {
+        console.log("📥 Received transaction dispute webhook payload:", payload);
+        try {
+            const accountId = payload?.account_id;
+            const dispute = payload?.data?.dispute;
+
+            if (!accountId || !dispute?.id || !dispute?.transaction_id) {
+                console.warn("handleTransactionDisputeWebhook: Missing required fields in payload:", payload);
+                return callback(null, { data: payload });
+            }
+
+            const kycAccount = await AirwallexKycAccount.findOne({
+                where: { airwallexAccountId: accountId },
+            });
+
+            if (!kycAccount) {
+                console.warn("handleTransactionDisputeWebhook: no AirwallexKycAccount found for accountId:", accountId);
+                return callback(null, { data: payload });
+            }
+
+            const reference = dispute.reference || null;
+            const disputeData = {
+                userId: kycAccount.userId,
+                disputeId: dispute.id,
+                transactionId: dispute.transaction_id,
+                amount: dispute.amount,
+                notes: dispute.notes,
+                reason: dispute.reason,
+                reference,
+                status: dispute.status || payload?.data?.status,
+                updatedBy: dispute.updated_by || payload?.data?.updated_by,
+                created_at: dispute.created_at ? new Date(dispute.created_at) : undefined,
+                updated_at: dispute.updated_at ? new Date(dispute.updated_at) : undefined,
+            };
+
+            
+
+            const existingDispute = await AirwallexTransactionDispute.findOne({
+                where: reference ? { reference } : { disputeId: dispute.id },
+            });
+
+             disputeData.webhookData = [dispute, ...(existingDispute?.webhookData || [])];
+
+            if (existingDispute) {
+               
+                await existingDispute.update(disputeData);
+                return callback(null, { data: existingDispute });
+            }
+
+             
+            const createdDispute = await AirwallexTransactionDispute.create(disputeData);
+            return callback(null, { data: createdDispute });
+        } catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            console.error("handleTransactionDisputeWebhook: Error processing webhook:", error);
             return callback(error, null);
         }
     }
