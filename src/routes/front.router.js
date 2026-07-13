@@ -531,6 +531,42 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
   }
 });
 
+/**
+    * @swagger
+    * /api/front/airwallet-liveness-check-redirect-url:
+    *   get:
+    *     summary: Get Airwallex liveness check redirect URL
+    *     tags: [Airwallex-liveness-check-return]
+    *     security:
+    *       - bearerAuth: []
+    *       - refreshToken: []
+    *     responses:
+    *       200:
+    *         description: Redirect URL fetched successfully
+    */
+router.get('/airwallet-liveness-check-return-url', async (req, res, next) => {
+   const response = await AirwallexPaymentController.getAirwalletLivenessCheckReturnUrl({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
+/**
+   * @swagger
+   * /api/front/airwallet-liveness-check-error-url:
+   *   get:
+   *     summary: Get Airwallex liveness check error URL
+   *     tags: [Airwallex-liveness-check-return]
+   *     security:
+   *       - bearerAuth: []
+   *       - refreshToken: []
+   *     responses:
+   *       200:
+   *         description: Error URL fetched successfully
+   */
+router.get('/airwallet-liveness-check-error-url', async (req, res, next) => {
+    const response = await AirwallexPaymentController.getAirwalletLivenessCheckErrorUrl({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+    res.return(response);
+});
+
 router.use('/login',loginRouter)
 router.use('/notification', notificationRouter);
 

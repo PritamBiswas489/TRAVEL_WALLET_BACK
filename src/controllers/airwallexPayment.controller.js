@@ -94,7 +94,7 @@ export default class AirwallexPaymentController {
     });
   }
 
-  static async airwallexSubmitKycDocuments(request) {
+  static async airwallexCreateKycDocuments(request) {
     const {
       payload,
       headers: { i18n },
@@ -105,8 +105,41 @@ export default class AirwallexPaymentController {
     const userId = user?.id || 1;
 
     return new Promise((resolve) => {
-      AirwallexPaymentService.airwallexSubmitKycDocuments(
+      AirwallexPaymentService.airwallexCreateKycDocuments(
         { payload, userId, i18n, files },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(
+                  err.message || "FAILED_TO_CREATE_KYC_DOCUMENTS",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: i18n.__("KYC_DOCUMENTS_CREATED_SUCCESSFULLY"),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async airwallexSubmitKycDocuments(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.airwallexSubmitKycDocuments(
+        { payload, userId, i18n },
         (err, response) => {
           if (err) {
             return resolve({
@@ -943,4 +976,159 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async livenessProactiveStart(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.livenessProactiveStart(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_START_LIVENESS_PROACTIVE_FLOW",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Liveness proactive flow started successfully",
+            error: null,
+          });
+        },
+      );
+    }); 
+  }
+  static async livenessProactiveHostedFlowStatus(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.livenessProactiveHostedFlowStatus(
+        { userId, i18n },
+        (err, response) => {
+          // console.log("Response from livenessProactiveHostedFlowStatus:", response);
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_GET_LIVENESS_PROACTIVE_HOSTED_FLOW_STATUS",
+                reason: err.message,
+              },
+            });
+          }
+          // console.log("Successfully fetched liveness proactive hosted flow status:", response.data);
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Liveness proactive hosted flow status fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+
+  }
+  static async getAirwalletLivenessCheckReturnUrl(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+     return new Promise((resolve) => {
+      AirwallexPaymentService.getAirwalletLivenessCheckReturnUrl(
+        { i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_GET_LIVENESS_CHECK_REDIRECT_URL",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Liveness check redirect URL fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async getAirwalletLivenessCheckErrorUrl(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+     return new Promise((resolve) => {
+      AirwallexPaymentService.getAirwalletLivenessCheckErrorUrl(
+        { i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_GET_LIVENESS_CHECK_ERROR_URL",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Liveness check error URL fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async livenessProactiveSaveAhfiId(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.livenessProactiveSaveAhfiId(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_SAVE_AHFI_ID",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "AHFI ID saved successfully",
+            error: null,
+          });
+        },
+      );
+    }); 
+  }
 }

@@ -217,6 +217,11 @@ export default function AirwallexKycAccount(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: null,
       },
+      ahfiId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+      }
     },
     {
       tableName: 'airwallex_kyc_account',

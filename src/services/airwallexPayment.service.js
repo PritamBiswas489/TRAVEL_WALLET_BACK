@@ -17,6 +17,7 @@ import NotificationService from "./notification.service.js";
 import { verifyAirwallexSignature } from "../libraries/utility.js";
 import { get } from "http";
 import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
+import { error } from "console";
 
 
 const {
@@ -361,7 +362,7 @@ export default class AirwallexPaymentService {
 
     }
   }
-  static async airwallexSubmitKycDocuments(
+  static async airwallexCreateKycDocuments(
     { payload, userId, i18n, files },
     callback,
   ) {
@@ -387,14 +388,10 @@ export default class AirwallexPaymentService {
       if (!files?.proofOfAddressImage?.path) {
         return callback(new Error("PROOF_OF_ADDRESS_IMAGE_REQUIRED"));
       }
-      if (!files?.selfieImage?.path) {
-        return callback(new Error("SELFIE_IMAGE_REQUIRED"));
-      }
 
       const frontImagePath = files.identificationFrontImage.path;
       const backImagePath = files.identificationBackImage?.path;
       const poaImagePath = files.proofOfAddressImage.path;
-      const selfieImagePath = files.selfieImage.path;
 
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
@@ -499,12 +496,11 @@ export default class AirwallexPaymentService {
         }
       };
 
-      let frontFileId, backFileId, poaFileId, selfieFileId;
+      let frontFileId, backFileId, poaFileId;
       try {
         frontFileId = await uploadFile(frontImagePath);
         backFileId = backImagePath ? await uploadFile(backImagePath) : null;
         poaFileId = await uploadFile(poaImagePath);
-        selfieFileId = await uploadFile(selfieImagePath);
       } catch (uploadErr) {
         return callback(new Error(uploadErr.errMsg), {
           airwallexError: uploadErr.airwallexError,
@@ -516,9 +512,6 @@ export default class AirwallexPaymentService {
       }
       if (!backFileId && backImagePath) {
         return callback(new Error("IDENTIFICATION_BACK_IMAGE_UPLOAD_FAILED"));
-      }
-      if (!selfieFileId) {
-        return callback(new Error("SELFIE_IMAGE_UPLOAD_FAILED"));
       }
       if (!poaFileId) {
         return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
@@ -564,7 +557,6 @@ export default class AirwallexPaymentService {
               .toISOString()
               .split("T")[0],
             nationality: validationResult.nationality,
-            live_selfie_file_id: selfieFileId,
             residential_address: {
               address_line1: validationResult.address,
               country_code: validationResult.country,
@@ -667,28 +659,27 @@ export default class AirwallexPaymentService {
               frontImagePath,
               backImagePath,
               poaImagePath,
-              selfieImagePath,
             },
           },
           userId,
         });
 
-        try {
-          await axios.post(
-            `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/submit`,
-            {},
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            },
-          );
-        } catch (error) {
-          console.error(
-            "Error submitting Airwallex account for KYC verification:",
-            error,
-          );
-          const { errMsg, airwallexError } = extractAirwallexError(error);
-          return callback(new Error(errMsg), { airwallexError });
-        }
+        // try {
+        //   await axios.post(
+        //     `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/submit`,
+        //     {},
+        //     {
+        //       headers: { Authorization: `Bearer ${accessToken}` },
+        //     },
+        //   );
+        // } catch (error) {
+        //   console.error(
+        //     "Error submitting Airwallex account for KYC verification:",
+        //     error,
+        //   );
+        //   const { errMsg, airwallexError } = extractAirwallexError(error);
+        //   return callback(new Error(errMsg), { airwallexError });
+        // }
 
         return callback(null, { data: updateResponse.data });
       } else {
@@ -699,6 +690,168 @@ export default class AirwallexPaymentService {
       console.error("Error submitting KYC documents:", error.message);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
+  }
+  static async airwallexSubmitKycDocuments({ userId, i18n }, callback) {
+    try {
+      const getData = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!getData || !getData.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+      const airwallexId = getData?.airwallexAccountId;
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${airwallexId}/submit`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (response?.data?.id) {
+        return callback(null, { data: response.data });
+      } else {
+        return callback(new Error("FAILED_TO_SUBMIT_CUSTOMER_ACCOUNT"));
+      }
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("Error submitting KYC documents:", error.message);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  static async  createHostedFlow(userId, returnUrl, errorUrl) {
+    try{
+      const templateId = process.env.AIRWALLET_LIVENESS_TEMPLATE_ID || "";
+      const getAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      const accountId = getAccount?.airwallexAccountId;
+      console.log("Creating hosted flow for userId:", userId, "accountId:", accountId, "templateId:", templateId, "returnUrl:", returnUrl);
+      console.log("#####################################################################################################################");
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        throw new Error("AIRWALLEX_TOKEN_NOT_GENERATED");
+      }
+      const d = {
+
+          account_id: accountId,
+          template: templateId,
+          return_url: returnUrl,
+          error_url: errorUrl,
+        };
+        console.log("Hosted flow creation payload:", d);
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/hosted_flows/create`,
+        d,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+           
+          },
+        }
+      );
+    
+      return response?.data;
+          
+    }catch(error){
+      console.error("Error creating hosted flow:", error?.message);
+      throw new Error("INTERNAL_SERVER_ERROR");
+    }
+  }
+  static async authorizeHostedFlow(hostedFlowId, userid) {
+    try{
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        throw new Error("AIRWALLEX_TOKEN_NOT_GENERATED");
+      }
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/hosted_flows/${hostedFlowId}/authorize`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      return response?.data;
+
+    }catch(error){
+      console.error("Error authorizing hosted flow:", error?.message);
+      throw new Error("INTERNAL_SERVER_ERROR");
+    }
+  }
+
+  static async livenessProactiveStart({ payload, headers, userId }, callback) {
+      console.log("Starting liveness proactive flow with payload:", payload);
+      let returnUrl = payload?.return_url || process.env.AIRWALLEX_LIVENESS_RETURN_URL || "";
+      let errorUrl = payload?.error_url || process.env.AIRWALLEX_LIVENESS_ERROR_URL || "";
+
+      const getAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      if (!getAccount || !getAccount.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+      
+      
+      const getHostedFlow = await this.createHostedFlow(userId, returnUrl, errorUrl).catch((error) => {
+        console.error("Error creating hosted flow:", error?.message);
+        return callback(new Error("FAILED_TO_CREATE_HOSTED_FLOW"));
+      });
+      if(getHostedFlow?.id){
+        const authorizeHostedFlow = await this.authorizeHostedFlow(getHostedFlow?.id, userId).catch((error) => {
+          console.error("Error authorizing hosted flow:", error?.message);
+          return callback(new Error("FAILED_TO_AUTHORIZE_HOSTED_FLOW"));
+        });
+        console.log("Authrise",authorizeHostedFlow);
+        if(!authorizeHostedFlow?.id){
+          return callback(new Error("FAILED_TO_AUTHORIZE_HOSTED_FLOW"));
+        }
+        getAccount.ahfiId = authorizeHostedFlow?.id;
+        getAccount.save();
+        return callback(null, { data: authorizeHostedFlow });
+      }
+      return callback(new Error("FAILED_TO_CREATE_HOSTED_FLOW"));
+  }
+  static async livenessProactiveHostedFlowStatus(payload, callback) {
+    console.log("Checking liveness proactive hosted flow status with payload:", payload);
+    try{
+      console.log("Received payload for hosted flow status check:", payload);
+      const userId = payload?.userId;
+    
+      const getAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      if (!getAccount || !getAccount.ahfiId) {
+        return callback(new Error("AIRWALLEX_HOSTED_FLOW_NOT_FOUND"));
+      }
+      const ahfi_id = getAccount?.ahfiId;
+      if(!ahfi_id){
+        return callback(new Error("AIRWALLEX_HOSTED_FLOW_ID_NOT_FOUND"));
+      }
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+      const response = await axios.get(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/hosted_flows/${ahfi_id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      // console.log("Hosted flow status response:", response?.data);
+      return callback(null, { data: response?.data });
+    }catch(error){
+      console.error("Error checking hosted flow status:", error?.message);
+      return callback(new Error("FAILED_TO_CHECK_HOSTED_FLOW_STATUS"));
+    }
+
   }
 
   static async testModeUpdateAccountStatus(
@@ -2455,5 +2608,52 @@ export default class AirwallexPaymentService {
     }
     return callback(null, { data: payload });
   }
+
+  static async getAirwalletLivenessCheckReturnUrl({ payload, headers }, callback) {
+    try {
+      console.log("Fetching Airwallet liveness check redirect URL with payload:", payload);
+       
+      return callback(null, { data: { SUCCESS:1 } });
+    }catch (error) {  
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("❌ Error fetching Airwallet liveness check redirect URL:", error?.message || error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+
+  }
+
+  static async getAirwalletLivenessCheckErrorUrl({ payload, headers }, callback) {
+    try {
+      console.log("Fetching Airwallet liveness check error URL with payload:", payload);
+      return callback(null, { data: { ERROR:1 } });
+    }catch (error) {  
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("❌ Error fetching Airwallet liveness check error URL:", error?.message || error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+
+  }
+
+  static async livenessProactiveSaveAhfiId({ userId, i18n, payload }, callback) {
+    try {
+      console.log("Saving AHFI ID for userId:", userId, "with payload:", payload);
+      const ahfiId = payload?.ahfi_id;
+      const kycAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      if (!kycAccount) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+      kycAccount.ahfiId = ahfiId || null;
+      await kycAccount.save();
+      console.log("✅ Successfully saved AHFI ID for userId:", userId, "AHFI ID:", ahfiId);
+      return callback(null, { data: { SUCCESS: 1 } });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error("❌ Error saving AHFI ID:", error?.message || error);
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  
   
 }

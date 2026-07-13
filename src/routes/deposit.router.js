@@ -28,7 +28,6 @@ const kycUpload = multer({
   { name: 'identificationFrontImage', maxCount: 1 },
   { name: 'identificationBackImage', maxCount: 1 },
   { name: 'proofOfAddressImage', maxCount: 1 },
-  { name: 'selfieImage', maxCount: 1 }
 ]);
 
 const router = express.Router();
@@ -440,7 +439,7 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
 
 /**
  * @swagger
- * /api/auth/deposit/airwallex-submit-kyc-documents:
+ * /api/auth/deposit/airwallex-create-kyc-account:
  *   post:
  *     summary: Submit KYC documents for Airwallex account verification
  *     tags:
@@ -521,10 +520,6 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *                 type: string
  *                 format: binary
  *                 description: Proof of address document image
- *               selfieImage:
- *                 type: string
- *                 format: binary
- *                 description: Selfie image of the applicant
  *               cardUsage:
  *                 type: array
  *                 description: "Ways in which the account will use Airwallex borderless cards."
@@ -657,16 +652,127 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *       200:
  *         description: Success - KYC documents submitted successfully
  */
-router.post('/airwallex-submit-kyc-documents', kycUpload, async (req, res) => {
+router.post('/airwallex-create-kyc-account', kycUpload, async (req, res) => {
   const files = req.files
     ? Object.fromEntries(Object.entries(req.files).map(([key, arr]) => [key, arr[0]]))
     : {};
-  const response = await AirwallexPaymentController.airwallexSubmitKycDocuments({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user, files });
+  const response = await AirwallexPaymentController.airwallexCreateKycDocuments({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user, files });
   res.return(response);
 });
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/liveness-proactive/start:
+ *   post:
+ *     summary: Start Airwallex liveness proactive flow
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - return_url
+ *             properties:
+ *               return_url:
+ *                 type: string
+ *                 format: uri
+ *                 default: ""
+ *                 description: URL where user is redirected after liveness flow
+ *               error_url:
+ *                 type: string
+ *                 format: uri
+ *                 default: ""
+ *                 description: URL where user is redirected if liveness flow fails
+ *     responses:
+ *       200:
+ *         description: Success - Liveness proactive flow started
+ */
+router.post('/liveness-proactive/start',async (req,res)=>{
+   const response = await AirwallexPaymentController.livenessProactiveStart({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+})
+
+// /**
+//  * @swagger
+//  * /api/auth/deposit/liveness-proactive/saveAhfiId:
+//  *   post:
+//  *     summary: Save Airwallex hosted flow identifier for the authenticated user
+//  *     tags:
+//  *       - Auth-airwallex-kyc-wallet routes
+//  *     security:
+//  *       - bearerAuth: []
+//  *       - refreshToken: []
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             required:
+//  *               - ahfi_id
+//  *             properties:
+//  *               ahfi_id:
+//  *                 type: string
+//  *                 description: Airwallex hosted flow identifier to persist
+//  *                 example: ahfi_1234567890
+//  *     responses:
+//  *       200:
+//  *         description: Success - AHFI ID saved
+//  */
+// router.post('/liveness-proactive/saveAhfiId',async (req,res)=>{
+//   const response = await AirwallexPaymentController.livenessProactiveSaveAhfiId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+//   res.return(response);
+
+
+// });
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/liveness-proactive/hostedFlow-status:
+ *   get:
+ *     summary: Get Airwallex liveness proactive hosted flow status
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Hosted flow status retrieved
+ */
+router.get('/liveness-proactive/hostedFlow-status',async (req,res)=>{
+  const response = await AirwallexPaymentController.livenessProactiveHostedFlowStatus({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/airwallex-submit-kyc-documents:
+ *   post:
+ *     summary: Submit KYC documents to Airwallex
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - KYC documents submitted
+ */
+router.post('/airwallex-submit-kyc-documents', async (req, res) => {
+  const response = await AirwallexPaymentController.airwallexSubmitKycDocuments({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
 
 /**
  * @swagger
@@ -736,6 +842,8 @@ router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
    const response = await AirwallexPaymentController.getAndUpdateAirWallexCustomerAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
 
 
 /**
@@ -1156,5 +1264,4 @@ router.post("/update-user-transaction-history-table", async (req, res) => {
 
 
 export default router;
-
 
