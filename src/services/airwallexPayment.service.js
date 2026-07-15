@@ -737,9 +737,12 @@ export default class AirwallexPaymentService {
 
           account_id: accountId,
           template: templateId,
-          return_url: returnUrl,
-          error_url: errorUrl,
+          // return_url: returnUrl,
+          // error_url: errorUrl,
         };
+        (returnUrl && (d.return_url = returnUrl));
+        (errorUrl && (d.error_url = errorUrl));
+
         console.log("Hosted flow creation payload:", d);
       const response = await axios.post(
         `${process.env.AIRWALLEX_API_URL}/api/v1/hosted_flows/create`,
@@ -786,8 +789,8 @@ export default class AirwallexPaymentService {
 
   static async livenessProactiveStart({ payload, headers, userId }, callback) {
       console.log("Starting liveness proactive flow with payload:", payload);
-      let returnUrl = payload?.return_url || process.env.AIRWALLEX_LIVENESS_RETURN_URL || "";
-      let errorUrl = payload?.error_url || process.env.AIRWALLEX_LIVENESS_ERROR_URL || "";
+      let returnUrl = payload?.return_url ||  "";
+      let errorUrl = payload?.error_url ||  "";
 
       const getAccount = await AirwallexKycAccount.findOne({
         where: { userId },
