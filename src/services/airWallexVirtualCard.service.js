@@ -33,15 +33,66 @@ export default class AirWallexVirtualCardSerivice {
 
         return res?.data?.token || null;
     }
+    static async getApiCardholderDetails({ userId, payload }, callback) {
+        try {
+            const getCardholder = await AirwallexCardholder.findOne({ where: { userId } });
+            if (!getCardholder) {
+                return callback(new Error("CARDHOLDER_NOT_FOUND"), null);
+            }
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!getAirwallexKycAccount) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const response = await fetch(`${apiUrl}/api/v1/issuing/cardholders/${getCardholder.cardholderId}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    "x-on-behalf-of": getAirwallexKycAccount.airwallexAccountId,
+                },
+            });
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                return callback(new Error(`Get cardholder details failed: ${errorResponse.message}`), null);
+            }
+            const cardholderDetails = await response.json();
+            return callback(null, cardholderDetails);
+        } catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+
+    }
     static async airwallexCreateIndividualCardholder({ userId, payload }, callback) {
         console.log('airwallexCreateIndividualCardholder called with userId:', userId, 'and payload:', payload);
         try {
             const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
             //console.log('getAirwallexKycAccount', getAirwallexKycAccount);
             if (getAirwallexKycAccount.status === 'ACTIVE') {
-                const chhecking = await AirwallexCardholder.findOne({ where: { userId } });
-                if (chhecking) {
-                    return callback(new Error("CARDHOLDER_ALREADY_EXISTS"), null);
+                const checking = await AirwallexCardholder.findOne({ where: { userId } });
+                if (checking) {
+                    const apiCardHolderDetails = await new Promise((resolve, reject) => {
+                        this.getApiCardholderDetails({ userId, payload }, (error, response) => {
+                            if (error) {
+                                 resolve(null);
+                            } else {
+                                resolve(response);
+                            }
+                        });
+                     });
+                    
+                    console.log("Cardholder already exists for userId:", userId, "with cardholderId:", checking?.cardholderId);
+                    
+                    if(apiCardHolderDetails && apiCardHolderDetails.cardholder_id){
+                        return callback(null, checking);
+                    }else{
+                        await AirwallexCardholder.destroy({ where: { userId } });
+                    }
+                    //return callback(new Error("CARDHOLDER_ALREADY_EXISTS"), null);
                 }
                 console.log("========================================================");
                 const userKycinputData = getAirwallexKycAccount.userInputData;

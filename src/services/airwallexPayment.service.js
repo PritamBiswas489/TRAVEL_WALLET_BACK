@@ -431,21 +431,29 @@ export default class AirwallexPaymentService {
         const platformIdentifier = `AWCUST-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const email = validationResult.email;
         const mobile = validationResult.mobile;
+        const createAccountPayload = {
+          account_details: { legal_entity_type: "INDIVIDUAL" },
+          customer_agreements: {
+            agreed_to_data_usage: true,
+            agreed_to_terms_and_conditions: true,
+            agreed_to_biometrics_consent: true,
+          },
+          primary_contact: { email, mobile },
+          identifier: platformIdentifier,
+        };
+
+        const createAccountCurlCmd =
+          `curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/accounts/create" ` +
+          `-H "Content-Type: application/json" ` +
+          `-H "Authorization: Bearer ${accessToken}" ` +
+          `-d '${JSON.stringify(createAccountPayload)}'`;
+        console.log("Airwallex create account curl:", createAccountCurlCmd);
 
         let createResponse;
         try {
           createResponse = await axios.post(
             `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/create`,
-            {
-              account_details: { legal_entity_type: "INDIVIDUAL" },
-              customer_agreements: {
-                agreed_to_data_usage: true,
-                agreed_to_terms_and_conditions: true,
-                agreed_to_biometrics_consent: true,
-              },
-              primary_contact: { email, mobile },
-              identifier: platformIdentifier,
-            },
+            createAccountPayload,
             {
               headers: {
                 "Content-Type": "application/json",

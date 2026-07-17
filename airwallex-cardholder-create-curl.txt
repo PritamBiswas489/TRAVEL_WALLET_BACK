@@ -1,7 +1,7 @@
-# Generated: 2026-07-06T16:52:01.446Z
+# Generated: 2026-07-17T10:27:19.901Z
 
 curl -X POST "https://api-demo.airwallex.com/api/v1/issuing/cardholders/create" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJraWQiOiJjNDRjODVkMDliMDc0NmNlYTIwZmI4NjZlYzI4YWY3ZSIsImFsZyI6IkhTMjU2In0.eyJ0eXBlIjoiY2xpZW50IiwiZGMiOiJISyIsImRhdGFfY2VudGVyX3JlZ2lvbiI6IkhLIiwiYWNjb3VudF9pZCI6ImU5OThiMWEwLThiMzAtNGRhYi04NjMzLTA4OTZjZjA2NjI5ZiIsImFwaV92ZXJzaW9uIjoiMjAyNC0wNi0xNCIsInBlcm1pc3Npb25zIjpbInI6YXd4Oio6KiIsInc6YXd4Oio6KiJdLCJ0aWVyIjoiUyIsInJhdGVfbGltaXQiOmZhbHNlLCJzdWIiOiIwZmUwNDJjNi0xM2I1LTQ2YjktYTZjYS0wYjBkZWJkOGExNDciLCJleHAiOjE3ODMzNTg1MTksImlhdCI6MTc4MzM1NjcxOSwianRpIjoiMTFjZTkxZTgtN2MwZC00MTlmLTk4MDYtOWQ1YzM0NmFjZGE1In0.cw3rErH9YgREphF6YNHwXJothug16yYJitbKT9TUSKM" \
-  -H "x-on-behalf-of: acct_LWcwNZx-MY-e6rC3M8kIiA" \
+  -H "Authorization: Bearer eyJraWQiOiJjNDRjODVkMDliMDc0NmNlYTIwZmI4NjZlYzI4YWY3ZSIsImFsZyI6IkhTMjU2In0.eyJ0eXBlIjoiY2xpZW50IiwiZGMiOiJISyIsImRhdGFfY2VudGVyX3JlZ2lvbiI6IkhLIiwiYWNjb3VudF9pZCI6ImU5OThiMWEwLThiMzAtNGRhYi04NjMzLTA4OTZjZjA2NjI5ZiIsImFwaV92ZXJzaW9uIjoiMjAyNC0wNi0xNCIsInBlcm1pc3Npb25zIjpbInI6YXd4Oio6KiIsInc6YXd4Oio6KiJdLCJ0aWVyIjoiUyIsInJhdGVfbGltaXQiOmZhbHNlLCJzdWIiOiIwZmUwNDJjNi0xM2I1LTQ2YjktYTZjYS0wYjBkZWJkOGExNDciLCJleHAiOjE3ODQyODU4MzgsImlhdCI6MTc4NDI4NDAzOCwianRpIjoiZTUzMTI2MzQtMGQzNy00MTRlLWIxYzAtYzVhMzMzZjYzY2ZjIn0.bmMwruk0WdmEeNXTUNFg659S2D3JdwtLFodarnviCjo" \
+  -H "x-on-behalf-of: acct__TH47lm7N8eV_yxYnAZ50w" \
   -d '{"type":"INDIVIDUAL","email":"john.doe@example.com","mobile_number":"+972546324388","individual":{"date_of_birth":"1990-01-01","name":{"first_name":"John","last_name":"Doe"},"address":{"line1":"123 Main Street","city":"Tel Aviv","state":"Tel Aviv District","country":"IL","postcode":"12345"},"express_consent_obtained":"yes"}}'
