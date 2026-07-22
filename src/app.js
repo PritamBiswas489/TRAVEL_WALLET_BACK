@@ -98,7 +98,71 @@ app.use(
 );
 // app.options("*", cors());
 app.use(compression());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://*.airwallex.com",
+        ],
+
+        scriptSrcElem: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://*.airwallex.com",
+        ],
+
+        connectSrc: [
+          "'self'",
+          "https://*.airwallex.com",
+        ],
+
+        frameSrc: [
+          "'self'",
+          "https://*.airwallex.com",
+        ],
+
+        imgSrc: [
+          "'self'",
+          "data:",
+          "blob:",
+          "https://*.airwallex.com",
+        ],
+
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+        ],
+
+        fontSrc: [
+          "'self'",
+          "https://*.airwallex.com",
+        ],
+
+        workerSrc: [
+          "'self'",
+          "blob:",
+        ],
+
+        objectSrc: ["'none'"],
+
+        baseUri: ["'self'"],
+
+        formAction: [
+          "'self'",
+          "https://*.airwallex.com",
+        ],
+
+        frameAncestors: ["'self'"],
+      },
+    },
+  })
+);
 app.use(locales);
 app.use((req, res, next) => {
    const defaultHeaders = {
@@ -275,6 +339,18 @@ app.get("/test-otp/:number/:otp_code", async (req, res) => {
     console.error("Error in OTP verification:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
+});
+
+app.get('/payment-intent-form', (req, res) => {
+  res.sendFile(pathResolve(pathJoin(dirname("./"), 'public', 'airwallex-topup-text-input.html')));
+});
+app.get("/airwallex-payment", (req, res) => {
+  const { payment_intent_id } = req.query;
+  if (!payment_intent_id) {
+    return res.status(400).send("Missing payment_intent_id");
+  }
+  console.log("Redirecting to payment confirmation page for payment_intent_id:", payment_intent_id);
+  res.sendFile(pathResolve(pathJoin(dirname("./"), 'public', 'airwallex-payment-redirect.html')));
 });
 
 app.get("/test-error2", (req, res) => {

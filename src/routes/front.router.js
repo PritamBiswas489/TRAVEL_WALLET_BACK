@@ -567,6 +567,35 @@ router.get('/airwallet-liveness-check-error-url', async (req, res, next) => {
     res.return(response);
 });
 
+
+/**
+ * @swagger
+ * /api/front/retrieve-payment-intent/{paymentIntentId}:
+ *   get:
+ *     summary: Retrieve Airwallex payment intent
+ *     tags:
+ *       - Front-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: paymentIntentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Airwallex payment intent ID
+ *     responses:
+ *       200:
+ *         description: Success - Payment intent retrieved
+ */
+router.get('/retrieve-payment-intent/:paymentIntentId', async (req, res) => {
+  const response = await AirwallexPaymentController.retrievePaymentIntent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+  res.return(response);
+});
+
+ 
+
 router.use('/login',loginRouter)
 router.use('/notification', notificationRouter);
 

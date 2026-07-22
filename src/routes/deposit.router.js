@@ -954,6 +954,40 @@ router.post('/sandbox/add-deposit/:globalAccountId', async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/deposit/create-aft-wallet-topup:
+ *   post:
+ *     summary: Create AFT wallet topup
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 example: 10
+ *                 description: Topup amount
+ *     responses:
+ *       200:
+ *         description: Success - AFT wallet topup created
+ */
+router.post('/create-aft-wallet-topup',async (req, res) => {
+  const response = await AirwallexPaymentController.createAftWalletTopup({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
+/**
+ * @swagger
  * /api/auth/deposit/account-balance:
  *   get:
  *     summary: Get current Airwallex account balance
@@ -1264,4 +1298,3 @@ router.post("/update-user-transaction-history-table", async (req, res) => {
 
 
 export default router;
-

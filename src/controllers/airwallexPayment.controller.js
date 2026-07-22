@@ -1131,4 +1131,69 @@ export default class AirwallexPaymentController {
       );
     }); 
   }
+
+  static async createAftWalletTopup(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.createAftWalletTopup(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_CREATE_AFT_WALLET_TOPUP",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "AFT wallet top-up created successfully",
+            error: null,
+          });
+        },
+      );
+    }); 
+  }
+
+  static async retrievePaymentIntent(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+     
+    return new Promise((resolve) => {
+      AirwallexPaymentService.retrievePaymentIntent(
+        {  payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_RETRIEVE_PAYMENT_INTENT",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Payment intent retrieved successfully",
+            error: null,
+          });
+        },
+      );
+    }); 
+  }
+  
 }

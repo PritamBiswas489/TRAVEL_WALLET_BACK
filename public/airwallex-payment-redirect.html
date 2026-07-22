@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#13aef4" />
+  <title>Travel Money — טעינה מאובטח</title>
+  <link rel="preconnect" href="https://static.airwallex.com" />
+  <script src="airwallex-sdk.js"></script>
+  <script>
+    (function () {
+      function setViewportUnit() {
+        document.documentElement.style.setProperty("--vh", window.innerHeight * 0.01 + "px");
+      }
+      setViewportUnit();
+      window.addEventListener("resize", setViewportUnit);
+      window.addEventListener("orientationchange", setViewportUnit);
+    })();
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --vh: 1vh;
+      --tm-cyan: #16b6f5;
+      --tm-blue: #3575f5;
+      --tm-violet: #9650f6;
+      --tm-purple: #6a35e9;
+      --tm-deep: #101a48;
+      --tm-ink: #171a2e;
+      --tm-muted: #77809a;
+      --tm-soft: #f4f6fb;
+      --tm-soft-blue: #edf6ff;
+      --tm-border: #e4e8f2;
+      --tm-success: #14a76c;
+      --tm-danger: #e34d59;
+      --tm-shadow: 0 18px 52px rgba(42, 48, 95, .13);
+      --tm-shadow-soft: 0 8px 24px rgba(42, 48, 95, .08);
+      --tm-gradient: linear-gradient(128deg, var(--tm-cyan) 0%, var(--tm-blue) 46%, var(--tm-violet) 100%);
+    }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: calc(var(--vh, 1vh) * 100);
+      background: #f7f8fc;
+      color: var(--tm-ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, input { font: inherit; color: inherit; }
+
+    .app-shell {
+      width: min(100%, 520px);
+      min-height: calc(var(--vh, 1vh) * 100);
+      margin: 0 auto;
+      background: #f7f8fc;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(30, 45, 90, .03);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 260px;
+      padding: max(18px, env(safe-area-inset-top)) 22px 44px;
+      overflow: hidden;
+      color: #fff;
+      background: var(--tm-gradient);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 240px;
+      height: 240px;
+      top: -116px;
+      right: -62px;
+      background: rgba(255,255,255,.09);
+    }
+
+    .hero::after {
+      width: 220px;
+      height: 220px;
+      bottom: -142px;
+      left: -72px;
+      background: rgba(255,255,255,.07);
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 46px 1fr 46px;
+      align-items: center;
+      min-height: 52px;
+    }
+
+    .back-button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .back-button:active { transform: scale(.96); }
+
+    .brand-pill {
+      justify-self: center;
+      height: 46px;
+      max-width: 210px;
+      padding: 7px 13px;
+      border-radius: 15px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 10px 24px rgba(28, 34, 90, .16);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .brand-pill img {
+      display: block;
+      width: 188px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .header-spacer { width: 42px; }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin: 22px auto 0;
+      max-width: 390px;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(26px, 7vw, 34px);
+      line-height: 1.16;
+      font-weight: 750;
+      letter-spacing: -.03em;
+    }
+
+    .hero-copy p {
+      margin: 9px 0 0;
+      color: rgba(255,255,255,.88);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .secure-line {
+      margin: 18px auto 0;
+      width: max-content;
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: 999px;
+      color: rgba(255,255,255,.94);
+      background: rgba(20, 34, 100, .12);
+      font-size: 12px;
+      font-weight: 650;
+      backdrop-filter: blur(9px);
+    }
+
+    .content-sheet {
+      position: relative;
+      z-index: 2;
+      margin-top: -28px;
+      min-height: calc(var(--vh, 1vh) * 100 - 232px);
+      padding: 22px 20px max(28px, env(safe-area-inset-bottom));
+      border-radius: 34px 34px 0 0;
+      background: #fff;
+      box-shadow: 0 -10px 30px rgba(31, 47, 98, .08);
+    }
+
+    .order-summary {
+      position: relative;
+      padding: 19px;
+      border: 1px solid rgba(71, 98, 220, .10);
+      border-radius: 22px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 10% 5%, rgba(255,255,255,.18), transparent 34%),
+        linear-gradient(132deg, #244fd4 0%, #5a4bea 48%, #9c54ef 100%);
+      box-shadow: 0 15px 32px rgba(72, 72, 199, .26);
+      overflow: hidden;
+    }
+
+    .order-summary::after {
+      content: "";
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      left: -68px;
+      bottom: -106px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 50%;
+      box-shadow: 0 0 0 22px rgba(255,255,255,.025), 0 0 0 44px rgba(255,255,255,.018);
+    }
+
+    .summary-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 7px;
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .summary-amount {
+      display: block;
+      direction: ltr;
+      text-align: right;
+      font-size: clamp(31px, 9vw, 42px);
+      line-height: 1;
+      font-weight: 760;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.035em;
+    }
+
+    .summary-icon {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    .summary-bottom {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.15);
+      font-size: 12px;
+      color: rgba(255,255,255,.83);
+    }
+
+    #order-number {
+      max-width: 58%;
+      direction: ltr;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-heading {
+      margin: 26px 2px 13px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: -.02em;
+    }
+
+    .section-heading p {
+      margin: 5px 0 0;
+      color: var(--tm-muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .wallet-pay-section {
+      margin-bottom: 4px;
+    }
+
+    .wallet-pay-slot {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .wallet-pay-slot + .wallet-pay-slot { margin-top: 10px; }
+
+    #googlePayButton button,
+    #googlePayButton iframe,
+    #applePayButton button,
+    #applePayButton iframe {
+      width: 100% !important;
+      max-width: 100%;
+      min-height: 48px !important;
+      border-radius: 15px !important;
+      overflow: hidden;
+    }
+
+    .wallet-divider {
+      position: relative;
+      margin: 20px 0 18px;
+      text-align: center;
+    }
+
+    .wallet-divider::before {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      top: 50%;
+      height: 1px;
+      background: var(--tm-border);
+    }
+
+    .wallet-divider span {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      min-width: 46px;
+      padding: 0 12px;
+      color: #9299ad;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    form { margin: 0; }
+
+    .field-group { margin-bottom: 15px; }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 3px 8px;
+      color: #2a3046;
+      font-size: 13px;
+      font-weight: 680;
+    }
+
+    .field-label__icon {
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #6a46ee;
+      background: #f0edff;
+    }
+
+    input[type="text"],
+    .airwallex-field {
+      width: 100%;
+      min-height: 54px;
+      border: 1.5px solid var(--tm-border);
+      border-radius: 16px;
+      background: #fbfcff;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    input[type="text"] {
+      padding: 0 16px;
+      direction: rtl;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input[type="text"]::placeholder { color: #a1a8ba; }
+
+    input[type="text"]:focus,
+    .airwallex-field.is-focused {
+      border-color: #7554ef;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(117, 84, 239, .11);
+    }
+
+    .airwallex-field { direction: ltr; }
+    .airwallex-field.is-invalid { border-color: var(--tm-danger); }
+
+    .split-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field-error {
+      min-height: 15px;
+      margin: 5px 4px 0;
+      color: var(--tm-danger);
+      font-size: 11.5px;
+      line-height: 1.3;
+    }
+
+    .save-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 1px 0 16px;
+      padding: 14px;
+      border: 1px solid var(--tm-border);
+      border-radius: 17px;
+      background: #fbfcff;
+      cursor: pointer;
+    }
+
+    .save-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .switch {
+      flex: 0 0 auto;
+      width: 46px;
+      height: 27px;
+      padding: 3px;
+      border-radius: 999px;
+      background: #cfd4df;
+      transition: background .2s ease;
+    }
+
+    .switch::after {
+      content: "";
+      display: block;
+      width: 21px;
+      height: 21px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(20, 28, 56, .22);
+      transition: transform .2s ease;
+    }
+
+    .save-card input:checked + .switch { background: var(--tm-gradient); }
+    .save-card input:checked + .switch::after { transform: translateX(-19px); }
+
+    .save-card__copy {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .save-card__copy strong { font-size: 13px; }
+    .save-card__copy small { color: var(--tm-muted); font-size: 11.5px; line-height: 1.4; }
+
+    .security-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin: 5px 0 16px;
+      padding: 13px 14px;
+      border: 1px solid #dcecff;
+      border-radius: 17px;
+      color: #31446e;
+      background: linear-gradient(135deg, #f1f8ff 0%, #f7f5ff 100%);
+      font-size: 12px;
+      line-height: 1.48;
+    }
+
+    .security-note__icon {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      color: #4a6df4;
+      background: #fff;
+      box-shadow: var(--tm-shadow-soft);
+    }
+
+    .payment-message {
+      min-height: 0;
+      margin: 0 0 11px;
+      border-radius: 13px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .payment-message.error,
+    .payment-message.success { padding: 11px 13px; }
+    .payment-message.error { color: #b52638; background: #fff0f2; border: 1px solid #ffd7dd; }
+    .payment-message.success { color: #08784c; background: #eafaf3; border: 1px solid #c8f0df; }
+
+    .pay-button {
+      width: 100%;
+      min-height: 58px;
+      border: 0;
+      border-radius: 19px;
+      color: #fff;
+      background: var(--tm-gradient);
+      box-shadow: 0 13px 28px rgba(78, 86, 224, .30);
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .2s ease, filter .2s ease;
+    }
+
+    .pay-button:active:not(:disabled) { transform: translateY(1px) scale(.995); }
+    .pay-button:disabled { opacity: .42; box-shadow: none; cursor: not-allowed; }
+    .pay-button:hover:not(:disabled) { filter: saturate(1.08); }
+
+    .loader {
+      width: 21px;
+      height: 21px;
+      border: 3px solid rgba(255,255,255,.38);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    .trust-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      margin-top: 16px;
+      color: #9299ad;
+      font-size: 11.5px;
+    }
+
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 17px;
+      background: var(--tm-gradient);
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+
+    .page-loader[data-hidden="true"] {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .page-loader__logo {
+      width: min(260px, 72vw);
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 16px 42px rgba(25, 38, 100, .22);
+    }
+
+    .page-loader__logo img { display: block; width: 100%; height: auto; }
+
+    .page-loader__ring {
+      width: 38px;
+      height: 38px;
+      border: 4px solid rgba(255,255,255,.30);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    .page-loader__text {
+      margin: 0;
+      color: rgba(255,255,255,.92);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 370px) {
+      .content-sheet { padding-inline: 15px; }
+      .hero { padding-inline: 16px; }
+      .brand-pill { max-width: 185px; }
+      .summary-amount { font-size: 31px; }
+      .split-row { gap: 9px; }
+    }
+
+    @media (min-width: 700px) {
+      body { padding: 28px 0; }
+      .app-shell {
+        min-height: auto;
+        border-radius: 32px;
+        box-shadow: 0 28px 90px rgba(20, 29, 73, .16);
+      }
+      .content-sheet { min-height: 0; padding-bottom: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="page-loader" role="status" aria-live="polite">
+    <div class="page-loader__logo">
+      <img src="travel-money-logo.png" alt="Travel Money" />
+    </div>
+    <div class="page-loader__ring" aria-hidden="true"></div>
+    <p class="page-loader__text">מכינים עבורך טעינה מאובטח…</p>
+  </div>
+
+  <main class="app-shell">
+    <header class="hero">
+      <div class="topbar">
+        <button class="back-button" type="button" aria-label="חזרה" onclick="history.back()">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="brand-pill">
+          <img src="travel-money-logo.png" alt="Travel Money" />
+        </div>
+        <span class="header-spacer" aria-hidden="true"></span>
+      </div>
+
+      <div class="hero-copy">
+        <h1 id="payment-title">טעינה מאובטח</h1>
+        <p>השלימו את פרטי הטעינה כדי לטעון את ארנק Travel Money.</p>
+        <div class="secure-line">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3 5 6v5c0 4.6 2.9 8.7 7 10 4.1-1.3 7-5.4 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            <path d="m9.3 12 1.8 1.8 3.7-3.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>מוגן באמצעות Airwallex</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="content-sheet" aria-labelledby="payment-title">
+      <section class="order-summary" aria-label="סיכום טעינה">
+        <div class="summary-top">
+          <div>
+            <span class="summary-label">סכום לטעינת הארנק</span>
+            <strong id="display-amount" class="summary-amount">&#8203;</strong>
+          </div>
+          <div class="summary-icon" aria-hidden="true">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
+              <path d="M4 7.5h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M16 13.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="16" cy="13.5" r=".8" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+        <div class="summary-bottom">
+          <span>טעינת ארנק Travel Money</span>
+          <span id="order-number">&#8203;</span>
+        </div>
+      </section>
+
+      <section class="wallet-pay-section" aria-label="טעינה מהיר">
+        <div class="section-heading">
+          <h2>טעינה מהיר</h2>
+          <p>שלמו באופן מאובטח באמצעות הארנק שבמכשיר.</p>
+        </div>
+        <div id="googlePayButton" class="wallet-pay-slot"></div>
+        <div id="applePayButton" class="wallet-pay-slot"></div>
+      </section>
+
+      <div class="wallet-divider" aria-hidden="true"><span>או בכרטיס אשראי</span></div>
+
+      <form id="payment-form" novalidate>
+        <div class="field-group">
+          <label class="field-label" for="cardholder-name">
+            <span class="field-label__icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M5 20c.6-4 3-6 7-6s6.4 2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span>שם בעל הכרטיס</span>
+          </label>
+          <input id="cardholder-name" name="cardholderName" type="text" autocomplete="cc-name" placeholder="כפי שמופיע על הכרטיס" required />
+          <p class="field-error" id="name-error"></p>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">
+            <span class="field-label__icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/>
+              </svg>
+            </span>
+            <span>מספר כרטיס</span>
+          </div>
+          <div id="card-number" class="airwallex-field" aria-label="מספר כרטיס"></div>
+          <p class="field-error" id="card-number-error"></p>
+        </div>
+
+        <div class="split-row">
+          <div class="field-group">
+            <div class="field-label">
+              <span class="field-label__icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="5" width="16" height="15" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span>תוקף</span>
+            </div>
+            <div id="expiry-date" class="airwallex-field" aria-label="תוקף כרטיס"></div>
+            <p class="field-error" id="expiry-error"></p>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">
+              <span class="field-label__icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="10" width="14" height="10" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M8 10V8a4 4 0 0 1 8 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span>CVV</span>
+            </div>
+            <div id="cvc" class="airwallex-field" aria-label="קוד אבטחה"></div>
+            <p class="field-error" id="cvc-error"></p>
+          </div>
+        </div>
+
+        <label class="save-card">
+          <input id="save-card" type="checkbox" />
+          <span class="switch" aria-hidden="true"></span>
+          <span class="save-card__copy">
+            <strong>שמירת הכרטיס לטעינה הבא</strong>
+            <small>הכרטיס נשמר באופן מוצפן אצל ספק התשלומים.</small>
+          </span>
+        </label>
+
+        <div id="auth-form-container"></div>
+        <div id="payment-message" class="payment-message" role="status" aria-live="polite"></div>
+
+        <div class="security-note">
+          <span class="security-note__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3 5 6v5c0 4.6 2.9 8.7 7 10 4.1-1.3 7-5.4 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="m9.3 12 1.8 1.8 3.7-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span><strong>הטעינה שלך מוגן.</strong><br />פרטי הכרטיס מועברים בצורה מוצפנת ואינם נשמרים בשרתים של Travel Money.</span>
+        </div>
+
+        <button id="submit-payment" class="pay-button" type="submit" disabled>
+          <span id="button-text">שלם</span>
+          <span id="button-loader" class="loader" hidden></span>
+        </button>
+
+        <div class="trust-row">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="5" y="10.5" width="14" height="9.5" rx="2.2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>טעינה מאובטח בתקן PCI DSS</span>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="payment.js"></script>
+</body>
+</html>
