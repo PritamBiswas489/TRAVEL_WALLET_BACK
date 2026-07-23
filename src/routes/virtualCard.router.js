@@ -1,6 +1,8 @@
 import '../config/environment.js';
 import express from 'express';
 import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 import VirtualCardController from '../controllers/virtualCard.controller.js';
 const router = express.Router();
 const disputeEvidenceUpload = multer({
@@ -21,6 +23,29 @@ const disputeEvidenceUpload = multer({
     }
 
     cb(new Error('Only image, PDF, and document files are allowed'));
+  }
+});
+
+const virtualCardBackgroundUploadPath = 'uploads/virtualCardBackground';
+if (!fs.existsSync(virtualCardBackgroundUploadPath)) {
+  fs.mkdirSync(virtualCardBackgroundUploadPath, { recursive: true });
+}
+
+const virtualCardBackgroundUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, virtualCardBackgroundUploadPath),
+    filename: (req, file, cb) => {
+      const extension = path.extname(file.originalname);
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`);
+    }
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only image files are allowed'));
   }
 });
 
@@ -612,4 +637,83 @@ router.get('/get-transaction-dispute-list', async (req, res, next) => {
   const response = await VirtualCardController.getTransactionDisputeList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
+
+/**
+ * @swagger
+ * /api/auth/virtual-card/set-virtual-card-background-image:
+ *   post:
+ *     summary: Set virtual card background image using preset or custom upload
+ *     tags:
+ *       - Auth-airwallex-virtual-card routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cardId
+ *               - type
+ *             properties:
+ *               cardId:
+ *                 type: string
+ *                 description: Airwallex virtual card ID
+ *               type:
+ *                 type: string
+ *                 enum: [preset, custom]
+ *                 description: Select preset design or upload custom image
+ *               preset_id:
+ *                 type: integer
+ *                 description: Required when type is preset
+ *                 example: 8
+ *               background:
+ *                 type: string
+ *                 format: binary
+ *                 description: Required when type is custom
+ *     responses:
+ *       200:
+ *         description: Virtual card design saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Virtual card background image set successfully.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     card_design:
+ *                       type: object
+ *                       properties:
+ *                         type:
+ *                           type: string
+ *                           enum: [preset, custom]
+ *                         preset_id:
+ *                           type: integer
+ *                           nullable: true
+ *                           example: 8
+ *                         background:
+ *                           type: string
+ *                           nullable: true
+ *                           example: https://cdn.domain.com/uploads/123.webp
+ */
+router.post('/set-virtual-card-background-image', virtualCardBackgroundUpload.single('background'), async (req, res, next) => {
+  const payload = {
+    ...req.body,
+    ...req.params,
+    ...req.query,
+    background: req.file ? `${process.env.BASE_URL}/uploads/virtualCardBackground/${req.file.filename}` : undefined,
+  };
+  const response = await VirtualCardController.setVirtualCardBackgroundImage({ headers: req.headers, user: req.user, payload });
+  res.return(response);
+});
+
 export default router;

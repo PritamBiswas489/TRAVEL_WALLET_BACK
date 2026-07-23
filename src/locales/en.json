@@ -559,5 +559,7 @@
 	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 89e41960a05f4914b48de560df3c2fbc)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 89e41960a05f4914b48de560df3c2fbc)",
 	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 66e8ee33cf384ee2beadcc5321a9b3f4)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 66e8ee33cf384ee2beadcc5321a9b3f4)",
 	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - ba956be654054848b945895bdfd22a88)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - ba956be654054848b945895bdfd22a88)",
-	"KYC_DOCUMENTS_CREATED_SUCCESSFULLY": "KYC_DOCUMENTS_CREATED_SUCCESSFULLY"
+	"KYC_DOCUMENTS_CREATED_SUCCESSFULLY": "KYC_DOCUMENTS_CREATED_SUCCESSFULLY",
+	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_FAILED": "Failed to set virtual card background image.",
+	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_SUCCESSFULLY": "Virtual card background image set successfully."
 }

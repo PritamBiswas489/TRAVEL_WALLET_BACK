@@ -555,5 +555,7 @@
 	"SUCCEEDED": "הצליח.",
 	"SUSPENDED": "מושעה.",
 	"TOPUP": "טעינה.",
-	"TRANSFER": "העברה."
+	"TRANSFER": "העברה.",
+	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_FAILED": "נכשל בהגדרת תמונת רקע לכרטיס הווירטואלי.",
+	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_SUCCESSFULLY": "תמונת הרקע לכרטיס הווירטואלי הוגדרה בהצלחה."
 }

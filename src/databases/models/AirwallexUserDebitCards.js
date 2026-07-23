@@ -29,6 +29,18 @@ export default function AirwallexUserDebitCards(sequelize, DataTypes) {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
+			cardDesignType: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+			cardDesignPresetId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+			},
+			cardDesignBackground: {
+				type: DataTypes.TEXT,
+				allowNull: true,
+			},
 			cardholderId: {
 				type: DataTypes.UUID,
 				allowNull: false,

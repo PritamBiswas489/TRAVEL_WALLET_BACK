@@ -132,6 +132,9 @@ router.post("/upload-profile-image", upload.single("image"), async (req, res) =>
    const profileDetails = await ProfileController.updateProfileAvatar({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user, file: req.file });
    res.return(profileDetails);
 })
+
+
+ 
 /**
  * @swagger
  * /api/auth/profile/update-pin:
@@ -782,6 +785,9 @@ router.delete("/delete", async (req, res) => {
   const response = await ProfileController.removeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+
+
+
 
 
 export default router;

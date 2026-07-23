@@ -1,7 +1,7 @@
-# Generated: 2026-07-06T16:52:04.175Z
+# Generated: 2026-07-23T15:36:28.255Z
 
 curl -X POST "https://api-demo.airwallex.com/api/v1/issuing/cards/create" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJraWQiOiJjNDRjODVkMDliMDc0NmNlYTIwZmI4NjZlYzI4YWY3ZSIsImFsZyI6IkhTMjU2In0.eyJ0eXBlIjoiY2xpZW50IiwiZGMiOiJISyIsImRhdGFfY2VudGVyX3JlZ2lvbiI6IkhLIiwiYWNjb3VudF9pZCI6ImU5OThiMWEwLThiMzAtNGRhYi04NjMzLTA4OTZjZjA2NjI5ZiIsImFwaV92ZXJzaW9uIjoiMjAyNC0wNi0xNCIsInBlcm1pc3Npb25zIjpbInI6YXd4Oio6KiIsInc6YXd4Oio6KiJdLCJ0aWVyIjoiUyIsInJhdGVfbGltaXQiOmZhbHNlLCJzdWIiOiIwZmUwNDJjNi0xM2I1LTQ2YjktYTZjYS0wYjBkZWJkOGExNDciLCJleHAiOjE3ODMzNTg1MjIsImlhdCI6MTc4MzM1NjcyMiwianRpIjoiN2FkMWJjODAtNTQ3ZS00NjY5LThhOGEtNDIxYmZlMDM0MzNlIn0.ydArtqtNhTlTLOeBUEei15FcgzPcIyNcvuRpXt_RQTo" \
-  -H "x-on-behalf-of: acct_LWcwNZx-MY-e6rC3M8kIiA" \
-  -d '{"program":{"purpose":"CONSUMER","type":"DEBIT"},"is_personalized":true,"form_factor":"VIRTUAL","cardholder_id":"76c60750-01fe-4ae8-bab9-fbfbbe19a01a","authorization_controls":{"allowed_merchant_categories":[],"allowed_transaction_count":"MULTIPLE","transaction_limits":{"currency":"ILS","limits":[{"amount":100000,"interval":"PER_TRANSACTION"}]}},"created_by":"John Doe","request_id":"9817aee0-6d4a-4519-a9d9-23ecbfa0fc39"}'
+  -H "Authorization: Bearer eyJraWQiOiJjNDRjODVkMDliMDc0NmNlYTIwZmI4NjZlYzI4YWY3ZSIsImFsZyI6IkhTMjU2In0.eyJ0eXBlIjoiY2xpZW50IiwiZGMiOiJISyIsImRhdGFfY2VudGVyX3JlZ2lvbiI6IkhLIiwiYWNjb3VudF9pZCI6ImU5OThiMWEwLThiMzAtNGRhYi04NjMzLTA4OTZjZjA2NjI5ZiIsImFwaV92ZXJzaW9uIjoiMjAyNC0wNi0xNCIsInBlcm1pc3Npb25zIjpbInI6YXd4Oio6KiIsInc6YXd4Oio6KiJdLCJ0aWVyIjoiUyIsInJhdGVfbGltaXQiOmZhbHNlLCJzdWIiOiIwZmUwNDJjNi0xM2I1LTQ2YjktYTZjYS0wYjBkZWJkOGExNDciLCJleHAiOjE3ODQ4MjI3ODYsImlhdCI6MTc4NDgyMDk4NiwianRpIjoiY2Y4YTA3NWEtM2NkMS00YTIzLWJlMGUtNDQ5Zjk0Y2Q4MzhjIn0.AU9ObskC4Eupoq2v2uS_M_DEsYmP6UR3L3w-zh7dmdc" \
+  -H "x-on-behalf-of: acct__TH47lm7N8eV_yxYnAZ50w" \
+  -d '{"program":{"purpose":"CONSUMER","type":"DEBIT"},"is_personalized":true,"form_factor":"VIRTUAL","cardholder_id":"c833599b-be61-4ece-8d69-2ce3bfb079bb","authorization_controls":{"allowed_merchant_categories":[],"allowed_transaction_count":"MULTIPLE","transaction_limits":{"currency":"ILS","limits":[{"amount":100000,"interval":"PER_TRANSACTION"}]}},"created_by":"John Doe","request_id":"0523fa8a-dd0f-45c8-bfb2-b2f78864e7e7"}'

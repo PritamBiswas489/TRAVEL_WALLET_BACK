@@ -1116,4 +1116,65 @@ export default class AirWallexVirtualCardSerivice {
             return callback(error, null);
         }
     }
+
+    static async setVirtualCardBackgroundImage({ userId, payload }, callback) {
+        try {
+            const cardId = payload?.cardId;
+            const type = payload?.type ? String(payload.type).toLowerCase() : '';
+
+            if (!cardId) {
+                return callback(new Error('CARD_ID_NOT_PROVIDED'), null);
+            }
+
+            if (!['preset', 'custom'].includes(type)) {
+                return callback(new Error('INVALID_CARD_DESIGN_TYPE'), null);
+            }
+
+            const card = await AirwallexUserDebitCards.findOne({ where: { userId, cardId } });
+            if (!card) {
+                return callback(new Error('CARD_NOT_FOUND'), null);
+            }
+
+            if (type === 'preset') {
+                const presetId = Number(payload?.preset_id);
+                if (!Number.isInteger(presetId) || presetId <= 0) {
+                    return callback(new Error('PRESET_ID_REQUIRED'), null);
+                }
+
+                await card.update({
+                    cardDesignType: 'preset',
+                    cardDesignPresetId: presetId,
+                    cardDesignBackground: null,
+                });
+
+                return callback(null, {
+                    card_design: {
+                        type: 'preset',
+                        preset_id: presetId,
+                    },
+                });
+            }
+
+            const background = payload?.background;
+            if (!background) {
+                return callback(new Error('BACKGROUND_IMAGE_REQUIRED'), null);
+            }
+
+            await card.update({
+                cardDesignType: 'custom',
+                cardDesignPresetId: null,
+                cardDesignBackground: background,
+            });
+
+            return callback(null, {
+                card_design: {
+                    type: 'custom',
+                    background,
+                },
+            });
+        } catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
 }

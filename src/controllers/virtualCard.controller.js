@@ -379,4 +379,29 @@ export default class VirtualCardController {
     });
   }
 
+  static async setVirtualCardBackgroundImage({ headers, user, payload }) {
+    const { i18n } = headers;
+    const userId = user?.id ?? 1;
+    return new Promise(async (resolve) => {
+      AirWallexVirtualCardSerivice.setVirtualCardBackgroundImage({ userId, payload }, (error, response) => {
+        if (error) {
+          process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+          resolve({
+            status: 500,
+            data: [],
+            error: { message: i18n.__("SET_VIRTUAL_CARD_BACKGROUND_IMAGE_FAILED"), reason: error.message },
+          });
+        }
+        else {
+          resolve({
+            status: 200,
+            data: response,
+            message: i18n.__("SET_VIRTUAL_CARD_BACKGROUND_IMAGE_SUCCESSFULLY"),
+            error: {},
+          });
+        }
+      })
+    });
+  }
+
 }
