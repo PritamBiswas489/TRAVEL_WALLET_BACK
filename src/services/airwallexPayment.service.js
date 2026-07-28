@@ -377,21 +377,10 @@ export default class AirwallexPaymentService {
       //console.log("Validated KYC data:", validationResult);
       //console.log("Received files for KYC submission:", files);
 
-      if (!files?.identificationFrontImage?.path) {
-        return callback(new Error("IDENTIFICATION_FRONT_IMAGE_REQUIRED"));
-      }
-      if (
-        !files?.identificationBackImage?.path &&
-        validationResult?.identificationType !== "PASSPORT"
-      ) {
-        return callback(new Error("IDENTIFICATION_BACK_IMAGE_REQUIRED"));
-      }
       if (!files?.proofOfAddressImage?.path) {
         return callback(new Error("PROOF_OF_ADDRESS_IMAGE_REQUIRED"));
       }
 
-      const frontImagePath = files.identificationFrontImage.path;
-      const backImagePath = files.identificationBackImage?.path;
       const poaImagePath = files.proofOfAddressImage.path;
 
       const accessToken = await this.getAirWalletxToken();
@@ -505,10 +494,8 @@ export default class AirwallexPaymentService {
         }
       };
 
-      let frontFileId, backFileId, poaFileId;
+      let poaFileId;
       try {
-        frontFileId = await uploadFile(frontImagePath);
-        backFileId = backImagePath ? await uploadFile(backImagePath) : null;
         poaFileId = await uploadFile(poaImagePath);
       } catch (uploadErr) {
         return callback(new Error(uploadErr.errMsg), {
@@ -516,45 +503,9 @@ export default class AirwallexPaymentService {
         });
       }
 
-      if (!frontFileId) {
-        return callback(new Error("IDENTIFICATION_FRONT_IMAGE_UPLOAD_FAILED"));
-      }
-      if (!backFileId && backImagePath) {
-        return callback(new Error("IDENTIFICATION_BACK_IMAGE_UPLOAD_FAILED"));
-      }
       if (!poaFileId) {
         return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
       }
-      //frontFileId = "NTZiN2NkNWUtYmUxNC00NTE2LTllNGMtZTNjNzU0ZGU2ZmE1LHwsaG9uZ2tvbmcsfCxBaXJ3YWxsZXgtbG9nby5wbmdfMTY0Nzk5NTgwNTIzNw";
-
-      //console.log("Uploaded file IDs:", { frontFileId, backFileId, poaFileId });
-
-      const identificationPayload = (() => {
-        const type = validationResult.identificationType;
-        const base = {
-          identification_type: type,
-          issuing_country_code: validationResult.nationality,
-        };
-        if (type === "PASSPORT") {
-          return { ...base, passport: { front_file_id: frontFileId } };
-        } else if (type === "DRIVERS_LICENSE") {
-          return {
-            ...base,
-            drivers_license: {
-              front_file_id: frontFileId,
-              ...(backFileId && { back_file_id: backFileId }),
-            },
-          };
-        } else {
-          return {
-            ...base,
-            personal_id: {
-              front_file_id: frontFileId,
-              ...(backFileId && { back_file_id: backFileId }),
-            },
-          };
-        }
-      })();
       //Upload Payload to Airwallex to update account with KYC details and submit for verification
       const updatePayload = {
         account_details: {
@@ -572,13 +523,6 @@ export default class AirwallexPaymentService {
               postcode: validationResult.postCode,
               state: validationResult.state,
               suburb: validationResult.suburb,
-            },
-            identifications: {
-              primary: {
-                ...identificationPayload,
-                issuing_country_code:
-                  validationResult.identificationDocumentIssueCountry,
-              },
             },
             attachments: {
               individual_documents: [
@@ -665,8 +609,6 @@ export default class AirwallexPaymentService {
             ...updateResponse.data,
             userInputData: {
               ...validationResult,
-              frontImagePath,
-              backImagePath,
               poaImagePath,
             },
           },

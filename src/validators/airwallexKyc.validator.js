@@ -2,7 +2,6 @@ import joi from "joi";
 
 const COUNTRY_CODES = ["IL"];
 const CURRENCIES = ["ILS", "USD", "EUR"];
-const IDENTIFICATION_TYPES = ["PERSONAL_ID", "DRIVERS_LICENSE", "PASSPORT"];
 const CARD_USAGE_VALUES = [
   "GENERAL_EXPENSES", "BUSINESS_EXPENSES", "EDUCATION", "TRAVEL_TRANSPORT",
   "INSURANCE", "SERVICES", "BILLS_UTILITIES", "INVESTMENT", "FEES_CHARGES",
@@ -89,14 +88,6 @@ export const airwallexKycValidator = async (data) => {
       suburb: joi.string().min(1).max(100).required().messages({
         "string.empty": "SUBURB_REQUIRED",
         "any.required": "SUBURB_REQUIRED",
-      }),
-      identificationType: joi.string().valid(...IDENTIFICATION_TYPES).required().messages({
-        "any.only": "INVALID_IDENTIFICATION_TYPE",
-        "string.empty": "IDENTIFICATION_TYPE_REQUIRED",
-        "any.required": "IDENTIFICATION_TYPE_REQUIRED",
-      }),
-      identificationDocumentIssueCountry: joi.string().valid(...COUNTRY_CODES).optional().default("IL").messages({
-        "any.only": "INVALID_IDENTIFICATION_DOCUMENT_ISSUE_COUNTRY",
       }),
       cardUsage: csvOrArrayOf(CARD_USAGE_VALUES).messages({
         "any.only": "INVALID_CARD_USAGE",

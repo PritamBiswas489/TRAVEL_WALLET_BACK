@@ -25,8 +25,6 @@ const kycUpload = multer({
     else cb(new Error('Only JPEG, PNG, or PDF files are allowed'));
   }
 }).fields([
-  { name: 'identificationFrontImage', maxCount: 1 },
-  { name: 'identificationBackImage', maxCount: 1 },
   { name: 'proofOfAddressImage', maxCount: 1 },
 ]);
 
@@ -494,28 +492,6 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *               suburb:
  *                 type: string
  *                 example: "Tel Aviv"
- *               identificationType:
- *                 type: string
- *                 enum:
- *                   - PERSONAL_ID
- *                   - DRIVERS_LICENSE
- *                   - PASSPORT
- *                 example: PERSONAL_ID
- *               identificationFrontImage:
- *                 type: string
- *                 format: binary
- *                 description: Front image of the identification document
- *               identificationBackImage:
- *                 type: string
- *                 format: binary
- *                 description: Back image of the identification document
- *               identificationDocumentIssueCountry:
- *                 type: string
- *                 enum:
- *                   - IL
- *                 description: "Country code where the identification document was issued (IL = Israel)"
- *                 default: IL
- *                 example: IL
  *               proofOfAddressImage:
  *                 type: string
  *                 format: binary
