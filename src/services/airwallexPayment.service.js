@@ -19,8 +19,6 @@ import { get } from "http";
 import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 import { error } from "console";
 
-
-
 const {
   sequelize,
   Op,
@@ -35,7 +33,7 @@ const {
   AirwallexUserTransactionAdditionalDetails,
   AirwallexQrCodeTransaction,
   AirwallexCardholder,
-  AirwallexCardTransactions
+  AirwallexCardTransactions,
 } = db;
 const REFRESH_TIMEOUT = 5000; // 5 seconds
 export default class AirwallexPaymentService {
@@ -44,7 +42,6 @@ export default class AirwallexPaymentService {
     const clientId = process.env.AIRWALLEX_CLIENT_ID;
     const apiUrl = process.env.AIRWALLEX_API_URL;
     const accountId = process.env.AIRWALLEX_ACCOUNT_ID;
-
 
     const res = await axios.post(
       `${apiUrl}/api/v1/authentication/login`,
@@ -149,8 +146,6 @@ export default class AirwallexPaymentService {
         },
       );
 
-
-
       if (response?.data?.id) {
         await this.saveAirwallexKycAccountDetails({
           accountData: response.data,
@@ -177,17 +172,29 @@ export default class AirwallexPaymentService {
       if (!getData) {
         return callback(new Error("AIRWALLEX_KYC_DETAILS_NOT_FOUND"));
       }
-      if (getData?.status === 'SUBMITTED') {
-        console.log("Action required: Fetching latest Airwallex KYC details for userId:", userId);
+      if (getData?.status === "SUBMITTED") {
+        console.log(
+          "Action required: Fetching latest Airwallex KYC details for userId:",
+          userId,
+        );
         await new Promise((resolve, reject) => {
-          this.getAndUpdateAirWallexCustomerAccount({ userId, i18n }, (error, result) => {
-            if (error) {
-              console.error("Error fetching and updating Airwallex KYC details:", error);
-            } else {
-              console.log("Successfully fetched and updated Airwallex KYC details:", result);
-            }
-            resolve(); // Resolve the promise regardless of success or failure
-          });
+          this.getAndUpdateAirWallexCustomerAccount(
+            { userId, i18n },
+            (error, result) => {
+              if (error) {
+                console.error(
+                  "Error fetching and updating Airwallex KYC details:",
+                  error,
+                );
+              } else {
+                console.log(
+                  "Successfully fetched and updated Airwallex KYC details:",
+                  result,
+                );
+              }
+              resolve(); // Resolve the promise regardless of success or failure
+            },
+          );
         });
         getData = await AirwallexKycAccount.findOne({
           where: { userId },
@@ -231,12 +238,8 @@ export default class AirwallexPaymentService {
           return null;
         }
 
-        return typeof value === "object"
-          ? JSON.stringify(value)
-          : value;
+        return typeof value === "object" ? JSON.stringify(value) : value;
       };
-
-
 
       const mappedData = {
         userId,
@@ -274,7 +277,8 @@ export default class AirwallexPaymentService {
 
         employer: checkObjectOrArrayOrString(individual?.employer) ?? null,
         estimatedMonthlyIncome:
-          checkObjectOrArrayOrString(individual?.estimated_monthly_income) ?? null,
+          checkObjectOrArrayOrString(individual?.estimated_monthly_income) ??
+          null,
 
         // BOOLEAN
         hasMemberHoldingPublicOffice:
@@ -284,25 +288,26 @@ export default class AirwallexPaymentService {
 
         liveSelfieFileId:
           checkObjectOrArrayOrString(individual?.live_selfie_file_id) ?? null,
-        nationality: checkObjectOrArrayOrString(individual?.nationality) ?? null,
+        nationality:
+          checkObjectOrArrayOrString(individual?.nationality) ?? null,
         occupation: checkObjectOrArrayOrString(individual?.occupation) ?? null,
 
         // JSONB
         otherNames: individual?.other_names ?? null,
 
         personId: checkObjectOrArrayOrString(individual?.person_id) ?? null,
-        phoneNumber: checkObjectOrArrayOrString(individual?.phone_number) ?? null,
+        phoneNumber:
+          checkObjectOrArrayOrString(individual?.phone_number) ?? null,
         photoHoldingIdentificationFileId:
           checkObjectOrArrayOrString(
-            individual?.photo_holding_identification_file_id
+            individual?.photo_holding_identification_file_id,
           ) ?? null,
 
         // JSONB / TEXT
         residentialAddress: individual?.residential_address ?? null,
         residentialAddressEnglish:
-          checkObjectOrArrayOrString(
-            individual?.residential_address_english
-          ) ?? null,
+          checkObjectOrArrayOrString(individual?.residential_address_english) ??
+          null,
 
         identifications: individual?.identifications ?? {},
         accountUsage: individual?.account_usage ?? {},
@@ -315,8 +320,7 @@ export default class AirwallexPaymentService {
         trusteeDetails: ad?.trustee_details ?? null,
 
         // customer_agreements
-        agreedToDataUsage:
-          customerAgreements?.agreed_to_data_usage ?? null,
+        agreedToDataUsage: customerAgreements?.agreed_to_data_usage ?? null,
         agreedToTermsAndConditions:
           customerAgreements?.agreed_to_terms_and_conditions ?? null,
         agreedToBiometricsConsent:
@@ -324,7 +328,7 @@ export default class AirwallexPaymentService {
 
         serviceAgreementType:
           checkObjectOrArrayOrString(
-            termsAndConditions?.service_agreement_type
+            termsAndConditions?.service_agreement_type,
           ) ?? null,
 
         deviceData: termsAndConditions?.device_data ?? {},
@@ -337,13 +341,10 @@ export default class AirwallexPaymentService {
 
         // DATE
         airwallexCreatedAt: accountData?.created_at ?? null,
-
       };
       if (accountData?.userInputData) {
         mappedData.userInputData = accountData?.userInputData;
       }
-
-
 
       const existing = await AirwallexKycAccount.findOne({
         where: { airwallexAccountId: mappedData.airwallexAccountId },
@@ -356,11 +357,9 @@ export default class AirwallexPaymentService {
         return await AirwallexKycAccount.create(mappedData);
       }
     } catch (error) {
-
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       //console.error("Error saving Airwallex KYC account details:", error?.message);
       throw error;
-
     }
   }
   static async airwallexCreateKycDocuments(
@@ -678,21 +677,31 @@ export default class AirwallexPaymentService {
         where: { userId },
       });
       const accountId = getAccount?.airwallexAccountId;
-      console.log("Creating hosted flow for userId:", userId, "accountId:", accountId, "templateId:", templateId, "returnUrl:", returnUrl);
-      console.log("#####################################################################################################################");
+      console.log(
+        "Creating hosted flow for userId:",
+        userId,
+        "accountId:",
+        accountId,
+        "templateId:",
+        templateId,
+        "returnUrl:",
+        returnUrl,
+      );
+      console.log(
+        "#####################################################################################################################",
+      );
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
         throw new Error("AIRWALLEX_TOKEN_NOT_GENERATED");
       }
       const d = {
-
         account_id: accountId,
         template: templateId,
         // return_url: returnUrl,
         // error_url: errorUrl,
       };
-      (returnUrl && (d.return_url = returnUrl));
-      (errorUrl && (d.error_url = errorUrl));
+      returnUrl && (d.return_url = returnUrl);
+      errorUrl && (d.error_url = errorUrl);
 
       console.log("Hosted flow creation payload:", d);
       const response = await axios.post(
@@ -702,13 +711,11 @@ export default class AirwallexPaymentService {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
-
           },
-        }
+        },
       );
 
       return response?.data;
-
     } catch (error) {
       console.error("Error creating hosted flow:", error?.message);
       throw new Error("INTERNAL_SERVER_ERROR");
@@ -728,10 +735,9 @@ export default class AirwallexPaymentService {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
       return response?.data;
-
     } catch (error) {
       console.error("Error authorizing hosted flow:", error?.message);
       throw new Error("INTERNAL_SERVER_ERROR");
@@ -750,13 +756,19 @@ export default class AirwallexPaymentService {
       return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
     }
 
-
-    const getHostedFlow = await this.createHostedFlow(userId, returnUrl, errorUrl).catch((error) => {
+    const getHostedFlow = await this.createHostedFlow(
+      userId,
+      returnUrl,
+      errorUrl,
+    ).catch((error) => {
       console.error("Error creating hosted flow:", error?.message);
       return callback(new Error("FAILED_TO_CREATE_HOSTED_FLOW"));
     });
     if (getHostedFlow?.id) {
-      const authorizeHostedFlow = await this.authorizeHostedFlow(getHostedFlow?.id, userId).catch((error) => {
+      const authorizeHostedFlow = await this.authorizeHostedFlow(
+        getHostedFlow?.id,
+        userId,
+      ).catch((error) => {
         console.error("Error authorizing hosted flow:", error?.message);
         return callback(new Error("FAILED_TO_AUTHORIZE_HOSTED_FLOW"));
       });
@@ -771,7 +783,10 @@ export default class AirwallexPaymentService {
     return callback(new Error("FAILED_TO_CREATE_HOSTED_FLOW"));
   }
   static async livenessProactiveHostedFlowStatus(payload, callback) {
-    console.log("Checking liveness proactive hosted flow status with payload:", payload);
+    console.log(
+      "Checking liveness proactive hosted flow status with payload:",
+      payload,
+    );
     try {
       console.log("Received payload for hosted flow status check:", payload);
       const userId = payload?.userId;
@@ -797,7 +812,7 @@ export default class AirwallexPaymentService {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        }
+        },
       );
       // console.log("Hosted flow status response:", response?.data);
       return callback(null, { data: response?.data });
@@ -805,7 +820,6 @@ export default class AirwallexPaymentService {
       console.error("Error checking hosted flow status:", error?.message);
       return callback(new Error("FAILED_TO_CHECK_HOSTED_FLOW_STATUS"));
     }
-
   }
 
   static async testModeUpdateAccountStatus(
@@ -850,18 +864,17 @@ export default class AirwallexPaymentService {
 
   static async airwallexKycWebhook({ payload, headers }, callback) {
     console.log("Received Airwallex KYC webhook with payload:", payload);
-    const timestamp = headers['x-timestamp'];
-    const signature = headers['x-signature'];
+    const timestamp = headers["x-timestamp"];
+    const signature = headers["x-signature"];
 
-    const rawBody = JSON.stringify(payload).toString('utf8')
+    const rawBody = JSON.stringify(payload).toString("utf8");
     const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
-
     if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-      console.error('Webhook signature verification failed');
-      return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+      console.error("Webhook signature verification failed");
+      return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
     }
-    console.log("======================================================")
+    console.log("======================================================");
     console.log("Webhook signature verified successfully");
 
     try {
@@ -907,10 +920,7 @@ export default class AirwallexPaymentService {
       await AirwallexKycAccount.update(
         {
           status: newStatus,
-          webhookData: [
-            payload,
-            ...existingWebhookData
-          ]
+          webhookData: [payload, ...existingWebhookData],
         },
         { where: { airwallexAccountId: accountId } },
       );
@@ -923,11 +933,9 @@ export default class AirwallexPaymentService {
       //========== send push notification to user =================//
       try {
         NotificationService.sendKycStatusNotification(accountId);
-
       } catch (err) {
         // console.error("Error sending KYC status notification:", err);
       }
-
 
       console.log(
         `airwallexKycWebhook: updated userId=${userId} to status=${newStatus}`,
@@ -1077,7 +1085,10 @@ export default class AirwallexPaymentService {
       const apiUrl = process.env.AIRWALLEX_API_URL;
 
       try {
-        console.log("Fetching existing Airwallex customer with ID:", existingCustomerId);
+        console.log(
+          "Fetching existing Airwallex customer with ID:",
+          existingCustomerId,
+        );
         const customerResponse = await axios.get(
           `${apiUrl}/api/v1/pa/customers/${existingCustomerId}`,
           {
@@ -1090,14 +1101,13 @@ export default class AirwallexPaymentService {
         );
         console.log("Fetched Airwallex customer data:", customerResponse?.data);
 
-
         if (customerResponse?.data?.id) {
           return {
             airwallexCustomerId: customerResponse.data.id,
             existing: true,
             customer: customerResponse.data,
           };
-        }else{
+        } else {
           await AirwallexCustomers.destroy({
             where: {
               userId,
@@ -1110,19 +1120,16 @@ export default class AirwallexPaymentService {
           "Error fetching Airwallex customer by ID:",
           error?.response?.data || error.message,
         );
-        if(error?.status === 404) {
-              await AirwallexCustomers.destroy({
-                where: {
-                  userId,
-                },
-             });
-        }else{
+        if (error?.status === 404) {
+          await AirwallexCustomers.destroy({
+            where: {
+              userId,
+            },
+          });
+        } else {
           throw new Error("AIRWALLEX_CUSTOMER_FETCH_FAILED");
         }
       }
-      
-
-      
     }
 
     const getUserDetails = await UserService.getUserById(userId);
@@ -1134,8 +1141,6 @@ export default class AirwallexPaymentService {
     const phoneNumber = getUserDetails.phoneNumber || "";
     const REQUEST_ID = uuidv4();
     const MECHANT_CUSTOMER_ID = `AWCUST-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-   
 
     if (!name && !email && !phoneNumber) {
       throw new Error("INSUFFICIENT_USER_DATA");
@@ -1250,7 +1255,7 @@ export default class AirwallexPaymentService {
         },
       );
       setTimeout(() => {
-        this.updateUserTransactionHistoryTable({ userId }, () => { });
+        this.updateUserTransactionHistoryTable({ userId }, () => {});
       }, REFRESH_TIMEOUT);
       AirwallexUserTransactionAdditionalDetails.create({
         sourceId: response.data.id,
@@ -1437,7 +1442,6 @@ export default class AirwallexPaymentService {
   }
 
   static async getAccountBalance({ userId, i18n }, callback) {
-
     try {
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
@@ -1554,13 +1558,13 @@ export default class AirwallexPaymentService {
       setTimeout(() => {
         this.updateUserTransactionHistoryTable(
           { userId: fromWalletId },
-          () => { },
+          () => {},
         );
       }, REFRESH_TIMEOUT);
       setTimeout(() => {
         this.updateUserTransactionHistoryTable(
           { userId: toWalletId },
-          () => { },
+          () => {},
         );
       }, REFRESH_TIMEOUT);
 
@@ -1643,18 +1647,17 @@ export default class AirwallexPaymentService {
   }
 
   static async airwallexConnectedTransferWebhook(payload, headers, callback) {
+    const timestamp = headers["x-timestamp"];
+    const signature = headers["x-signature"];
 
-    const timestamp = headers['x-timestamp'];
-    const signature = headers['x-signature'];
-
-    const rawBody = JSON.stringify(payload).toString('utf8')
+    const rawBody = JSON.stringify(payload).toString("utf8");
     const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
     if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-      console.error('Connected transfer webhook signature verification failed');
-      return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+      console.error("Connected transfer webhook signature verification failed");
+      return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
     }
-    console.log("======================================================")
+    console.log("======================================================");
     console.log("Connected transfer webhook signature verified successfully");
 
     let useId = null;
@@ -1711,24 +1714,30 @@ export default class AirwallexPaymentService {
         });
         if (get) {
           useId = get.userId;
-          get.refundWebhookData = [payload.data, ...(get.refundWebhookData || [])];
+          get.refundWebhookData = [
+            payload.data,
+            ...(get.refundWebhookData || []),
+          ];
           get.refundStatus = payload.data.status;
           await get.save();
-          console.log("Updated QR transaction record with refund ID and status:", payload.data.id, payload.data.status);
+          console.log(
+            "Updated QR transaction record with refund ID and status:",
+            payload.data.id,
+            payload.data.status,
+          );
         }
-
       }
       if (useId) {
-        this.updateUserTransactionHistoryTable({ userId: useId }, () => { });
-
+        this.updateUserTransactionHistoryTable({ userId: useId }, () => {});
       }
       console.log(
         "Checking for AirwallexUserTransactionAdditionalDetails with sourceId:",
         payload.data.id,
       );
-      const getAirwallexUserTransactionAdditionalDetails = await AirwallexUserTransactionAdditionalDetails.findOne({
-        where: { sourceId: payload.data.id },
-      });
+      const getAirwallexUserTransactionAdditionalDetails =
+        await AirwallexUserTransactionAdditionalDetails.findOne({
+          where: { sourceId: payload.data.id },
+        });
       if (getAirwallexUserTransactionAdditionalDetails) {
         AirwallexUserTransactionAdditionalDetails.update(
           {
@@ -1743,19 +1752,17 @@ export default class AirwallexPaymentService {
   static async handleDepositWebhook(payload, headers, callback) {
     console.log("📥 Received Airwallex deposit webhook payload:", payload);
     try {
-
-      const timestamp = headers['x-timestamp'];
-      const signature = headers['x-signature'];
-      const rawBody = JSON.stringify(payload).toString('utf8');
+      const timestamp = headers["x-timestamp"];
+      const signature = headers["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
       if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-        console.error('Deposit webhook signature verification failed');
-        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+        console.error("Deposit webhook signature verification failed");
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
-      console.log("======================================================")
+      console.log("======================================================");
       console.log("Deposit webhook signature verified successfully");
-
 
       if (payload?.data?.id) {
         AirwallexUserTransactionAdditionalDetails.update(
@@ -1769,17 +1776,32 @@ export default class AirwallexPaymentService {
             where: { airwallexAccountId: payload.account_id },
           });
           if (kycAccount) {
-            console.log("Reloading transaction history for userId:", kycAccount.userId);
-            this.updateUserTransactionHistoryTable({ userId: kycAccount.userId }, () => { });
+            console.log(
+              "Reloading transaction history for userId:",
+              kycAccount.userId,
+            );
+            this.updateUserTransactionHistoryTable(
+              { userId: kycAccount.userId },
+              () => {},
+            );
           }
           //======== Start generate card holder =====//
-          AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder({ userId: kycAccount.userId, payload: {} }, (err, result) => {
-            if (err) {
-              console.error("Error creating Airwallex cardholder:", err.message);
-            } else {
-              console.log("Airwallex cardholder created successfully:", result.data);
-            }
-          });
+          AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder(
+            { userId: kycAccount.userId, payload: {} },
+            (err, result) => {
+              if (err) {
+                console.error(
+                  "Error creating Airwallex cardholder:",
+                  err.message,
+                );
+              } else {
+                console.log(
+                  "Airwallex cardholder created successfully:",
+                  result.data,
+                );
+              }
+            },
+          );
           //======== End generate card holder =====//
         }
         console.log("Received deposit webhook with payload:", payload);
@@ -1789,7 +1811,10 @@ export default class AirwallexPaymentService {
     }
     return callback(null, { data: payload });
   }
-  static async testModeTransferBetweenConnectedAccounts({ userId, payload }, callback) {
+  static async testModeTransferBetweenConnectedAccounts(
+    { userId, payload },
+    callback,
+  ) {
     try {
       let airwallextConnectedAccountId = null;
       if (payload?.accountId) {
@@ -1801,7 +1826,6 @@ export default class AirwallexPaymentService {
         if (airWallexAccont) {
           airwallextConnectedAccountId = airWallexAccont.airwallexAccountId;
         }
-
       }
       if (!airwallextConnectedAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
@@ -1811,7 +1835,8 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-      const amount = payload?.amount !== undefined ? parseFloat(payload.amount) : NaN;
+      const amount =
+        payload?.amount !== undefined ? parseFloat(payload.amount) : NaN;
       if (!amount || Number.isNaN(amount) || amount <= 0) {
         return callback(new Error("INVALID_AMOUNT"));
       }
@@ -1819,7 +1844,7 @@ export default class AirwallexPaymentService {
         request_id: payload?.request_id || `TEST-CHARGE-${Date.now()}`,
         reference: payload?.reference || "55667788",
         amount,
-        currency: 'ILS',
+        currency: "ILS",
         reason: payload?.reason || "travel",
         source: airwallextConnectedAccountId,
       };
@@ -1835,7 +1860,6 @@ export default class AirwallexPaymentService {
       );
 
       return callback(null, { data: response.data });
-
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
@@ -1844,24 +1868,22 @@ export default class AirwallexPaymentService {
       );
       const errMsg = error?.response?.data?.message || "INTERNAL_SERVER_ERROR";
       return callback(new Error(errMsg));
-
     }
-
   }
 
   static async handleAirwallexChargesWebhook(payload, headers, callback) {
     console.log("📥 Received Airwallex charges webhook payload:", payload);
     try {
-      const timestamp = headers['x-timestamp'];
-      const signature = headers['x-signature'];
-      const rawBody = JSON.stringify(payload).toString('utf8');
+      const timestamp = headers["x-timestamp"];
+      const signature = headers["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
       if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-        console.error('Charges webhook signature verification failed');
-        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+        console.error("Charges webhook signature verification failed");
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
-      console.log("======================================================")
+      console.log("======================================================");
       console.log("Charges webhook signature verified successfully");
 
       if (payload?.data?.request_id) {
@@ -1870,16 +1892,23 @@ export default class AirwallexPaymentService {
             where: { id: payload.data.request_id },
           });
           if (get) {
-            if (get.chargeStatus !== 'SETTLED') {
+            if (get.chargeStatus !== "SETTLED") {
               get.chargeStatus = payload.data.status;
-              get.chargeWebhookData = [payload.data, ...(get.chargeWebhookData || [])];
+              get.chargeWebhookData = [
+                payload.data,
+                ...(get.chargeWebhookData || []),
+              ];
               await get.save();
-              console.log("Updated QR code transaction with new webhook data and status:", get.id, get.chargeStatus);
+              console.log(
+                "Updated QR code transaction with new webhook data and status:",
+                get.id,
+                get.chargeStatus,
+              );
 
-
-              const getAirwallexUserTransactionAdditionalDetails = await AirwallexUserTransactionAdditionalDetails.findOne({
-                where: { sourceId: payload.data.id },
-              });
+              const getAirwallexUserTransactionAdditionalDetails =
+                await AirwallexUserTransactionAdditionalDetails.findOne({
+                  where: { sourceId: payload.data.id },
+                });
               if (getAirwallexUserTransactionAdditionalDetails) {
                 AirwallexUserTransactionAdditionalDetails.update(
                   {
@@ -1892,7 +1921,7 @@ export default class AirwallexPaymentService {
               setTimeout(() => {
                 this.updateUserTransactionHistoryTable(
                   { userId: get.userId },
-                  () => { },
+                  () => {},
                 );
               }, REFRESH_TIMEOUT);
               return callback(null, { data: payload });
@@ -1901,13 +1930,16 @@ export default class AirwallexPaymentService {
         }
       }
       return callback(null, { data: payload });
-
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("Error writing Airwallex charges webhook payload:", error?.message || error);
-      return callback(new Error("FAILED_TO_WRITE_AIRWALLEX_CHARGES_WEBHOOK_PAYLOAD"));
+      console.error(
+        "Error writing Airwallex charges webhook payload:",
+        error?.message || error,
+      );
+      return callback(
+        new Error("FAILED_TO_WRITE_AIRWALLEX_CHARGES_WEBHOOK_PAYLOAD"),
+      );
     }
-
   }
   //==============================================================================================================================================================//
   static async createMerchantOrderIdRequestId(args, callback) {
@@ -2069,7 +2101,9 @@ export default class AirwallexPaymentService {
           if (existing) {
             await existing.update(recordData, { transaction: t });
           } else {
-            await AirwallexUserTransactionHistory.create(recordData, { transaction: t });
+            await AirwallexUserTransactionHistory.create(recordData, {
+              transaction: t,
+            });
           }
         });
         upsertCount++;
@@ -2126,13 +2160,18 @@ export default class AirwallexPaymentService {
             },
           ],
         });
-      const formattedRows = rows ? rows.map((row) => {
-        const item = row.toJSON();
-        item.transactionStatus = item.additionalDetails?.jsonData?.data?.status || null;
-        return item;
-      }) : [];
+      const formattedRows = rows
+        ? rows.map((row) => {
+            const item = row.toJSON();
+            item.transactionStatus =
+              item.additionalDetails?.jsonData?.data?.status || null;
+            return item;
+          })
+        : [];
 
-      return callback(null, { data: { total: count, transactions: formattedRows } });
+      return callback(null, {
+        data: { total: count, transactions: formattedRows },
+      });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error("Error fetching wallet transaction history:", error);
@@ -2170,7 +2209,6 @@ export default class AirwallexPaymentService {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error("Error fetching admin Airwallex wallet balance:", error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
-
     }
   }
 
@@ -2206,19 +2244,23 @@ export default class AirwallexPaymentService {
       return callback(null, { data: response.data });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("Error testing transfer from child account to parent account:", error);
+      console.error(
+        "Error testing transfer from child account to parent account:",
+        error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
   }
-  static async airwallexQrPaymentTransferToPlatformWallet({ userId, payload, i18n }, callback) {
-
+  static async airwallexQrPaymentTransferToPlatformWallet(
+    { userId, payload, i18n },
+    callback,
+  ) {
     try {
       const { amount, paymentCountry } = payload;
       let tramsferAmt = parseFloat(amount);
 
-      const validCountries = ["th", 'ph'];
-      const currencies = { "th": "THB", "ph": "PHP" };
+      const validCountries = ["th", "ph"];
+      const currencies = { th: "THB", ph: "PHP" };
       if (!validCountries.includes(paymentCountry)) {
         return callback(new Error("INVALID_PAYMENT_COUNTRY"));
       }
@@ -2227,7 +2269,7 @@ export default class AirwallexPaymentService {
         (resolve, reject) => {
           CurrencyService.currencyConverterPaymentCurToWalletCur(
             currencies[paymentCountry],
-            'ILS',
+            "ILS",
             amount,
             (err, res) => {
               if (err) {
@@ -2251,13 +2293,13 @@ export default class AirwallexPaymentService {
           .converted_amount_with_delta_percentage,
       );
 
-
-      const getAccountBa = await new Promise((resolve, reject) => {
-        this.getAccountBalance({ userId: userId, i18n }, (err, result) => {
-          if (err) return resolve({});
-          resolve(result?.data || {});
-        });
-      }) || {};
+      const getAccountBa =
+        (await new Promise((resolve, reject) => {
+          this.getAccountBalance({ userId: userId, i18n }, (err, result) => {
+            if (err) return resolve({});
+            resolve(result?.data || {});
+          });
+        })) || {};
       const currentBalance = getAccountBa?.ILS || 0;
       if (currentBalance <= 0) {
         return callback(new Error("AIRWALLEX_BALANCE_FETCH_ERROR"));
@@ -2285,13 +2327,16 @@ export default class AirwallexPaymentService {
         status: "PENDING",
       });
       if (createInitialRecord?.id) {
-        console.log("Created initial QR transaction record with ID:", createInitialRecord.id);
+        console.log(
+          "Created initial QR transaction record with ID:",
+          createInitialRecord.id,
+        );
         const requestId = createInitialRecord?.id;
         const postata = {
           request_id: requestId,
-          reference: 'QR_CODE_PAYMENT',
+          reference: "QR_CODE_PAYMENT",
           amount: tramsferAmt,
-          currency: 'ILS',
+          currency: "ILS",
           reason: payload?.reason || "travel",
           source: connectedAccountId,
         };
@@ -2308,10 +2353,16 @@ export default class AirwallexPaymentService {
         if (response?.data?.id) {
           createInitialRecord.chargeId = response.data.id;
           createInitialRecord.chargeStatus = response.data.status || "PENDING";
-          createInitialRecord.chargeWebhookData = [...(createInitialRecord.chargeWebhookData || []), response.data];
+          createInitialRecord.chargeWebhookData = [
+            ...(createInitialRecord.chargeWebhookData || []),
+            response.data,
+          ];
           await createInitialRecord.save();
-          console.log("Updated QR transaction record with charge ID and status:", response.data.id, response.data.status);
-
+          console.log(
+            "Updated QR transaction record with charge ID and status:",
+            response.data.id,
+            response.data.status,
+          );
 
           AirwallexUserTransactionAdditionalDetails.create({
             sourceId: response.data.id,
@@ -2327,12 +2378,17 @@ export default class AirwallexPaymentService {
         return callback(new Error("QR_TRANSACTION_RECORD_CREATION_FAILED"));
       }
     } catch (error) {
-      console.error("Error in airwallexQrPaymentTransferToPlatformWallet", error?.message || error);
+      console.error(
+        "Error in airwallexQrPaymentTransferToPlatformWallet",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({ userId, payload, i18n }, callback) {
-
+  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount(
+    { userId, payload, i18n },
+    callback,
+  ) {
     try {
       const id = payload?.id;
       if (!id) {
@@ -2347,7 +2403,7 @@ export default class AirwallexPaymentService {
       if (getTransaction.chargeStatus !== "SETTLED") {
         return callback(new Error("QR_TRANSACTION_NOT_SETTLED"));
       }
-      if (getTransaction.refundStatus !== 'none') {
+      if (getTransaction.refundStatus !== "none") {
         return callback(new Error("QR_TRANSACTION_ALREADY_REFUNDED"));
       }
       const airWallexAccont = await AirwallexKycAccount.findOne({
@@ -2357,7 +2413,10 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
       const connectedAccountId = airWallexAccont.airwallexAccountId;
-      console.log("Connected Airwallex account ID for refund:", connectedAccountId);
+      console.log(
+        "Connected Airwallex account ID for refund:",
+        connectedAccountId,
+      );
 
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
@@ -2368,7 +2427,7 @@ export default class AirwallexPaymentService {
         `${process.env.AIRWALLEX_API_URL}/api/v1/connected_account_transfers/create`,
         {
           request_id: getTransaction.id,
-          reference: 'QR_PAYMMENT_REFUND',
+          reference: "QR_PAYMMENT_REFUND",
           amount: parseFloat(getTransaction.amount),
           currency: "ILS",
           reason: "travel",
@@ -2386,7 +2445,10 @@ export default class AirwallexPaymentService {
       if (response?.data?.id) {
         getTransaction.refundStatus = response.data.status || "PENDING";
         getTransaction.refundId = response.data.id;
-        getTransaction.refundWebhookData = [...(getTransaction.refundWebhookData || []), response.data];
+        getTransaction.refundWebhookData = [
+          ...(getTransaction.refundWebhookData || []),
+          response.data,
+        ];
         await getTransaction.save();
         AirwallexUserTransactionAdditionalDetails.create({
           sourceId: response.data.id,
@@ -2394,14 +2456,20 @@ export default class AirwallexPaymentService {
           description: "Refund for QR code payment",
           description_he: "החזר עבור תשלום בקוד QR",
         });
-        console.log("Updated QR transaction record with refund ID and status:", response.data.id, response.data.status);
+        console.log(
+          "Updated QR transaction record with refund ID and status:",
+          response.data.id,
+          response.data.status,
+        );
         return callback(null, { data: getTransaction });
-
       } else {
         return callback(new Error("QR_PAYMENT_REFUND_FAILED"));
       }
     } catch (error) {
-      console.error("Error in airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount", error?.message || error);
+      console.error(
+        "Error in airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
@@ -2419,57 +2487,88 @@ export default class AirwallexPaymentService {
         return callback(new Error("QR_TRANSACTION_NOT_FOUND"));
       }
     } catch (error) {
-      console.error("Error in getAirwallexQrPaymentDetails", error?.message || error);
+      console.error(
+        "Error in getAirwallexQrPaymentDetails",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
   static async handleCardHolderWebhook(payload, headers, callback) {
     try {
-      const timestamp = headers['x-timestamp'];
-      const signature = headers['x-signature'];
-      const rawBody = JSON.stringify(payload).toString('utf8');
+      const timestamp = headers["x-timestamp"];
+      const signature = headers["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
       if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-        console.error('❌ Card holder webhook signature verification failed');
-        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+        console.error("❌ Card holder webhook signature verification failed");
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
-      console.log("======================================================")
+      console.log("======================================================");
       console.log("✅ Card holder webhook signature verified successfully");
 
       console.log("📥 Received card holder webhook payload:", payload);
-      console.log("🔍 Checking for cardholder_id in the payload data:", payload?.data?.cardholder_id);
+      console.log(
+        "🔍 Checking for cardholder_id in the payload data:",
+        payload?.data?.cardholder_id,
+      );
       if (payload?.data?.cardholder_id) {
         const getCardHolder = await AirwallexCardholder.findOne({
           where: { cardholderId: payload.data.cardholder_id },
         });
         if (getCardHolder) {
-          getCardHolder.webhookData = [payload.data, ...(getCardHolder.webhookData || [])];
+          getCardHolder.webhookData = [
+            payload.data,
+            ...(getCardHolder.webhookData || []),
+          ];
           getCardHolder.status = payload.data.status || getCardHolder.status;
           await getCardHolder.save();
-          console.log("📝 Updated card holder record with new webhook data and status:", getCardHolder.cardholderId, getCardHolder.status);
-          if (getCardHolder.status === "READY" && getCardHolder.firstVirtualCardApplied === false) {
-            console.log("🚀 Card holder is READY and firstVirtualCardApplied is false. Creating Airwallex virtual card for userId:", getCardHolder.userId);
-            AirWallexVirtualCardSerivice.airwallexCreateVirtualCard({ userId: getCardHolder.userId, payload: {} }, (err, result) => {
-              if (err) {
-                console.error("❌ Error creating Airwallex virtual card:", err.message);
-              } else {
-                getCardHolder.firstVirtualCardApplied = true;
-                getCardHolder.save();
-                console.log("✅ Airwallex virtual card created successfully:", result.data);
-              }
-            });
+          console.log(
+            "📝 Updated card holder record with new webhook data and status:",
+            getCardHolder.cardholderId,
+            getCardHolder.status,
+          );
+          if (
+            getCardHolder.status === "READY" &&
+            getCardHolder.firstVirtualCardApplied === false
+          ) {
+            console.log(
+              "🚀 Card holder is READY and firstVirtualCardApplied is false. Creating Airwallex virtual card for userId:",
+              getCardHolder.userId,
+            );
+            AirWallexVirtualCardSerivice.airwallexCreateVirtualCard(
+              { userId: getCardHolder.userId, payload: {} },
+              (err, result) => {
+                if (err) {
+                  console.error(
+                    "❌ Error creating Airwallex virtual card:",
+                    err.message,
+                  );
+                } else {
+                  getCardHolder.firstVirtualCardApplied = true;
+                  getCardHolder.save();
+                  console.log(
+                    "✅ Airwallex virtual card created successfully:",
+                    result.data,
+                  );
+                }
+              },
+            );
           }
         } else {
-          console.log("⚠️ No matching card holder found for cardholder_id:", payload.data.cardholder_id);
+          console.log(
+            "⚠️ No matching card holder found for cardholder_id:",
+            payload.data.cardholder_id,
+          );
         }
-
-
-
       }
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error handling card holder webhook:", error?.message || error);
+      console.error(
+        "❌ Error handling card holder webhook:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
     return callback(null, { data: payload });
@@ -2477,16 +2576,16 @@ export default class AirwallexPaymentService {
   static async handleDebitCardWebhook(payload, headers, callback) {
     console.log("📥 Received debit card webhook payload:", payload);
     try {
-      const timestamp = headers['x-timestamp'];
-      const signature = headers['x-signature'];
-      const rawBody = JSON.stringify(payload).toString('utf8');
+      const timestamp = headers["x-timestamp"];
+      const signature = headers["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
       if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-        console.error('❌ Debit card webhook signature verification failed');
-        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+        console.error("❌ Debit card webhook signature verification failed");
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
-      console.log("======================================================")
+      console.log("======================================================");
       console.log("✅ Debit card webhook signature verified successfully");
 
       console.log("📥 Received debit card webhook payload:", payload);
@@ -2497,23 +2596,34 @@ export default class AirwallexPaymentService {
         });
         if (getKycAccount) {
           const userid = getKycAccount.userId;
-          console.log("🔍 Found KYC account for account_id:", payload.account_id, "with userId:", userid);
+          console.log(
+            "🔍 Found KYC account for account_id:",
+            payload.account_id,
+            "with userId:",
+            userid,
+          );
           // You can add more logic here to update the user's transaction history or perform other actions based on the webhook payload
-          AirWallexVirtualCardSerivice.saveAllCardInRecord({ userId: userid }, (err, result) => {
-            if (err) {
-              console.error("❌ Error saving card records:", err.message);
-            } else {
-              console.log("✅ Card records saved successfully for userId:", userid);
-            }
-          });
+          AirWallexVirtualCardSerivice.saveAllCardInRecord(
+            { userId: userid },
+            (err, result) => {
+              if (err) {
+                console.error("❌ Error saving card records:", err.message);
+              } else {
+                console.log(
+                  "✅ Card records saved successfully for userId:",
+                  userid,
+                );
+              }
+            },
+          );
         }
-
       }
-
-
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error handling debit card webhook:", error?.message || error);
+      console.error(
+        "❌ Error handling debit card webhook:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
     return callback(null, { data: payload });
@@ -2522,17 +2632,21 @@ export default class AirwallexPaymentService {
   static async handleCardTransactionsWebhook(payload, headers, callback) {
     console.log("📥 Received card transactions webhook payload:", payload);
     try {
-      const timestamp = headers['x-timestamp'];
-      const signature = headers['x-signature'];
-      const rawBody = JSON.stringify(payload).toString('utf8');
+      const timestamp = headers["x-timestamp"];
+      const signature = headers["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
       if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
-        console.error('❌ Card transactions webhook signature verification failed');
-        return callback(new Error('WEBHOOK_SIGNATURE_VERIFICATION_FAILED'));
+        console.error(
+          "❌ Card transactions webhook signature verification failed",
+        );
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
-      console.log("======================================================")
-      console.log("✅ Card transactions webhook signature verified successfully");
+      console.log("======================================================");
+      console.log(
+        "✅ Card transactions webhook signature verified successfully",
+      );
 
       console.log("📥 Received card transactions webhook payload:", payload);
 
@@ -2540,9 +2654,10 @@ export default class AirwallexPaymentService {
       const merchant = transactionPayload?.merchant || {};
       const riskDetails = transactionPayload?.risk_details || {};
 
-
       if (!transactionPayload?.transaction_id || !transactionPayload?.card_id) {
-        console.warn("⚠️ Missing required transaction_id or card_id in card transactions webhook payload");
+        console.warn(
+          "⚠️ Missing required transaction_id or card_id in card transactions webhook payload",
+        );
         return callback(null, { data: payload });
       }
 
@@ -2556,16 +2671,23 @@ export default class AirwallexPaymentService {
 
       const mappedData = {
         userId,
-        acquiringInstitutionIdentifier: transactionPayload?.acquiring_institution_identifier || null,
+        acquiringInstitutionIdentifier:
+          transactionPayload?.acquiring_institution_identifier || null,
         authCode: transactionPayload?.auth_code || null,
         billingAmount: transactionPayload?.billing_amount ?? null,
         billingCurrency: transactionPayload?.billing_currency || null,
         cardId: transactionPayload?.card_id,
         cardNickname: transactionPayload?.card_nickname || null,
         cardTransactionEventId:
-          transactionPayload?.card_transaction_event_id || transactionPayload?.event_id || transactionPayload?.id || null,
+          transactionPayload?.card_transaction_event_id ||
+          transactionPayload?.event_id ||
+          transactionPayload?.id ||
+          null,
         cardTransactionId: transactionPayload?.card_transaction_id || null,
-        cardTransactionLifecycleId: transactionPayload?.card_transaction_lifecycle_id || transactionPayload?.lifecycle_id || null,
+        cardTransactionLifecycleId:
+          transactionPayload?.card_transaction_lifecycle_id ||
+          transactionPayload?.lifecycle_id ||
+          null,
         lifecycleId: transactionPayload?.lifecycle_id || null,
         maskedCardNumber: transactionPayload?.masked_card_number || null,
         merchantCategoryCode: merchant?.category_code || null,
@@ -2574,8 +2696,10 @@ export default class AirwallexPaymentService {
         merchantIdentifier: merchant?.identifier || null,
         merchantName: merchant?.name || null,
         merchantCategory: merchant?.category || null,
-        merchantSubCategory: merchant?.subcategory || merchant?.sub_category || null,
-        networkTransactionId: transactionPayload?.network_transaction_id || null,
+        merchantSubCategory:
+          merchant?.subcategory || merchant?.sub_category || null,
+        networkTransactionId:
+          transactionPayload?.network_transaction_id || null,
         postedDate: transactionPayload?.posted_date || null,
         retrievalRef: transactionPayload?.retrieval_ref || null,
         riskActionsPerformed: riskDetails?.risk_actions_performed || null,
@@ -2596,48 +2720,80 @@ export default class AirwallexPaymentService {
 
       if (existingRecord) {
         await existingRecord.update(mappedData);
-        console.log("📝 Updated Airwallex card transaction record:", transactionPayload.transaction_id);
+        console.log(
+          "📝 Updated Airwallex card transaction record:",
+          transactionPayload.transaction_id,
+        );
       } else {
         await AirwallexCardTransactions.create(mappedData);
-        console.log("✅ Created Airwallex card transaction record:", transactionPayload.transaction_id);
+        console.log(
+          "✅ Created Airwallex card transaction record:",
+          transactionPayload.transaction_id,
+        );
       }
-
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error handling card transactions webhook:", error?.message || error);
+      console.error(
+        "❌ Error handling card transactions webhook:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
     return callback(null, { data: payload });
   }
 
-  static async getAirwalletLivenessCheckReturnUrl({ payload, headers }, callback) {
+  static async getAirwalletLivenessCheckReturnUrl(
+    { payload, headers },
+    callback,
+  ) {
     try {
-      console.log("Fetching Airwallet liveness check redirect URL with payload:", payload);
+      console.log(
+        "Fetching Airwallet liveness check redirect URL with payload:",
+        payload,
+      );
 
       return callback(null, { data: { SUCCESS: 1 } });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error fetching Airwallet liveness check redirect URL:", error?.message || error);
+      console.error(
+        "❌ Error fetching Airwallet liveness check redirect URL:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
   }
 
-  static async getAirwalletLivenessCheckErrorUrl({ payload, headers }, callback) {
+  static async getAirwalletLivenessCheckErrorUrl(
+    { payload, headers },
+    callback,
+  ) {
     try {
-      console.log("Fetching Airwallet liveness check error URL with payload:", payload);
+      console.log(
+        "Fetching Airwallet liveness check error URL with payload:",
+        payload,
+      );
       return callback(null, { data: { ERROR: 1 } });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error fetching Airwallet liveness check error URL:", error?.message || error);
+      console.error(
+        "❌ Error fetching Airwallet liveness check error URL:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
   }
 
-  static async livenessProactiveSaveAhfiId({ userId, i18n, payload }, callback) {
+  static async livenessProactiveSaveAhfiId(
+    { userId, i18n, payload },
+    callback,
+  ) {
     try {
-      console.log("Saving AHFI ID for userId:", userId, "with payload:", payload);
+      console.log(
+        "Saving AHFI ID for userId:",
+        userId,
+        "with payload:",
+        payload,
+      );
       const ahfiId = payload?.ahfi_id;
       const kycAccount = await AirwallexKycAccount.findOne({
         where: { userId },
@@ -2647,7 +2803,12 @@ export default class AirwallexPaymentService {
       }
       kycAccount.ahfiId = ahfiId || null;
       await kycAccount.save();
-      console.log("✅ Successfully saved AHFI ID for userId:", userId, "AHFI ID:", ahfiId);
+      console.log(
+        "✅ Successfully saved AHFI ID for userId:",
+        userId,
+        "AHFI ID:",
+        ahfiId,
+      );
       return callback(null, { data: { SUCCESS: 1 } });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
@@ -2660,12 +2821,19 @@ export default class AirwallexPaymentService {
     try {
       const { amount } = payload;
       const getAirwallexCustomerId = await this.getAirwallexCustomerId(userId);
-      console.log("Retrieved Airwallex customer ID for userId:", userId, "Customer ID:", getAirwallexCustomerId?.airwallexCustomerId);
+      console.log(
+        "Retrieved Airwallex customer ID for userId:",
+        userId,
+        "Customer ID:",
+        getAirwallexCustomerId?.airwallexCustomerId,
+      );
       if (!getAirwallexCustomerId?.airwallexCustomerId) {
         return callback(new Error("AIRWALLEX_CUSTOMER_ID_NOT_FOUND"));
       }
       const airwallexCustomerId = getAirwallexCustomerId.airwallexCustomerId;
-      const getKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      const getKycAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
       if (!getKycAccount?.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -2694,7 +2862,7 @@ export default class AirwallexPaymentService {
           topup_id: topupId,
           user_id: userId,
           wallet_account_id: airwallexAccountId,
-          transaction_type: "wallet_topup"
+          transaction_type: "wallet_topup",
         },
 
         additional_info: {
@@ -2704,18 +2872,21 @@ export default class AirwallexPaymentService {
 
             sender: {
               first_name: firstName,
-              last_name: lastName
+              last_name: lastName,
             },
 
             recipient: {
               first_name: firstName,
               last_name: lastName,
-              account_number: airwallexAccountId
-            }
-          }
-        }
+              account_number: airwallexAccountId,
+            },
+          },
+        },
       };
-      console.log("Payload for AFT wallet topup:", JSON.stringify(requestPayload, null, 2));
+      console.log(
+        "Payload for AFT wallet topup:",
+        JSON.stringify(requestPayload, null, 2),
+      );
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
@@ -2725,10 +2896,11 @@ export default class AirwallexPaymentService {
         `curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/pa/payment_intents/create" ` +
         `-H "Authorization: Bearer ${accessToken}" ` +
         `-H "Content-Type: application/json" ` +
-        `-d '${JSON.stringify({...requestPayload,request_id:  uuidv4()})}'`;
-      console.log("Airwallex create payment intent curl:\n", createPaymentIntentCurlCmd);
-
-    
+        `-d '${JSON.stringify({ ...requestPayload, request_id: uuidv4() })}'`;
+      console.log(
+        "Airwallex create payment intent curl:\n",
+        createPaymentIntentCurlCmd,
+      );
 
       const response = await fetch(
         `${process.env.AIRWALLEX_API_URL}/api/v1/pa/payment_intents/create`,
@@ -2738,30 +2910,124 @@ export default class AirwallexPaymentService {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(requestPayload)
-        }
+          body: JSON.stringify(requestPayload),
+        },
       );
 
       const responseBody = await response.json();
-      if(responseBody?.id && responseBody?.client_secret){
-          responseBody.paymentUrl = `${process.env.BASE_URL}/airwallex-payment?payment_intent_id=${responseBody.id}`;
-
+      if (responseBody?.id && responseBody?.client_secret) {
+        responseBody.paymentUrl = `${process.env.BASE_URL}/airwallex-payment?payment_intent_id=${responseBody.id}`;
       }
 
       if (!response.ok) {
         throw new Error(
-          `Airwallex PaymentIntent creation failed: ${JSON.stringify(responseBody)}`
+          `Airwallex PaymentIntent creation failed: ${JSON.stringify(responseBody)}`,
         );
       }
       return callback(null, { data: responseBody });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error creating AFT wallet topup:", error?.message || error);
+      console.error(
+        "❌ Error creating AFT wallet topup:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  static async fundSplitWithConnectedAccount({ userId, payload }, callback) {
+    console.log("payload", payload);
+    try {
+      const { paymentIntentId } = payload;
+      if (!paymentIntentId) {
+        return callback(new Error("PAYMENT_INTENT_ID_NOT_PROVIDED"));
+      }
+      const intentDetails = await this.retrievePaymentIntent(
+        { payload: { paymentIntentId } },
+        (err, result) => {
+          if (err) {
+            console.error(
+              "❌ Error retrieving PaymentIntent details:",
+              err.message,
+            );
+            return callback(err);
+          }
+          return result?.data || {};
+        },
+      );
+
+      if (!intentDetails?.id) {
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
+       const status = intentDetails?.status;
+       const accountId = intentDetails?.metadata?.wallet_account_id;
+      //  console.log("PaymentIntent status:", status, "Account ID:", accountId);
+       if(status !== "SUCCEEDED") {
+        return callback(new Error("PAYMENT_INTENT_NOT_SUCCEEDED"));
+       }
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const amount = 2.64;
+      if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        return callback(new Error("INVALID_AMOUNT"));
+      }
+      if (!accountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const requestPayload = {
+        request_id: uuidv4(),
+        source_id: paymentIntentId,
+        source_type: "PAYMENT_INTENT",
+        amount: parseFloat(amount),
+        destination: accountId,
+        type: "disbursement",
+        metadata: {
+          reason: "disbursement to wallet account",
+          user_id: userId,
+        },
+      };
+
+      const fundSplitCurlCmd =
+        `curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_splits/create" ` +
+        `-H "Authorization: Bearer ${accessToken}" ` +
+        `-H "Content-Type: application/json" ` +
+        `-d '${JSON.stringify({...requestPayload,  request_id: uuidv4()})}'`;
+      console.log("Airwallex fund split curl:\n", fundSplitCurlCmd);
+
+      const response = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_splits/create`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestPayload),
+        },
+      );
+
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          `Airwallex fund split failed: ${JSON.stringify(responseBody)}`,
+        );
+      }
+
+      return callback(null, { data: responseBody });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error in fundSplitWithConnectedAccount:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
 
-  static async retrievePaymentIntent({payload}, callback) {
+  static async retrievePaymentIntent({ payload }, callback) {
     try {
       const { paymentIntentId } = payload;
       if (!paymentIntentId) {
@@ -2778,22 +3044,25 @@ export default class AirwallexPaymentService {
           method: "GET",
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          }
-        }
+            "Content-Type": "application/json",
+          },
+        },
       );
 
       const responseBody = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          `Airwallex PaymentIntent retrieval failed: ${JSON.stringify(responseBody)}`
+          `Airwallex PaymentIntent retrieval failed: ${JSON.stringify(responseBody)}`,
         );
       }
       return callback(null, { data: responseBody });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error retrieving PaymentIntent:", error?.message || error);
+      console.error(
+        "❌ Error retrieving PaymentIntent:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }

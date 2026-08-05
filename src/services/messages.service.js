@@ -108,7 +108,7 @@ export const otpWhatsappService = async (number, otp_code) => {
  * @throws {Error} - If the Twilio API request fails
  * @description This function sends an OTP code via SMS using Twilio's messaging service.
  */
-export const otpSmsService = async (number, otp_code, appHash) => {
+export const otpSmsServiceBk = async (number, otp_code, appHash) => {
      try {
          const accountSid = process.env.TWILLO_ACCOUNT_SID;
         const authToken = process.env.TWILLO_AUTH_TOKEN;
@@ -135,4 +135,63 @@ export const otpSmsService = async (number, otp_code, appHash) => {
          return {error: "Sms Sending failed "+error.message, details: error};
      }
 
+};
+
+
+export const otpSmsService = async (number, otp_code, appHash) => {
+    try {
+        const authToken = process.env.SMS_019_AUTH_TOKEN;
+        const source = process.env.SMS_019_SOURCE || "TRAVELMONEY";
+        const username = process.env.SMS_019_USERNAME || "lametayel";
+        console.log("SMS 019 Auth Token:", authToken);
+
+        if (!authToken) {
+            return { error: "Missing SMS_019_AUTH_TOKEN in environment" };
+        }
+
+        const normalizedNumber = String(number || "")
+            .replace(/\s+/g, "")
+            .replace(/^\+972/, "0");
+
+        const payload = {
+            sms: {
+                user: {
+                    username,
+                },
+                source,
+                destinations: {
+                    phone: [
+                        {
+                            _: normalizedNumber,
+                        },
+                    ],
+                },
+                message: `<#> שלום! הקוד שלך לכניסה לאפליקציית TRAVEL MONEY הוא: ${otp_code}. הקוד בתוקף ל-10 דקות. שמרו עליו בסוד\n${appHash || ""}`,
+                includes_international: 1,
+            },
+        };
+
+        const response = await axios.request({
+            method: "post",
+            maxBodyLength: Infinity,
+            url: "https://019sms.co.il/api",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${authToken}`,
+            },
+            data: JSON.stringify(payload),
+        });
+
+        return {
+            msg: "SMS sent successfully",
+            data: response.data,
+        };
+    } catch (error) {
+        console.error("Error in 019 SMS service:", error.response?.data || error.message);
+        return {
+            error: "Sms Sending failed",
+            details: error.response?.data || error.message,
+        };
+    }
 };

@@ -961,6 +961,39 @@ router.post('/create-aft-wallet-topup',async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/fund-split-with-connected-account:
+ *   post:
+ *     summary: Split funds with a connected Airwallex account
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - paymentIntentId
+ *             properties:
+ *               paymentIntentId:
+ *                 type: string
+ *                 description: The Airwallex payment intent ID to split funds for
+ *                 example: "int_abc123xyz"
+ *     responses:
+ *       200:
+ *         description: Success - Funds split with connected account
+ */
+router.post('/fund-split-with-connected-account', async (req, res) => {
+  const response = await AirwallexPaymentController.fundSplitWithConnectedAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
 
 /**
  * @swagger

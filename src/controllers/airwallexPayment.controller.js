@@ -1164,6 +1164,39 @@ export default class AirwallexPaymentController {
     }); 
   }
 
+  static async fundSplitWithConnectedAccount(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.fundSplitWithConnectedAccount(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_SPLIT_FUNDS_WITH_CONNECTED_ACCOUNT",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Funds split with connected account successfully",
+            error: null,
+          });
+        },
+      );
+    });
+
+  }
+
   static async retrievePaymentIntent(request) {
     const {
       payload,
