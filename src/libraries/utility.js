@@ -311,5 +311,48 @@ export function verifyAirwallexSignature(rawBody, timestamp, signature, secret) 
   return expectedSignature === signature;
 }
 
+export async function generateUniqueCode(
+  Model,
+  userId,
+  mobile,
+  field = "token",
+  length = 6,
+  attempt = 1,
+) {
+  if (attempt > 20) {
+    throw new Error("Unable to generate a unique code after 20 attempts.");
+  }
+
+  const random = crypto.randomBytes(4).toString("hex");
+
+  const hash = crypto
+    .createHash("sha256")
+    .update(`${userId}-${mobile}-${Date.now()}-${random}`)
+    .digest("base64")
+    .replace(/[^A-Z0-9]/gi, "")
+    .toUpperCase();
+
+  const code = hash.substring(0, length);
+
+  const exists = await Model.findOne({
+    where: {
+      [field]: code,
+    },
+  });
+
+  if (exists) {
+    return generateUniqueCode(
+      Model,
+      userId,
+      mobile,
+      field,
+      length,
+      attempt + 1,
+    );
+  }
+
+  return code;
+}
+
 
 

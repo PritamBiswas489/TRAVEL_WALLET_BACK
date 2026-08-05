@@ -561,5 +561,9 @@
 	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - ba956be654054848b945895bdfd22a88)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - ba956be654054848b945895bdfd22a88)",
 	"KYC_DOCUMENTS_CREATED_SUCCESSFULLY": "KYC_DOCUMENTS_CREATED_SUCCESSFULLY",
 	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_FAILED": "Failed to set virtual card background image.",
-	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_SUCCESSFULLY": "Virtual card background image set successfully."
+	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_SUCCESSFULLY": "Virtual card background image set successfully.",
+	"GET_PERSONAL_QR_SUCCESSFUL": "GET_PERSONAL_QR_SUCCESSFUL",
+	"GET_PERSONAL_QR_FAILED": "GET_PERSONAL_QR_FAILED",
+	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "CREATE_PAYMENT_REQUEST_SUCCESSFUL",
+	"GET_PAYMENT_LINK_SUCCESSFUL": "GET_PAYMENT_LINK_SUCCESSFUL"
 }

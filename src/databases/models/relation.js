@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -149,6 +149,9 @@ const relation = (db) => {
 
   AirwallexUserDebitCards.belongsTo(AirwallexCardholder, { foreignKey: "cardholderId", targetKey: "cardholderId", as: "cardholder" });
   AirwallexCardholder.hasMany(AirwallexUserDebitCards, { foreignKey: "cardholderId", sourceKey: "cardholderId", as: "debitCards" });
+
+  UserOwnGeneratedQrCodes.belongsTo(User, { foreignKey: "userId", as: "user" });
+  User.hasMany(UserOwnGeneratedQrCodes, { foreignKey: "userId", as: "ownGeneratedQrCodes" });
 
   AirwallexUserTransactionHistory.hasOne(AirwallexUserTransactionAdditionalDetails, { foreignKey: "sourceId", sourceKey: "apiSource", as: "additionalDetails" });
   AirwallexUserTransactionAdditionalDetails.belongsTo(AirwallexUserTransactionHistory, { foreignKey: "sourceId", targetKey: "apiSource", as: "transactionHistory" });
