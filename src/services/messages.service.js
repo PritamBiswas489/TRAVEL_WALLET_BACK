@@ -167,7 +167,7 @@ export const otpSmsService = async (number, otp_code, appHash) => {
                     ],
                 },
                 message: `<#> שלום! הקוד שלך לכניסה לאפליקציית TRAVEL MONEY הוא: ${otp_code}. הקוד בתוקף ל-10 דקות. שמרו עליו בסוד\n${appHash || ""}`,
-                includes_international: 1,
+                ...(!String(number).startsWith("+972") ? { includes_international: 1 } : {}),
             },
         };
 
