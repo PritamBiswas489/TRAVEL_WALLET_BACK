@@ -488,6 +488,24 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       'issuing.transaction_dispute.lost'
 
    ];
+   const paymentIntentWebhookEventNames = [
+      'payment_intent.created', 
+      'payment_intent.requires_payment_method', 
+      'payment_intent.updated', 
+      'payment_intent.requires_customer_action', 
+      'payment_intent.requires_capture', 
+      'payment_intent.pending',
+      'payment_intent.pending_review',
+      'payment_intent.succeeded'
+   ];
+
+   //fund split events
+   const fundSplitWebhookEventNames = [
+      'funds_split.created',
+      'funds_split.failed',
+      'funds_split.released',
+      'funds_split.settled'
+   ];
    if(kycEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.airwallexKycWebhook({ payload, headers: req.headers });
       return res.return(response);
@@ -508,15 +526,21 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       const response = await AirwallexPaymentController.handleCardHolderWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
-   else if(debitCardWebhookEventNames.includes(payload?.name)) {
+   else if(debitCardWebhookEventNames.includes(payload?.name)) { //debit card events
       const response = await AirwallexPaymentController.handleDebitCardWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
-   else if(cardTransactionsWebhookEventNames.includes(payload?.name)) {
+   else if(cardTransactionsWebhookEventNames.includes(payload?.name)) { //card transactions events
       const response = await AirwallexPaymentController.handleCardTransactionsWebhook({ payload, headers: req.headers });
       return res.return(response);
-   }else if(transactionDisputeWebhookEventNames.includes(payload?.name)) {
+   }else if(transactionDisputeWebhookEventNames.includes(payload?.name)) { //transaction dispute events
       const response = await AirwallexPaymentController.handleTransactionDisputeWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }else if(paymentIntentWebhookEventNames.includes(payload?.name)) { //payment intent events
+      const response = await AirwallexPaymentController.handlePaymentIntentWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }else if (fundSplitWebhookEventNames.includes(payload?.name)) { //fund split events
+      const response = await AirwallexPaymentController.handleFundSplitWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
 

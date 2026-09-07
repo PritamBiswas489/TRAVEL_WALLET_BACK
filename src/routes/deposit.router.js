@@ -978,12 +978,12 @@ router.post('/create-aft-wallet-topup',async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - paymentIntentId
+ *               - paymentId
  *             properties:
- *               paymentIntentId:
+ *               paymentId:
  *                 type: string
- *                 description: The Airwallex payment intent ID to split funds for
- *                 example: "int_abc123xyz"
+ *                 description: The Airwallex payment ID to split funds for
+ *                 example: "1"
  *     responses:
  *       200:
  *         description: Success - Funds split with connected account

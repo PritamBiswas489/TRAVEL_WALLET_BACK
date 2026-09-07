@@ -10,7 +10,6 @@ import { v4 as uuidv4 } from "uuid";
 import AirwallexPaymentService from "../services/airwallexPayment.service.js";
 import AirWallexVirtualCardSerivice from "../services/airWallexVirtualCard.service.js";
 
-
 export default class AirwallexPaymentController {
   static async createMerchantOrderIdRequestId(request) {
     const {
@@ -568,10 +567,11 @@ export default class AirwallexPaymentController {
     });
   }
   static async airwallexConnectedTransferWebhook(request) {
-    const { payload , headers} = request;
+    const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.airwallexConnectedTransferWebhook(
-        payload, headers,
+        payload,
+        headers,
         (err, response) => {
           if (err) {
             return resolve({
@@ -596,7 +596,7 @@ export default class AirwallexPaymentController {
   }
 
   static async testModeTransferBetweenConnectedAccounts(request) {
-      const {
+    const {
       headers: { i18n },
       user,
       payload,
@@ -616,7 +616,8 @@ export default class AirwallexPaymentController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_TRANSFER_BETWEEN_CONNECTED_ACCOUNTS",
+                  err.message ||
+                    "FAILED_TO_TRANSFER_BETWEEN_CONNECTED_ACCOUNTS",
                 ),
                 reason: err.message,
               },
@@ -709,9 +710,9 @@ export default class AirwallexPaymentController {
     const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleDepositWebhook(
-        payload, headers, 
+        payload,
+        headers,
         (err, response) => {
-
           if (err) {
             return resolve({
               status: 400,
@@ -728,7 +729,7 @@ export default class AirwallexPaymentController {
             message: "Deposit webhook processed successfully",
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -769,8 +770,10 @@ export default class AirwallexPaymentController {
       );
     });
   }
-   
-  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount(request) {
+
+  static async airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount(
+    request,
+  ) {
     const {
       payload,
       headers: { i18n },
@@ -791,7 +794,8 @@ export default class AirwallexPaymentController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT",
+                  err.message ||
+                    "FAILED_TO_REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT",
                 ),
                 reason: err.message,
               },
@@ -800,7 +804,9 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT_SUCCESSFUL"),
+            message: i18n.__(
+              "REFUND_FROM_PLATFORM_WALLET_TO_CONNECTED_ACCOUNT_SUCCESSFUL",
+            ),
             error: null,
           });
         },
@@ -849,14 +855,16 @@ export default class AirwallexPaymentController {
     const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleAirwallexChargesWebhook(
-        payload, headers,
+        payload,
+        headers,
         (err, response) => {
           if (err) {
             return resolve({
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_PROCESS_AIRWALLEX_CHARGES_WEBHOOK",
+                message:
+                  err.message || "FAILED_TO_PROCESS_AIRWALLEX_CHARGES_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -867,7 +875,7 @@ export default class AirwallexPaymentController {
             message: "Airwallex charges webhook processed successfully",
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -875,7 +883,8 @@ export default class AirwallexPaymentController {
     const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleCardHolderWebhook(
-        payload, headers,
+        payload,
+        headers,
         (err, response) => {
           if (err) {
             return resolve({
@@ -893,7 +902,7 @@ export default class AirwallexPaymentController {
             message: "Cardholder webhook processed successfully",
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -901,7 +910,8 @@ export default class AirwallexPaymentController {
     const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleDebitCardWebhook(
-        payload, headers,
+        payload,
+        headers,
         (err, response) => {
           if (err) {
             return resolve({
@@ -919,7 +929,7 @@ export default class AirwallexPaymentController {
             message: "Debit card webhook processed successfully",
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -927,14 +937,16 @@ export default class AirwallexPaymentController {
     const { payload, headers } = request;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleCardTransactionsWebhook(
-        payload, headers,
+        payload,
+        headers,
         (err, response) => {
           if (err) {
             return resolve({
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_PROCESS_CARD_TRANSACTIONS_WEBHOOK",
+                message:
+                  err.message || "FAILED_TO_PROCESS_CARD_TRANSACTIONS_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -945,7 +957,7 @@ export default class AirwallexPaymentController {
             message: "Card transactions webhook processed successfully",
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -953,14 +965,17 @@ export default class AirwallexPaymentController {
     const { payload, headers } = request;
     return new Promise((resolve) => {
       AirWallexVirtualCardSerivice.handleTransactionDisputeWebhook(
-        payload, headers,
+        payload,
+        headers,
         (err, response) => {
           if (err) {
             return resolve({
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_PROCESS_TRANSACTION_DISPUTE_WEBHOOK",
+                message:
+                  err.message ||
+                  "FAILED_TO_PROCESS_TRANSACTION_DISPUTE_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -971,7 +986,63 @@ export default class AirwallexPaymentController {
             message: "Transaction dispute webhook processed successfully",
             error: null,
           });
-        }
+        },
+      );
+    });
+  }
+  static async handlePaymentIntentWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handlePaymentIntentWebhook(
+        payload,
+        headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message:
+                  err.message || "FAILED_TO_PROCESS_PAYMENT_INTENT_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Payment intent webhook processed successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async handleFundSplitWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleFundSplitWebhook(
+        payload,
+        headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message:
+                  err.message || "FAILED_TO_PROCESS_FUND_SPLIT_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Fund split webhook processed successfully",
+            error: null,
+          });
+        },
       );
     });
   }
@@ -992,7 +1063,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_START_LIVENESS_PROACTIVE_FLOW",
+                message:
+                  err.message || "FAILED_TO_START_LIVENESS_PROACTIVE_FLOW",
                 reason: err.message,
               },
             });
@@ -1005,7 +1077,7 @@ export default class AirwallexPaymentController {
           });
         },
       );
-    }); 
+    });
   }
   static async livenessProactiveHostedFlowStatus(request) {
     const {
@@ -1024,7 +1096,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_GET_LIVENESS_PROACTIVE_HOSTED_FLOW_STATUS",
+                message:
+                  err.message ||
+                  "FAILED_TO_GET_LIVENESS_PROACTIVE_HOSTED_FLOW_STATUS",
                 reason: err.message,
               },
             });
@@ -1033,20 +1107,20 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Liveness proactive hosted flow status fetched successfully",
+            message:
+              "Liveness proactive hosted flow status fetched successfully",
             error: null,
           });
         },
       );
     });
-
   }
   static async getAirwalletLivenessCheckReturnUrl(request) {
     const {
       payload,
       headers: { i18n },
     } = request;
-     return new Promise((resolve) => {
+    return new Promise((resolve) => {
       AirwallexPaymentService.getAirwalletLivenessCheckReturnUrl(
         { i18n, payload },
         (err, response) => {
@@ -1055,7 +1129,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_GET_LIVENESS_CHECK_REDIRECT_URL",
+                message:
+                  err.message || "FAILED_TO_GET_LIVENESS_CHECK_REDIRECT_URL",
                 reason: err.message,
               },
             });
@@ -1076,7 +1151,7 @@ export default class AirwallexPaymentController {
       payload,
       headers: { i18n },
     } = request;
-     return new Promise((resolve) => {
+    return new Promise((resolve) => {
       AirwallexPaymentService.getAirwalletLivenessCheckErrorUrl(
         { i18n, payload },
         (err, response) => {
@@ -1085,7 +1160,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_GET_LIVENESS_CHECK_ERROR_URL",
+                message:
+                  err.message || "FAILED_TO_GET_LIVENESS_CHECK_ERROR_URL",
                 reason: err.message,
               },
             });
@@ -1129,7 +1205,7 @@ export default class AirwallexPaymentController {
           });
         },
       );
-    }); 
+    });
   }
 
   static async createAftWalletTopup(request) {
@@ -1161,7 +1237,7 @@ export default class AirwallexPaymentController {
           });
         },
       );
-    }); 
+    });
   }
 
   static async fundSplitWithConnectedAccount(request) {
@@ -1180,7 +1256,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_SPLIT_FUNDS_WITH_CONNECTED_ACCOUNT",
+                message:
+                  err.message || "FAILED_TO_SPLIT_FUNDS_WITH_CONNECTED_ACCOUNT",
                 reason: err.message,
               },
             });
@@ -1194,7 +1271,6 @@ export default class AirwallexPaymentController {
         },
       );
     });
-
   }
 
   static async retrievePaymentIntent(request) {
@@ -1203,10 +1279,10 @@ export default class AirwallexPaymentController {
       headers: { i18n },
       user,
     } = request;
-     
+
     return new Promise((resolve) => {
       AirwallexPaymentService.retrievePaymentIntent(
-        {  payload },
+        { payload },
         (err, response) => {
           if (err) {
             return resolve({
@@ -1226,9 +1302,6 @@ export default class AirwallexPaymentController {
           });
         },
       );
-    }); 
+    });
   }
-
-  
-  
 }

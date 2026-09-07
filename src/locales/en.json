@@ -532,6 +532,10 @@
 	"QR_TRANSACTION_CREATION_FAILED": "QR transaction creation failed.",
 	"QR_TRANSACTION_RECORD_CREATION_FAILED": "Failed to create QR transaction record.",
 	"WEBHOOK_SIGNATURE_VERIFICATION_FAILED": "Webhook signature verification failed.",
+	"FUND_SPLIT_CREATED_BODY": "Recharge created for {{amount}} {{currency}}.",
+	"FUND_SPLIT_FAILED_BODY": "Recharge failed for {{amount}} {{currency}}.",
+	"FUND_SPLIT_RELEASED_BODY": "Recharge released for {{amount}} {{currency}}.",
+	"FUND_SPLIT_SETTLED_BODY": "Recharge settled for {{amount}} {{currency}}.",
 	"ACTION_REQUIRED": "Action required.",
 	"ACTIVE": "Active.",
 	"DC_CREDIT": "Debit card credit.",
@@ -556,14 +560,13 @@
 	"SUSPENDED": "Suspended.",
 	"TOPUP": "Top-up.",
 	"TRANSFER": "Transfer.",
-	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 89e41960a05f4914b48de560df3c2fbc)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 89e41960a05f4914b48de560df3c2fbc)",
-	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 66e8ee33cf384ee2beadcc5321a9b3f4)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - 66e8ee33cf384ee2beadcc5321a9b3f4)",
-	"[operation_failed] Request cannot be processed. Please contact customer support (ER01 - ba956be654054848b945895bdfd22a88)": "[operation_failed] Request cannot be processed. Please contact customer support (ER01 - ba956be654054848b945895bdfd22a88)",
-	"KYC_DOCUMENTS_CREATED_SUCCESSFULLY": "KYC_DOCUMENTS_CREATED_SUCCESSFULLY",
+	"KYC_DOCUMENTS_CREATED_SUCCESSFULLY": "KYC documents created successfully.",
 	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_FAILED": "Failed to set virtual card background image.",
 	"SET_VIRTUAL_CARD_BACKGROUND_IMAGE_SUCCESSFULLY": "Virtual card background image set successfully.",
-	"GET_PERSONAL_QR_SUCCESSFUL": "GET_PERSONAL_QR_SUCCESSFUL",
-	"GET_PERSONAL_QR_FAILED": "GET_PERSONAL_QR_FAILED",
-	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "CREATE_PAYMENT_REQUEST_SUCCESSFUL",
-	"GET_PAYMENT_LINK_SUCCESSFUL": "GET_PAYMENT_LINK_SUCCESSFUL"
+	"GET_PERSONAL_QR_SUCCESSFUL": "Personal QR retrieved successfully.",
+	"GET_PERSONAL_QR_FAILED": "Failed to retrieve personal QR.",
+	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "Payment request created successfully.",
+	"GET_PAYMENT_LINK_SUCCESSFUL": "Payment link retrieved successfully.",
+	"FUND_SPLIT_UPDATE":"Recharge status updated."
+
 }

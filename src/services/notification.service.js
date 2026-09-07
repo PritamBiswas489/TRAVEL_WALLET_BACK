@@ -855,4 +855,44 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
     }
 
   }
+  static async sendSplitNotification({ userId, status, amount, currency }) {
+    try {
+      const user = await User.findByPk(userId);
+      if (!user) {
+        console.error("User not found for id:", userId);
+        return;
+      }
+      
+      const language = user.language || "he";
+      const messageTitle = il8n.__({ phrase: "FUND_SPLIT_UPDATE_TITLE", locale: language });
+      const messageBody = il8n.__({ phrase: `FUND_SPLIT_${status}_BODY`, locale: language }, { status, amount, currency });
+      const notificationData = await Notification.create({
+        userId,
+        type: "FUND_SPLIT_UPDATE",
+        title: messageTitle,
+        message: messageBody,
+        metadata: { status, amount, currency },
+      });
+      PushNotificationService.sendNotification(
+        {
+          userId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            action: "FUND_SPLIT_UPDATE",
+            status,
+            amount,
+            currency,
+            notificationId: String(notificationData.id),
+          },
+        },
+        (err, res) => {
+          if (err) console.error("Error sending push notification:", err);
+          else console.log("Push notification sent successfully:", res);
+        }
+      );
+    } catch (error) {
+      console.error("Error sending fund split notification:", error);
+    }
+  }
 }
