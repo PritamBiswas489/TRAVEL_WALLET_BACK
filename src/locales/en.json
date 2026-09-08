@@ -532,10 +532,10 @@
 	"QR_TRANSACTION_CREATION_FAILED": "QR transaction creation failed.",
 	"QR_TRANSACTION_RECORD_CREATION_FAILED": "Failed to create QR transaction record.",
 	"WEBHOOK_SIGNATURE_VERIFICATION_FAILED": "Webhook signature verification failed.",
-	"FUND_SPLIT_CREATED_BODY": "Recharge created for {{amount}} {{currency}}.",
-	"FUND_SPLIT_FAILED_BODY": "Recharge failed for {{amount}} {{currency}}.",
-	"FUND_SPLIT_RELEASED_BODY": "Recharge released for {{amount}} {{currency}}.",
-	"FUND_SPLIT_SETTLED_BODY": "Recharge settled for {{amount}} {{currency}}.",
+	"FUND_SPLIT_CREATED_BODY": "Your recharge of {{amount}} {{currency}} has been created successfully.",
+	"FUND_SPLIT_FAILED_BODY": "Your recharge of {{amount}} {{currency}} could not be completed.",
+	"FUND_SPLIT_RELEASED_BODY": "Your recharge of {{amount}} {{currency}} has been released. Please wait for settlement before the balance is added to your wallet.",
+	"FUND_SPLIT_SETTLED_BODY": "Your recharge of {{amount}} {{currency}} has been settled successfully. The balance has been added to your wallet.",
 	"ACTION_REQUIRED": "Action required.",
 	"ACTIVE": "Active.",
 	"DC_CREDIT": "Debit card credit.",
@@ -567,6 +567,5 @@
 	"GET_PERSONAL_QR_FAILED": "Failed to retrieve personal QR.",
 	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "Payment request created successfully.",
 	"GET_PAYMENT_LINK_SUCCESSFUL": "Payment link retrieved successfully.",
-	"FUND_SPLIT_UPDATE":"Recharge status updated."
-
+	"FUND_SPLIT_UPDATE": "Recharge status updated."
 }

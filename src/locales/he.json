@@ -532,10 +532,10 @@
 	"QR_TRANSACTION_CREATION_FAILED": "יצירת עסקת QR נכשלה.",
 	"QR_TRANSACTION_RECORD_CREATION_FAILED": "יצירת רשומת עסקת QR נכשלה.",
 	"WEBHOOK_SIGNATURE_VERIFICATION_FAILED": "אימות חתימת webhook נכשל.",
-	"FUND_SPLIT_CREATED_BODY": "טעינה נוצרה עבור {{amount}} {{currency}}.",
-	"FUND_SPLIT_FAILED_BODY": "טעינה נכשלה עבור {{amount}} {{currency}}.",
-	"FUND_SPLIT_RELEASED_BODY": "טעינה שוחררה עבור {{amount}} {{currency}}.",
-	"FUND_SPLIT_SETTLED_BODY": "טעינה הוסדרה עבור {{amount}} {{currency}}.",
+	"FUND_SPLIT_CREATED_BODY": "הטעינה שלך בסך {{amount}} {{currency}} נוצרה בהצלחה.",
+	"FUND_SPLIT_FAILED_BODY": "לא ניתן היה להשלים את הטעינה שלך בסך {{amount}} {{currency}}.",
+	"FUND_SPLIT_RELEASED_BODY": "הטעינה שלך בסך {{amount}} {{currency}} שוחררה. יש להמתין לסיום תהליך הסליקה לפני שהיתרה תתווסף לארנק שלך.",
+	"FUND_SPLIT_SETTLED_BODY": "הטעינה שלך בסך {{amount}} {{currency}} הושלמה בהצלחה. היתרה נוספה לארנק שלך.",
 	"ACTION_REQUIRED": "נדרשת פעולה.",
 	"ACTIVE": "פעיל.",
 	"DC_CREDIT": "זיכוי כרטיס דביט.",
@@ -567,5 +567,5 @@
 	"GET_PERSONAL_QR_FAILED": "אחזור קוד QR אישי נכשל.",
 	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "בקשת תשלום נוצרה בהצלחה.",
 	"GET_PAYMENT_LINK_SUCCESSFUL": "קישור התשלום אוחזר בהצלחה.",
-	"FUND_SPLIT_UPDATE":"סטטוס הטעינה עודכן."
+	"FUND_SPLIT_UPDATE": "סטטוס הטעינה עודכן."
 }
