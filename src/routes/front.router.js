@@ -116,6 +116,25 @@ router.get('/terms-and-conditions', async (req, res, next) => {
    res.return(response);
 });
 
+
+/**
+ * @swagger
+ * /api/front/get-settings:
+ *   get:
+ *     summary: Get application settings
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Application settings retrieved successfully
+ */
+router.get("/get-settings", async (req, res, next) => {
+   const response = await ContentController.getSettings({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers });
+   res.return(response);
+});
+
 /**
  * @swagger
  * /api/front/privacy-policy:

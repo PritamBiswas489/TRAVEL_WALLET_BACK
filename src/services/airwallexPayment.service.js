@@ -19,6 +19,7 @@ import { verifyAirwallexSignature } from "../libraries/utility.js";
 import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
  
 import redisClient from "../config/redis.config.js";
+import SettingsService from "./settings.service.js";
 
 const {
   sequelize,
@@ -2838,7 +2839,7 @@ export default class AirwallexPaymentService {
         where: { userId },
       });
       console.log("===== airwallex account id ===========")
-      console.log(getKycAccount);
+     // console.log(getKycAccount);
       if (!getKycAccount?.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -2846,7 +2847,7 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_APPROVED"));
       }
       const airwallexAccountId = getKycAccount.airwallexAccountId;
-      console.log({ userId, airwallexCustomerId, airwallexAccountId, mainAmount });
+     // console.log({ userId, airwallexCustomerId, airwallexAccountId, mainAmount });
       const requestId = uuidv4();
       const topupId = `AFT-TOPUP-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const getuser = await User.findOne({ where: { id: userId } });
@@ -2856,7 +2857,11 @@ export default class AirwallexPaymentService {
 
 
       const mainAmountFloat = parseFloat(mainAmount);
-      const addCostPercentage = parseFloat(process.env.AIRWALLEX_WALLET_TOPUP_ADDITIONAL_COST_PERCENTAGE || "0.9");
+      const getCostPercentage = await SettingsService.getSetting("recharge_cost_percentage");
+      if(!getCostPercentage?.data?.value){
+        return callback(new Error("RECHARGE_COST_PERCENTAGE_NOT_FOUND"));
+      }
+      const addCostPercentage =  parseFloat(getCostPercentage?.data?.value) || 0;
       const amount = (mainAmountFloat + (mainAmountFloat * addCostPercentage) / 100).toFixed(2);
 
       const requestPayload = {
@@ -3119,6 +3124,45 @@ export default class AirwallexPaymentService {
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
+  }
+
+  static async getAftPaymentList({ userId, payload }, callback) {
+    try {
+      const { page = 1, limit = 10 } = payload;
+      const offset = (page - 1) * limit;
+
+      const paymentList = await AirwallexPaymentIntent.findAndCountAll({
+        where: { userId },
+        order: [["createdAt", "DESC"]],
+        attributes: { exclude: ["rawPayload","metadata","additionalInfo"] },
+        include: [
+          {
+            model: AirwallexPaymentSplit,
+            as: "split",
+            attributes: { exclude: ["rawPayload","metadata"] },
+          },
+        ],
+        limit,
+        offset,
+      });
+
+      return callback(null, {
+        data: {
+          total: paymentList.count,
+          page,
+          limit,
+          payments: paymentList.rows,
+        },
+      });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error fetching AFT payment list:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+
   }
 
   // Handle PaymentIntent webhook from Airwallex

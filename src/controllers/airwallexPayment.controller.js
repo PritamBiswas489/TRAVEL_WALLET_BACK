@@ -1273,6 +1273,38 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async getAftPaymentList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAftPaymentList(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_GET_AFT_PAYMENT_LIST",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "AFT payment list fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
   static async retrievePaymentIntent(request) {
     const {
       payload,

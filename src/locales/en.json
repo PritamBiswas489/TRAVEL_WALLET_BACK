@@ -567,5 +567,7 @@
 	"GET_PERSONAL_QR_FAILED": "Failed to retrieve personal QR.",
 	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "Payment request created successfully.",
 	"GET_PAYMENT_LINK_SUCCESSFUL": "Payment link retrieved successfully.",
-	"FUND_SPLIT_UPDATE": "Recharge status updated."
+	"FUND_SPLIT_UPDATE": "Recharge status updated.",
+	"RECHARGE_COST_PERCENTAGE_NOT_FOUND": "Recharge cost percentage not found.",
+	"FAILED_TO_CREATE_AFT_WALLET_TOPUP": "Failed to create AFT wallet top-up."
 }

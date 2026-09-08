@@ -997,6 +997,39 @@ router.post('/fund-split-with-connected-account', async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/deposit/aft-payment-list:
+ *   get:
+ *     summary: Get AFT payment list for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of records per page
+ *     responses:
+ *       200:
+ *         description: Success - AFT payment list retrieved
+ */
+router.get("/aft-payment-list", async (req, res) => {
+  const response = await AirwallexPaymentController.getAftPaymentList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
  * /api/auth/deposit/account-balance:
  *   get:
  *     summary: Get current Airwallex account balance

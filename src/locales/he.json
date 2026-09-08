@@ -567,5 +567,7 @@
 	"GET_PERSONAL_QR_FAILED": "אחזור קוד QR אישי נכשל.",
 	"CREATE_PAYMENT_REQUEST_SUCCESSFUL": "בקשת תשלום נוצרה בהצלחה.",
 	"GET_PAYMENT_LINK_SUCCESSFUL": "קישור התשלום אוחזר בהצלחה.",
-	"FUND_SPLIT_UPDATE": "סטטוס הטעינה עודכן."
+	"FUND_SPLIT_UPDATE": "סטטוס הטעינה עודכן.",
+	"RECHARGE_COST_PERCENTAGE_NOT_FOUND": "אחוז עלות הטעינה לא נמצא.",
+	"FAILED_TO_CREATE_AFT_WALLET_TOPUP": " יצירת טעינת ארנק AFT נכשלה."
 }
