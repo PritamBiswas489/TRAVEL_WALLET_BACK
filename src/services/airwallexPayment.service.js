@@ -3382,9 +3382,6 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         return callback(null, { data: payload });
       }
 
-      // --- Redis idempotency guard: dedupe the raw webhook delivery ---
-      // payload.id is Airwallex's own event id, so it's a reliable dedupe key
-      // (no need for the composite fallback used in the PaymentIntent handler).
       const webhookEventId = payload?.id || `${dataObject.split_id}:${dataObject.status}`;
       const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
 
@@ -3392,14 +3389,12 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         webhookDedupeKey,
         "1",
         "EX",
-        60 * 60 * 24, // 24h TTL, well beyond any realistic retry window
+        60 * 60 * 24,
         "NX",
       );
 
       if (!isNewDelivery) {
-        console.log(
-          `⚠️ Duplicate webhook delivery ignored for event ${webhookEventId}`,
-        );
+        console.log(`⚠️ Duplicate webhook delivery ignored for event ${webhookEventId}`);
         return callback(null, { data: payload });
       }
 
@@ -3411,10 +3406,7 @@ static async handleFundSplitWebhook(payload, headers, callback) {
 
       const userId = Number.parseInt(dataObject?.metadata?.user_id, 10);
 
-      let resolvedPaymentId = Number.parseInt(
-        dataObject?.metadata?.payment_id,
-        10,
-      );
+      let resolvedPaymentId = Number.parseInt(dataObject?.metadata?.payment_id, 10);
       if (Number.isNaN(resolvedPaymentId)) {
         resolvedPaymentId = null;
       }
@@ -3441,6 +3433,35 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       }
 
       const previousStatus = existingSplit?.status || null;
+      const incomingStatus = dataObject?.status || null;
+
+      // --- Status transition guard ---
+      // Rank reflects the expected forward progression of a split's lifecycle.
+      // "failed" is treated as terminal (same rank as "settled") so once a split
+      // has failed or settled, no further status change is accepted either way.
+      const STATUS_RANK = {
+        CREATED: 1,
+        RELEASED: 2,
+        SETTLED: 3,
+        FAILED: 3,
+      };
+
+      const previousRank = previousStatus ? STATUS_RANK[previousStatus] ?? null : null;
+      const incomingRank = incomingStatus ? STATUS_RANK[incomingStatus] ?? null : null;
+
+      const isBackwardOrStaleTransition =
+        existingSplit &&
+        previousRank !== null &&
+        incomingRank !== null &&
+        incomingRank <= previousRank &&
+        incomingStatus !== previousStatus; // allow idempotent same-status re-delivery through the existing dedupe above, but block same-rank *different* status (e.g. settled -> failed)
+
+      if (isBackwardOrStaleTransition) {
+        console.log(
+          `⚠️ Rejected status transition for split ${dataObject.split_id}: ${previousStatus} -> ${incomingStatus} is not a forward transition, skipping update`,
+        );
+        return callback(null, { data: existingSplit });
+      }
 
       const splitRecordPayload = {
         paymentId: resolvedPaymentId,
@@ -3452,7 +3473,7 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         amount: dataObject?.amount ?? null,
         destination: dataObject?.destination || null,
         type: "disbursement",
-        status: dataObject?.status || null,
+        status: incomingStatus,
         autoRelease: true,
         metadata: dataObject?.metadata || null,
         rawPayload: payload || null,
@@ -3465,8 +3486,6 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         existingSplit = await AirwallexPaymentSplit.create(splitRecordPayload);
       }
 
-      // Only notify when the status actually changed (covers the case where the
-      // dedupe key above differs but the underlying split state didn't move).
       if (existingSplit?.status !== previousStatus) {
         NotificationService.sendSplitNotification({
           userId: userId,
@@ -3483,10 +3502,7 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       return callback(null, { data: existingSplit });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error(
-        "❌ Error handling FundSplit webhook:",
-        error?.message || error,
-      );
+      console.error("❌ Error handling FundSplit webhook:", error?.message || error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
