@@ -21,6 +21,7 @@ import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
 
+
 const {
   sequelize,
   Op,
@@ -3113,7 +3114,14 @@ export default class AirwallexPaymentService {
       } else {
         await AirwallexPaymentSplit.create(splitRecordPayload);
       }
-
+      if (responseBody?.status) {
+          NotificationService.sendSplitNotification({
+            userId,
+            status: responseBody?.status,
+            amount: responseBody?.amount ?? null,
+            currency: responseBody?.currency || null,
+          });
+      }
       return callback(null, { data: responseBody });
 
     } catch (error) {

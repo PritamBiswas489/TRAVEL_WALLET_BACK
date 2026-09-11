@@ -3,6 +3,9 @@ import UserService from "./user.service.js";
 
 export default class PushNotificationService {
   static async sendNotification({ userId, title, body, data }, callback) {
+    console.log("Sending notification with data to userId:", userId);
+    console.log("Notification title:", title);
+    console.log("Notification body:", body);
     console.log(data);
     try {
       const user = await UserService.getUserDetails(userId);
