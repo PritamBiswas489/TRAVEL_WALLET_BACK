@@ -3118,7 +3118,7 @@ export default class AirwallexPaymentService {
           NotificationService.sendSplitNotification({
             userId,
             status: responseBody?.status,
-            amount: responseBody?.amount ?? null,
+            amount: String(responseBody?.amount ?? null),
             currency: responseBody?.currency || null,
           });
       }
@@ -3456,7 +3456,7 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         NotificationService.sendSplitNotification({
           userId: userId,
           status: existingSplit?.status,
-          amount: existingSplit?.amount,
+          amount: String(existingSplit?.amount),
           currency: existingSplit?.currency,
         });
       } else {

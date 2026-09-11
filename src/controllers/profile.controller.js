@@ -361,6 +361,7 @@ export default class ProfileController {
       let userFcm = await UserFcm.findOne({ where: { userId: user.id , deviceID: deviceid } });
 
       if (!userFcm) {
+        await UserFcm.destroy({ where: { userId: user.id , deviceID: deviceid } });
         userFcm = await UserFcm.create({ userId: user.id, fcmToken, deviceID: deviceid });
       } else {
         await userFcm.update({ fcmToken });
