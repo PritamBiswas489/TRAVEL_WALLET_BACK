@@ -993,6 +993,39 @@ router.post('/fund-split-with-connected-account', async (req, res) => {
   res.return(response);
 });
 
+/**
+ * @swagger
+ * /api/auth/deposit/refund-payment-intent:
+ *   post:
+ *     summary: Refund an Airwallex payment intent
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - paymentId
+ *             properties:
+ *               paymentId:
+ *                 type: string
+ *                 description: Airwallex payment intent identifier to refund
+ *                 example: "1"
+ *     responses:
+ *       200:
+ *         description: Success - Payment intent refunded
+ */
+
+router.post("/refund-payment-intent", async (req, res) => {
+  const response = await AirwallexPaymentController.refundPaymentIntent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
 
 
 /**

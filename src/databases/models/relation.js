@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -158,6 +158,9 @@ const relation = (db) => {
 
   AirwallexPaymentIntent.hasOne(AirwallexPaymentSplit, { foreignKey: "paymentId", as: "split" });
   AirwallexPaymentSplit.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
+
+  AirwallexPaymentIntent.hasMany(AirwallexPaymentIntentRefund, { foreignKey: "paymentId", as: "refunds" });
+  AirwallexPaymentIntentRefund.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 
 };
 

@@ -39,6 +39,7 @@ const {
   AirwallexCardTransactions,
   AirwallexPaymentIntent,
   AirwallexPaymentSplit,
+  AirwallexPaymentIntentRefund
 } = db;
 const REFRESH_TIMEOUT = 5000; // 5 seconds
 export default class AirwallexPaymentService {
@@ -3133,6 +3134,101 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
+  static async refundPaymentIntent({ userId, payload }, callback) {
+    try {
+      const { paymentId } = payload;
+
+      const getPaymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { id: paymentId, userId },
+      });
+
+      if (!getPaymentIntent) {
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
+
+      if (getPaymentIntent?.status !== "SUCCEEDED") {
+        return callback(new Error("PAYMENT_INTENT_REFUND_NOT_SUCCEEDED"));
+      }
+
+      const paymentIntentId = getPaymentIntent?.airwallexIntentId;
+      console.log("💸 Refunding payment intent with Airwallex ID:", paymentIntentId);
+
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"));
+      }
+
+      const response = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/refunds/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            payment_intent_id: paymentIntentId,
+            request_id: uuidv4(),
+            metadata:{
+              userId,
+              paymentId,
+            }
+          }),
+        },
+      );
+
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          `Airwallex refund failed: ${JSON.stringify(responseBody)}`,
+        );
+      }
+
+      if (responseBody?.id) {
+        const parseAirwallexDate = (value) => {
+          if (!value) return null;
+          const parsedDate = new Date(value);
+          return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+        };
+
+        const refundRecordPayload = {
+          paymentId: getPaymentIntent.id,
+          airwallexRefundId: responseBody?.id,
+          requestId: responseBody?.request_id || null,
+          paymentIntentId: responseBody?.payment_intent_id || null,
+          paymentAttemptId: responseBody?.payment_attempt_id || null,
+          merchantOrderId: responseBody?.merchant_order_id || null,
+          amount: responseBody?.amount ?? null,
+          currency: responseBody?.currency || null,
+          status: responseBody?.status || null,
+          airwallexCreatedAt: parseAirwallexDate(responseBody?.created_at),
+          airwallexUpdatedAt: parseAirwallexDate(responseBody?.updated_at),
+          rawPayload: responseBody || null,
+        };
+
+        const existingRefund = await AirwallexPaymentIntentRefund.findOne({
+          where: { airwallexRefundId: responseBody.id },
+        });
+
+        if (existingRefund) {
+          await existingRefund.update(refundRecordPayload);
+        } else {
+          await AirwallexPaymentIntentRefund.create(refundRecordPayload);
+        }
+
+        return callback(null, { data: responseBody });
+      }
+
+      return callback(new Error("PAYMENT_INTENT_REFUND_NOT_SUCCEEDED"));
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error in refundPaymentIntent:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
 
   static async getAftPaymentList({ userId, payload }, callback) {
     try {
@@ -3329,6 +3425,11 @@ export default class AirwallexPaymentService {
                    console.error(
                      `❌ Fund split permanently failed for intent ${recordPayload.airwallexIntentId} after ${maxAttempts} attempts — manual review needed`,
                    );
+                   //Initiate a refund for the payment intent since fund split failed
+                   this.refundPaymentIntent({
+                     userId: recordPayload.userId,
+                     payload: { paymentId: getPaymentIntent.id },
+                   });
                    process.env.SENTRY_ENABLED === "true" &&
                      Sentry.captureException(err);
                    redisClient.del(fundSplitLockKey).catch(() => {});
@@ -3369,6 +3470,8 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       const timestamp = headers["x-timestamp"];
       const signature = headers["x-signature"];
 
+      console.log("Received headers:", { timestamp, signature });
+
       const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
 
@@ -3407,30 +3510,13 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       const userId = Number.parseInt(dataObject?.metadata?.user_id, 10);
 
       let resolvedPaymentId = Number.parseInt(dataObject?.metadata?.payment_id, 10);
-      if (Number.isNaN(resolvedPaymentId)) {
-        resolvedPaymentId = null;
+       if (!resolvedPaymentId) {
+        return callback(new Error("PAYMENT_ID_NOT_FOUND_IN_FUND_SPLIT_WEBHOOK"));
       }
 
       let existingSplit = await AirwallexPaymentSplit.findOne({
-        where: { airwallexSplitId: dataObject.split_id },
+        where: { paymentId: resolvedPaymentId },
       });
-
-      if (!resolvedPaymentId && existingSplit?.paymentId) {
-        resolvedPaymentId = existingSplit.paymentId;
-      }
-
-      if (!resolvedPaymentId && dataObject?.source_id) {
-        const getPaymentIntent = await AirwallexPaymentIntent.findOne({
-          where: { airwallexIntentId: dataObject.source_id },
-        });
-        if (getPaymentIntent?.id) {
-          resolvedPaymentId = getPaymentIntent.id;
-        }
-      }
-
-      if (!resolvedPaymentId) {
-        return callback(new Error("PAYMENT_ID_NOT_FOUND_IN_FUND_SPLIT_WEBHOOK"));
-      }
 
       const previousStatus = existingSplit?.status || null;
       const incomingStatus = dataObject?.status || null;
@@ -3505,6 +3591,117 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       console.error("❌ Error handling FundSplit webhook:", error?.message || error);
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
+  }
+
+  static async handlePaymentIntentReturnWebhook(payload, headers, callback){
+    try {
+      const timestamp = headers["x-timestamp"];
+      const signature = headers["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
+      const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
+
+      if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+        console.error("Webhook signature verification failed");
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
+      }
+
+      const dataObject = payload?.data?.object;
+      if (!dataObject?.id) {
+        return callback(null, { data: payload });
+      }
+
+      const paymentId = dataObject?.metadata?.paymentId;
+      const userId = dataObject?.metadata?.userId;
+      const airwallexRefundId = dataObject?.id;
+
+      console.log(
+        `ℹ️ Received PaymentIntent return webhook for paymentId: ${paymentId}, userId: ${userId}, airwallexRefundId: ${airwallexRefundId}`,
+      );
+
+       const webhookEventId = payload?.id || `${dataObject.id}:${dataObject.status}`;
+      const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
+      const isNewDelivery = await redisClient.set(
+        webhookDedupeKey,
+        "1",
+        "EX",
+        60 * 60 * 24,
+        "NX",
+      );
+      if (!isNewDelivery) {
+        console.log(`ℹ️ Duplicate webhook received for eventId: ${webhookEventId}, skipping processing`);
+        return callback(null, { data: payload });
+      }
+       const getRefundData = await AirwallexPaymentIntentRefund.findOne({
+        where: {
+          paymentId,
+          airwallexRefundId,
+        },
+      });
+
+      if (getRefundData) {
+        const previousStatus = getRefundData?.status || null;
+        const incomingStatus = dataObject?.status || null;
+
+        const STATUS_RANK = {
+          RECEIVED: 1,
+          ACCEPTED: 2,
+          SETTLED: 3,
+          FAILED: 3,
+        };
+
+        const previousRank = previousStatus
+          ? (STATUS_RANK[previousStatus] ?? null)
+          : null;
+        const incomingRank = incomingStatus
+          ? (STATUS_RANK[incomingStatus] ?? null)
+          : null;
+
+        const isBackwardOrStaleTransition =
+          getRefundData &&
+          previousRank !== null &&
+          incomingRank !== null &&
+          incomingRank <= previousRank &&
+          incomingStatus !== previousStatus; // allow idempotent same-status re-delivery through the existing dedupe above, but block same-rank *different* status (e.g. settled -> failed)
+
+        if (isBackwardOrStaleTransition) {
+          console.log(
+            `⚠️ Rejected status transition for refund ${airwallexRefundId}: ${previousStatus} -> ${incomingStatus} is not a forward transition, skipping update`,
+          );
+          return callback(null, { data: getRefundData });
+        }
+
+        console.log(
+          `ℹ️ Updating refund ${airwallexRefundId} status from ${previousStatus} to ${incomingStatus}`,
+        );
+
+        // Update the refund status in the database
+        await AirwallexPaymentIntentRefund.update(
+          { status: incomingStatus },
+          {
+            where: {
+              paymentId,
+              airwallexRefundId,
+            },
+          },
+        );
+      }
+      return callback(null, {
+        data: {
+          paymentId,
+          userId,
+          airwallexRefundId,
+          payload,
+        },
+      });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error handling PaymentIntent return webhook:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+
   }
 
   // Retrieve PaymentIntent details from Airwallex

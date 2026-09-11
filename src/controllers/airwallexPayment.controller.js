@@ -1046,6 +1046,33 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async handlePaymentIntentReturnWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handlePaymentIntentReturnWebhook(
+        payload,
+        headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_HANDLE_PAYMENT_INTENT_RETURN_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Payment intent return webhook handled successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
 
   static async livenessProactiveStart(request) {
     const {
@@ -1266,6 +1293,38 @@ export default class AirwallexPaymentController {
             status: 200,
             data: response.data,
             message: "Funds split with connected account successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async refundPaymentIntent(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.refundPaymentIntent(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_REFUND_PAYMENT_INTENT",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Payment intent refunded successfully",
             error: null,
           });
         },

@@ -525,6 +525,15 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       'funds_split.released',
       'funds_split.settled'
    ];
+
+   const paymentIntentReturnWebhookEventNames = [
+      'refund.received',
+      'refund.accepted',
+      'refund.settled',
+      'refund.failed'
+   ];
+
+
    if(kycEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.airwallexKycWebhook({ payload, headers: req.headers });
       return res.return(response);
@@ -560,6 +569,9 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       return res.return(response);
    }else if (fundSplitWebhookEventNames.includes(payload?.name)) { //fund split events
       const response = await AirwallexPaymentController.handleFundSplitWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }else if(paymentIntentReturnWebhookEventNames.includes(payload?.name)) { //payment intent return events
+      const response = await AirwallexPaymentController.handlePaymentIntentReturnWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
 
