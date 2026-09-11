@@ -68,12 +68,11 @@ export default class ProfileController {
         passportId: payload.passportId,
         passportExpiryDate: payload.passportExpiryDate,
         nationality: payload.nationality,
-
       };
 
       const [validationError, validatedData] = await profileEditValidator(
         updatedData,
-        i18n
+        i18n,
       );
       if (validationError) return validationError;
 
@@ -105,6 +104,40 @@ export default class ProfileController {
     }
   }
 
+  static async updateLanguage(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const userDetails = await User.findOne({ where: { id: user.id } });
+
+      if (!userDetails) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
+        };
+      }
+
+      await userDetails.update({ language: request.payload.language });
+
+      return {
+        status: 200,
+        data: { language: request.payload.language },
+        message: i18n.__("LANGUAGE_UPDATED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
   /**
    * Update user profile avatar
    */
@@ -169,7 +202,7 @@ export default class ProfileController {
 
       const [validationError, validatedData] = await updatepinValidator(
         updatedData,
-        i18n
+        i18n,
       );
       if (validationError) return validationError;
 
@@ -187,7 +220,7 @@ export default class ProfileController {
 
       const isPinCodeValid = await compareHashedStr(
         validatedData?.existingPinCode,
-        userDetails?.password
+        userDetails?.password,
       );
 
       if (!isPinCodeValid) {
@@ -230,7 +263,7 @@ export default class ProfileController {
         {
           pinCode: payload.pinCode,
         },
-        i18n
+        i18n,
       );
       if (validationError) return validationError;
 
@@ -248,7 +281,7 @@ export default class ProfileController {
 
       const isPinCodeValid = await compareHashedStr(
         validatedData?.pinCode,
-        userDetails?.password
+        userDetails?.password,
       );
 
       if (!isPinCodeValid) {
@@ -285,7 +318,7 @@ export default class ProfileController {
     } = request;
 
     try {
-      const userDetails = await UserService.getUserDetails(user.id) ;
+      const userDetails = await UserService.getUserDetails(user.id);
 
       if (!userDetails) {
         return {
@@ -297,13 +330,15 @@ export default class ProfileController {
         };
       }
 
-      const wallets  = userDetails?.wallets?.find(wallet => parseFloat(wallet.balance) > 0);
-      if(wallets){
-          return {
-            status: 400,
-            data: [],
-            error: { message: i18n.__("USER_HAS_NON_ZERO_WALLET_BALANCE") },
-          };      
+      const wallets = userDetails?.wallets?.find(
+        (wallet) => parseFloat(wallet.balance) > 0,
+      );
+      if (wallets) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("USER_HAS_NON_ZERO_WALLET_BALANCE") },
+        };
       }
 
       // Remove related data before deleting user
@@ -323,7 +358,7 @@ export default class ProfileController {
         Notification.destroy({ where: { userId: user.id } }),
       ]);
       await User.destroy({ where: { id: user.id } });
-     
+
       return {
         status: 200,
         data: [],
@@ -343,7 +378,7 @@ export default class ProfileController {
   static async saveFcmToken(request) {
     const {
       payload,
-      headers: { i18n , deviceid},
+      headers: { i18n, deviceid },
       user,
     } = request;
 
@@ -358,11 +393,19 @@ export default class ProfileController {
         };
       }
 
-      let userFcm = await UserFcm.findOne({ where: { userId: user.id , deviceID: deviceid } });
+      let userFcm = await UserFcm.findOne({
+        where: { userId: user.id, deviceID: deviceid },
+      });
 
       if (!userFcm) {
-        await UserFcm.destroy({ where: { userId: user.id , deviceID: deviceid } });
-        userFcm = await UserFcm.create({ userId: user.id, fcmToken, deviceID: deviceid });
+        await UserFcm.destroy({
+          where: { userId: user.id, deviceID: deviceid },
+        });
+        userFcm = await UserFcm.create({
+          userId: user.id,
+          fcmToken,
+          deviceID: deviceid,
+        });
       } else {
         await userFcm.update({ fcmToken });
       }
@@ -413,7 +456,7 @@ export default class ProfileController {
             message: i18n.__("PUSH_NOTIFICATION_SUCCESS"),
             error: {},
           });
-        }
+        },
       );
     });
   }
@@ -430,7 +473,7 @@ export default class ProfileController {
         NotificationService.getNotifications(
           user.id,
           payload?.page || 1,
-          payload?.limit || 10
+          payload?.limit || 10,
         ),
         NotificationService.countUnreadNotifications(user.id),
       ]);
@@ -473,7 +516,7 @@ export default class ProfileController {
 
       const notification = await NotificationService.markAsRead(
         user.id,
-        notificationId
+        notificationId,
       );
 
       if (!notification) {
@@ -572,7 +615,7 @@ export default class ProfileController {
 
     try {
       const unreadCount = await NotificationService.countUnreadNotifications(
-        user.id
+        user.id,
       );
 
       return {
@@ -590,14 +633,16 @@ export default class ProfileController {
       };
     }
   }
-  static async getNotificationBellIconColor(request){
+  static async getNotificationBellIconColor(request) {
     const {
       headers: { i18n },
       user,
     } = request;
 
     try {
-      const color = await NotificationService.getNotificationBellIconColor(user.id);
+      const color = await NotificationService.getNotificationBellIconColor(
+        user.id,
+      );
 
       return {
         status: 200,
@@ -637,7 +682,7 @@ export default class ProfileController {
         status: 200,
         data: lastNotification,
         message: i18n.__(
-          "LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY"
+          "LAST_PENDING_TRANSFER_NOTIFICATION_FETCHED_SUCCESSFULLY",
         ),
         error: {},
       };
@@ -665,7 +710,7 @@ export default class ProfileController {
             data: null,
             error: {
               message: i18n.__(
-                err.message || "FAILED_TO_ADD_MOBILE_NUMBERS_TO_CONTACT_LIST"
+                err.message || "FAILED_TO_ADD_MOBILE_NUMBERS_TO_CONTACT_LIST",
               ),
               reason: err.message,
             },
@@ -686,7 +731,7 @@ export default class ProfileController {
       user,
     } = request;
 
-    const type = request?.payload?.type || 'all'; // all or whitelist
+    const type = request?.payload?.type || "all"; // all or whitelist
 
     return new Promise((resolve) => {
       ContactListService.clearContactList(user.id, type, (err, response) => {
@@ -695,9 +740,7 @@ export default class ProfileController {
             status: 400,
             data: null,
             error: {
-              message: i18n.__(
-                err.message || "FAILED_TO_CLEAR_CONTACT_LIST"
-              ),
+              message: i18n.__(err.message || "FAILED_TO_CLEAR_CONTACT_LIST"),
               reason: err.message,
             },
           });
@@ -721,7 +764,7 @@ export default class ProfileController {
     // console.log(payload);
     return new Promise((resolve) => {
       WhitelistMobilesService.create(
-        { userId: user.id, ...payload }, 
+        { userId: user.id, ...payload },
         (err, response) => {
           if (err) {
             return resolve({
@@ -729,7 +772,7 @@ export default class ProfileController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST"
+                  err.message || "FAILED_TO_ADD_MOBILE_NUMBER_TO_WHITELIST",
                 ),
                 reason: err.message,
               },
@@ -741,7 +784,7 @@ export default class ProfileController {
             message: i18n.__("MOBILE_NUMBER_ADDED_SUCCESSFULLY_TO_WHITELIST"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -762,7 +805,7 @@ export default class ProfileController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_FETCH_MOBILE_NUMBER_WHITELIST"
+                  err.message || "FAILED_TO_FETCH_MOBILE_NUMBER_WHITELIST",
                 ),
                 reason: err.message,
               },
@@ -774,7 +817,7 @@ export default class ProfileController {
             message: i18n.__("MOBILE_NUMBER_WHITELIST_FETCHED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -798,7 +841,7 @@ export default class ProfileController {
               data: null,
               error: {
                 message: i18n.__(
-                  "FAILED_TO_DELETE_MOBILE_NUMBER_FROM_WHITELIST"
+                  "FAILED_TO_DELETE_MOBILE_NUMBER_FROM_WHITELIST",
                 ),
                 reason: err.message,
               },
@@ -808,11 +851,11 @@ export default class ProfileController {
             status: 200,
             data: response,
             message: i18n.__(
-              "MOBILE_NUMBER_DELETED_SUCCESSFULLY_FROM_WHITELIST"
+              "MOBILE_NUMBER_DELETED_SUCCESSFULLY_FROM_WHITELIST",
             ),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -824,7 +867,11 @@ export default class ProfileController {
     } = request;
 
     return new Promise((resolve) => {
-      if(!['everyone', 'noone', 'contactonly','whitelist'].includes(payload?.restriction)){
+      if (
+        !["everyone", "noone", "contactonly", "whitelist"].includes(
+          payload?.restriction,
+        )
+      ) {
         return resolve({
           status: 400,
           data: null,
@@ -845,7 +892,7 @@ export default class ProfileController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_SET_REQUEST_MONEY_RESTRICTION"
+                  err.message || "FAILED_TO_SET_REQUEST_MONEY_RESTRICTION",
                 ),
                 reason: err.message,
               },
@@ -857,7 +904,7 @@ export default class ProfileController {
             message: i18n.__("REQUEST_MONEY_RESTRICTION_SET_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -869,8 +916,11 @@ export default class ProfileController {
     } = request;
 
     return new Promise((resolve) => {
-      
-      if(!['everyone', 'noone', 'contactonly','whitelist'].includes(payload?.restriction)){
+      if (
+        !["everyone", "noone", "contactonly", "whitelist"].includes(
+          payload?.restriction,
+        )
+      ) {
         return resolve({
           status: 400,
           data: null,
@@ -890,7 +940,9 @@ export default class ProfileController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(err.message || "FAILED_TO_SET_SEND_MONEY_RESTRICTION"),
+                message: i18n.__(
+                  err.message || "FAILED_TO_SET_SEND_MONEY_RESTRICTION",
+                ),
                 reason: err.message,
               },
             });
@@ -901,7 +953,7 @@ export default class ProfileController {
             message: i18n.__("SEND_MONEY_RESTRICTION_SET_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -924,7 +976,8 @@ export default class ProfileController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_CHECK_MOBILE_NUMBER_IN_CONTACT_LIST"
+                  err.message ||
+                    "FAILED_TO_CHECK_MOBILE_NUMBER_IN_CONTACT_LIST",
                 ),
                 reason: err.message,
               },
@@ -936,7 +989,7 @@ export default class ProfileController {
             message: i18n.__("MOBILE_NUMBER_CHECKED_SUCCESSFULLY"),
             error: null,
           });
-        }
+        },
       );
     });
   }
@@ -959,7 +1012,8 @@ export default class ProfileController {
               data: null,
               error: {
                 message: i18n.__(
-                  err.message || "FAILED_TO_REMOVE_MOBILE_NUMBER_FROM_CONTACT_LIST"
+                  err.message ||
+                    "FAILED_TO_REMOVE_MOBILE_NUMBER_FROM_CONTACT_LIST",
                 ),
                 reason: err.message,
               },
@@ -968,15 +1022,16 @@ export default class ProfileController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("MOBILE_NUMBER_REMOVED_SUCCESSFULLY_FROM_CONTACT_LIST"),
+            message: i18n.__(
+              "MOBILE_NUMBER_REMOVED_SUCCESSFULLY_FROM_CONTACT_LIST",
+            ),
             error: null,
           });
-        }
+        },
       );
     });
-     
   }
- 
+
   static async clearDeviceId(request) {
     const {
       headers: { i18n, deviceid },
@@ -985,26 +1040,30 @@ export default class ProfileController {
     } = request;
 
     return new Promise((resolve) => {
-      UserService.clearDeviceId(user.id, deviceid, false, i18n, (err, response) => {
-        if (err) {
+      UserService.clearDeviceId(
+        user.id,
+        deviceid,
+        false,
+        i18n,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "FAILED_TO_CLEAR_DEVICE_ID"),
+                reason: err.message,
+              },
+            });
+          }
           return resolve({
-            status: 400,
-            data: null,
-            error: {
-              message: i18n.__(
-                err.message || "FAILED_TO_CLEAR_DEVICE_ID"
-              ),
-              reason: err.message,
-            },
+            status: 200,
+            data: response.data,
+            message: i18n.__("DEVICE_ID_CLEARED_SUCCESSFULLY"),
+            error: null,
           });
-        }
-        return resolve({
-          status: 200,
-          data: response.data,
-          message: i18n.__("DEVICE_ID_CLEARED_SUCCESSFULLY"),
-          error: null,
-        });
-      });
+        },
+      );
     });
   }
   static async deleteDeviceId(request) {
@@ -1014,40 +1073,42 @@ export default class ProfileController {
       payload,
     } = request;
 
-    if(deviceid === payload?.deviceId){
+    if (deviceid === payload?.deviceId) {
       return {
-            status: 400,
-            data: null,
-            error: {
-              message: i18n.__(
-                "CANNOT_DELETE_CURRENTLY_USED_DEVICE_ID"
-              ),
-              reason: "CANNOT_DELETE_CURRENTLY_USED_DEVICE_ID",
-            },
-          }
+        status: 400,
+        data: null,
+        error: {
+          message: i18n.__("CANNOT_DELETE_CURRENTLY_USED_DEVICE_ID"),
+          reason: "CANNOT_DELETE_CURRENTLY_USED_DEVICE_ID",
+        },
+      };
     }
 
     return new Promise((resolve) => {
-      UserService.clearDeviceId(user.id, payload.deviceId, true, i18n, (err, response) => {
-        if (err) {
+      UserService.clearDeviceId(
+        user.id,
+        payload.deviceId,
+        true,
+        i18n,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: i18n.__(err.message || "FAILED_TO_DELETE_DEVICE_ID"),
+                reason: err.message,
+              },
+            });
+          }
           return resolve({
-            status: 400,
-            data: null,
-            error: {
-              message: i18n.__(
-                err.message || "FAILED_TO_DELETE_DEVICE_ID"
-              ),
-              reason: err.message,
-            },
+            status: 200,
+            data: response.data,
+            message: i18n.__("DEVICE_ID_DELETED_SUCCESSFULLY"),
+            error: null,
           });
-        }
-        return resolve({
-          status: 200,
-          data: response.data,
-          message: i18n.__("DEVICE_ID_DELETED_SUCCESSFULLY"),
-          error: null,
-        });
-      });
+        },
+      );
     });
   }
 }

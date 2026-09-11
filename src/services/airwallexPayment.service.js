@@ -2825,10 +2825,6 @@ export default class AirwallexPaymentService {
   static async createAftWalletTopup({ userId, payload }, callback) {
     try {
       const { amount:mainAmount } = payload;
-      const mainAmountFloat = Number.parseFloat(mainAmount);
-      if (Number.isNaN(mainAmountFloat) || mainAmountFloat <= 0) {
-        return callback(new Error("INVALID_AMOUNT"));
-      }
       const getAirwallexCustomerId = await this.getAirwallexCustomerId(userId);
       console.log(
         "Retrieved Airwallex customer ID for userId:",
@@ -2859,6 +2855,9 @@ export default class AirwallexPaymentService {
       const userName = getuser?.name;
       const firstName = userName?.split(" ")[0] || "User";
       const lastName = userName?.split(" ")[1] || "User";
+
+
+      const mainAmountFloat = parseFloat(mainAmount);
       const getCostPercentage = await SettingsService.getSetting("recharge_cost_percentage");
       if(!getCostPercentage?.data?.value){
         return callback(new Error("RECHARGE_COST_PERCENTAGE_NOT_FOUND"));
@@ -2880,7 +2879,6 @@ export default class AirwallexPaymentService {
           user_id: userId,
           wallet_account_id: airwallexAccountId,
           transaction_type: "wallet_topup",
-          split_amount: mainAmountFloat.toFixed(2),
         },
 
         additional_info: {
@@ -3039,9 +3037,6 @@ export default class AirwallexPaymentService {
 
       // Ensure that the splitAmount is a valid number
       const splitAmount  = parseFloat(getPaymentIntent?.splitAmount);
-      if (Number.isNaN(splitAmount) || splitAmount <= 0) {
-        return callback(new Error("INVALID_SPLIT_AMOUNT"));
-      }
 
        const requestPayload = {
         request_id: uuidv4(),
@@ -3227,18 +3222,6 @@ export default class AirwallexPaymentService {
         return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
       };
 
-      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
-        where: { airwallexIntentId: dataObject.id },
-      });
-
-      const previousStatus = getPaymentIntent?.status || null;
-      const metadataSplitAmount = Number.parseFloat(
-        dataObject?.metadata?.split_amount,
-      );
-      const resolvedSplitAmount = Number.isNaN(metadataSplitAmount)
-        ? (getPaymentIntent?.splitAmount ?? null)
-        : metadataSplitAmount;
-
       const parsedUserId = Number.parseInt(dataObject?.metadata?.user_id, 10);
 
       const recordPayload = {
@@ -3248,7 +3231,6 @@ export default class AirwallexPaymentService {
         requestId: dataObject?.request_id || null,
         status: dataObject?.status || null,
         amount: dataObject?.amount ?? null,
-        splitAmount: resolvedSplitAmount,
         capturedAmount: dataObject?.captured_amount ?? null,
         currency: dataObject?.currency || null,
         baseAmount: dataObject?.base_amount ?? null,
@@ -3286,6 +3268,12 @@ export default class AirwallexPaymentService {
         airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
       };
 
+      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { airwallexIntentId: dataObject.id },
+      });
+
+      const previousStatus = getPaymentIntent?.status || null;
+
       //get payment intent record and update it with the new data from the webhook, if it doesn't exist create a new record
       if (getPaymentIntent) {
         await getPaymentIntent.update(recordPayload);
@@ -3315,37 +3303,52 @@ export default class AirwallexPaymentService {
           "NX",
         );
 
-        if (lockAcquired) {
-          console.log(
-            `🔒 Acquired lock for fund split of intent ${getPaymentIntent.id}, proceeding`,
-          );
+       if (lockAcquired) {
+         console.log(
+           `🔒 Acquired lock for fund split of intent ${getPaymentIntent.id}, proceeding`,
+         );
 
-          this.fundSplitWithConnectedAccount(
-            {
-              userId: recordPayload.userId,
-              payload: { paymentId: getPaymentIntent.id },
-            },
-            (err, result) => {
-              if (err) {
-                console.error(
-                  "❌ Error initiating fund split with connected account:",
-                  err.message,
-                );
-                // Release the lock on failure so a legitimate retry can still split
-                redisClient.del(fundSplitLockKey).catch(() => {});
-              } else {
-                console.log(
-                  "✅ Fund split with connected account initiated successfully:",
-                  result?.data,
-                );
-              }
-            },
-          );
-        } else {
-          console.log(
-            `⚠️ Fund split already triggered/locked for intent ${recordPayload.airwallexIntentId}, skipping`,
-          );
-        }
+         const attemptFundSplit = (attemptNumber = 1, maxAttempts = 3) => {
+           this.fundSplitWithConnectedAccount(
+             {
+               userId: recordPayload.userId,
+               payload: { paymentId: getPaymentIntent.id },
+             },
+             (err, result) => {
+               if (err) {
+                 console.error(
+                   `❌ Fund split attempt ${attemptNumber}/${maxAttempts} failed for intent ${recordPayload.airwallexIntentId}:`,
+                   err.message,
+                 );
+                 if (attemptNumber < maxAttempts) {
+                   setTimeout(
+                     () => attemptFundSplit(attemptNumber + 1, maxAttempts),
+                     attemptNumber * 5000, // 5s, 10s backoff
+                   );
+                 } else {
+                   console.error(
+                     `❌ Fund split permanently failed for intent ${recordPayload.airwallexIntentId} after ${maxAttempts} attempts — manual review needed`,
+                   );
+                   process.env.SENTRY_ENABLED === "true" &&
+                     Sentry.captureException(err);
+                   redisClient.del(fundSplitLockKey).catch(() => {});
+                 }
+               } else {
+                 console.log(
+                   "✅ Fund split with connected account initiated successfully:",
+                   result?.data,
+                 );
+               }
+             },
+           );
+         };
+
+         attemptFundSplit();
+       } else {
+         console.log(
+           `⚠️ Fund split already triggered/locked for intent ${recordPayload.airwallexIntentId}, skipping`,
+         );
+       }
       }
 
       return callback(null, { data: payload });

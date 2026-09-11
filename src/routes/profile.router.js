@@ -103,6 +103,39 @@ router.put("/edit", async (req, res, next) => {
   const profileDetails = await ProfileController.updateProfile({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(profileDetails);
 });
+
+
+
+/**
+ * @swagger
+ * /api/auth/profile/update-language:
+ *   post:
+ *     summary: Update user language
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - language
+ *             properties:
+ *               language:
+ *                 type: string
+ *                 description: Preferred language code for the user
+ *                 example: "he"
+ *     responses:
+ *       200:
+ *         description: Success - User language updated
+ */
+router.post("/update-language", async (req, res, next) => {
+  const response = await ProfileController.updateLanguage({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
 /**
  * @swagger
  * /api/auth/profile/upload-profile-image:
