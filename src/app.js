@@ -17,7 +17,7 @@ import multer from "multer";
 import customReturn from "./middlewares/responseBuilder.js";
 import locales from "./middlewares/locales.js";
 
- 
+
 
 // import "./cron/index.js"
 
@@ -43,6 +43,7 @@ const publicDir =
     : pathResolve(pathJoin(dirname("./"), "public"));
 
 const app = express();
+
 
 
  
@@ -224,7 +225,6 @@ const sequelize = new Sequelize(DB_DATABASE, DB_USERNAME, DB_PASSWORD, {
 });
 
 
-
 app.use((req, res, next) => {
   console.log("Incoming request path:", req.path, req.method);
   next();
@@ -383,5 +383,7 @@ app.use((err, req, res, next) => {
   }
   next();
 });
+
+
 
 export default app;

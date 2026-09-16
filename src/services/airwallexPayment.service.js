@@ -2884,7 +2884,9 @@ export default class AirwallexPaymentService {
           user_id: userId,
           wallet_account_id: airwallexAccountId,
           transaction_type: "wallet_topup",
+          ...(payload?.throwSplitError !== undefined ? { throwSplitError: payload?.throwSplitError } : {})
         },
+        
 
         additional_info: {
           account_funding_data: {
@@ -3034,6 +3036,11 @@ export default class AirwallexPaymentService {
       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
         where: { id: paymentId },
       });
+      //for testing purposes, allow forcing a split error based on metadata
+      if(getPaymentIntent?.metadata?.throwSplitError) {
+        console.log("##### Forcing split error as per metadata #####");
+        return callback(new Error("SPLIT_ERROR_REQUESTED"));
+      }
       if (getPaymentIntent?.status !== "SUCCEEDED") {
         return callback(new Error("PAYMENT_INTENT_NOT_SUCCEEDED"));
       }
@@ -3302,13 +3309,6 @@ export default class AirwallexPaymentService {
         return callback(null, { data: payload });
       }
 
-      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
-        where: { airwallexIntentId: dataObject.id },
-      });
-      if(!getPaymentIntent) {
-        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
-      }
-
       // --- Redis idempotency guard: dedupe the raw webhook delivery itself ---
       // Airwallex retries webhooks on non-2xx/timeout, and the same event id
       // can arrive more than once. Use the event id if present, else fall back
@@ -3385,12 +3385,17 @@ export default class AirwallexPaymentService {
         airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
       };
 
-     
+      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { airwallexIntentId: dataObject.id },
+      });
+      if(!getPaymentIntent) {
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
 
       const previousStatus = getPaymentIntent?.status || null;
 
       //get payment intent record and update it with the new data from the webhook, if it doesn't exist create a new record
-       await getPaymentIntent.update(recordPayload);
+      await getPaymentIntent.update(recordPayload);
 
       // --- Redis lock: guard the fund split itself, not just the webhook delivery ---
       // This protects against a duplicate/concurrent SUCCEEDED webhook triggering
@@ -3410,6 +3415,7 @@ export default class AirwallexPaymentService {
             intentId: recordPayload.airwallexIntentId,
             userId: recordPayload.userId,
             paymentId: getPaymentIntent.id,
+          
           });
         } catch (enqueueErr) {
           // Queue itself is unreachable (e.g. Redis down). Log + Sentry now;
