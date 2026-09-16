@@ -15,12 +15,12 @@ import { AIRWALLEX_TRANSFER_STATUS } from "../config/airwallexTransferStatus.js"
 import CurrencyService from "./currency.service.js";
 import NotificationService from "./notification.service.js";
 import { verifyAirwallexSignature } from "../libraries/utility.js";
- 
+
 import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
- 
+
 import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
-
+import { enqueueFundSplit } from "../queues/airwallexPaymentIntent.queue.js";
 
 const {
   sequelize,
@@ -39,7 +39,7 @@ const {
   AirwallexCardTransactions,
   AirwallexPaymentIntent,
   AirwallexPaymentSplit,
-  AirwallexPaymentIntentRefund
+  AirwallexPaymentIntentRefund,
 } = db;
 const REFRESH_TIMEOUT = 5000; // 5 seconds
 export default class AirwallexPaymentService {
@@ -2825,7 +2825,7 @@ export default class AirwallexPaymentService {
 
   static async createAftWalletTopup({ userId, payload }, callback) {
     try {
-      const { amount:mainAmount } = payload;
+      const { amount: mainAmount } = payload;
       const getAirwallexCustomerId = await this.getAirwallexCustomerId(userId);
       console.log(
         "Retrieved Airwallex customer ID for userId:",
@@ -2840,8 +2840,8 @@ export default class AirwallexPaymentService {
       const getKycAccount = await AirwallexKycAccount.findOne({
         where: { userId },
       });
-      console.log("===== airwallex account id ===========")
-     // console.log(getKycAccount);
+      console.log("===== airwallex account id ===========");
+      // console.log(getKycAccount);
       if (!getKycAccount?.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -2849,7 +2849,7 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_APPROVED"));
       }
       const airwallexAccountId = getKycAccount.airwallexAccountId;
-     // console.log({ userId, airwallexCustomerId, airwallexAccountId, mainAmount });
+      // console.log({ userId, airwallexCustomerId, airwallexAccountId, mainAmount });
       const requestId = uuidv4();
       const topupId = `AFT-TOPUP-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const getuser = await User.findOne({ where: { id: userId } });
@@ -2857,14 +2857,18 @@ export default class AirwallexPaymentService {
       const firstName = userName?.split(" ")[0] || "User";
       const lastName = userName?.split(" ")[1] || "User";
 
-
       const mainAmountFloat = parseFloat(mainAmount);
-      const getCostPercentage = await SettingsService.getSetting("recharge_cost_percentage");
-      if(!getCostPercentage?.data?.value){
+      const getCostPercentage = await SettingsService.getSetting(
+        "recharge_cost_percentage",
+      );
+      if (!getCostPercentage?.data?.value) {
         return callback(new Error("RECHARGE_COST_PERCENTAGE_NOT_FOUND"));
       }
-      const addCostPercentage =  parseFloat(getCostPercentage?.data?.value) || 0;
-      const amount = (mainAmountFloat + (mainAmountFloat * addCostPercentage) / 100).toFixed(2);
+      const addCostPercentage = parseFloat(getCostPercentage?.data?.value) || 0;
+      const amount = (
+        mainAmountFloat +
+        (mainAmountFloat * addCostPercentage) / 100
+      ).toFixed(2);
 
       const requestPayload = {
         request_id: requestId,
@@ -2948,8 +2952,6 @@ export default class AirwallexPaymentService {
         return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
       };
 
-       
-
       const recordPayload = {
         airwallexIntentId: responseBody?.id,
         merchantOrderId: responseBody?.merchant_order_id || null,
@@ -3017,17 +3019,22 @@ export default class AirwallexPaymentService {
     }
   }
   static async fundSplitWithConnectedAccount({ userId, payload }, callback) {
-    console.log("payload", payload);
+    console.log("fundSplitWithConnectedAccount payload", payload);
     try {
       const { paymentId } = payload;
       if (!paymentId) {
         return callback(new Error("PAYMENT_ID_NOT_PROVIDED"));
       }
-      console.log("Initiating fund split with connected account for userId:", userId, "paymentId:", paymentId);
+      console.log(
+        "Initiating fund split with connected account for userId:",
+        userId,
+        "paymentId:",
+        paymentId,
+      );
       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
         where: { id: paymentId },
       });
-      if(getPaymentIntent?.status !== "SUCCEEDED"){
+      if (getPaymentIntent?.status !== "SUCCEEDED") {
         return callback(new Error("PAYMENT_INTENT_NOT_SUCCEEDED"));
       }
       const getKycAccount = await AirwallexKycAccount.findOne({
@@ -3037,9 +3044,9 @@ export default class AirwallexPaymentService {
       const paymentIntentId = getPaymentIntent?.airwallexIntentId;
 
       // Ensure that the splitAmount is a valid number
-      const splitAmount  = parseFloat(getPaymentIntent?.splitAmount);
+      const splitAmount = parseFloat(getPaymentIntent?.splitAmount);
 
-       const requestPayload = {
+      const requestPayload = {
         request_id: uuidv4(),
         source_id: paymentIntentId,
         source_type: "PAYMENT_INTENT",
@@ -3053,15 +3060,16 @@ export default class AirwallexPaymentService {
         },
       };
       const accessToken = await this.getAirWalletxToken();
+      console.log("requestPayload", requestPayload);
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-       const fundSplitCurlCmd =
+      const fundSplitCurlCmd =
         `curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_splits/create" ` +
         `-H "Authorization: Bearer ${accessToken}" ` +
         `-H "Content-Type: application/json" ` +
-        `-d '${JSON.stringify({...requestPayload,  request_id: uuidv4()})}'`;
+        `-d '${JSON.stringify({ ...requestPayload, request_id: uuidv4() })}'`;
       console.log("Airwallex fund split curl:\n", fundSplitCurlCmd);
 
       const response = await fetch(
@@ -3116,15 +3124,14 @@ export default class AirwallexPaymentService {
         await AirwallexPaymentSplit.create(splitRecordPayload);
       }
       if (responseBody?.status) {
-          NotificationService.sendSplitNotification({
-            userId,
-            status: responseBody?.status,
-            amount: String(responseBody?.amount ?? null),
-            currency: responseBody?.currency || null,
-          });
+        NotificationService.sendSplitNotification({
+          userId,
+          status: responseBody?.status,
+          amount: String(responseBody?.amount ?? null),
+          currency: responseBody?.currency || null,
+        });
       }
       return callback(null, { data: responseBody });
-
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
@@ -3151,7 +3158,10 @@ export default class AirwallexPaymentService {
       }
 
       const paymentIntentId = getPaymentIntent?.airwallexIntentId;
-      console.log("💸 Refunding payment intent with Airwallex ID:", paymentIntentId);
+      console.log(
+        "💸 Refunding payment intent with Airwallex ID:",
+        paymentIntentId,
+      );
 
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
@@ -3169,10 +3179,10 @@ export default class AirwallexPaymentService {
           body: JSON.stringify({
             payment_intent_id: paymentIntentId,
             request_id: uuidv4(),
-            metadata:{
+            metadata: {
               userId,
               paymentId,
-            }
+            },
           }),
         },
       );
@@ -3238,12 +3248,12 @@ export default class AirwallexPaymentService {
       const paymentList = await AirwallexPaymentIntent.findAndCountAll({
         where: { userId },
         order: [["createdAt", "DESC"]],
-        attributes: { exclude: ["rawPayload","metadata","additionalInfo"] },
+        attributes: { exclude: ["rawPayload", "metadata", "additionalInfo"] },
         include: [
           {
             model: AirwallexPaymentSplit,
             as: "split",
-            attributes: { exclude: ["rawPayload","metadata"] },
+            attributes: { exclude: ["rawPayload", "metadata"] },
           },
         ],
         limit,
@@ -3266,13 +3276,15 @@ export default class AirwallexPaymentService {
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
   }
 
   // Handle PaymentIntent webhook from Airwallex
   static async handlePaymentIntentWebhook(payload, headers, callback) {
     try {
-      console.log("📥 Received PaymentIntent webhook payload:", JSON.stringify(payload));
+      // console.log(
+      //   "📥 Received PaymentIntent webhook payload:",
+      //   JSON.stringify(payload),
+      // );
 
       const timestamp = headers["x-timestamp"];
       const signature = headers["x-signature"];
@@ -3290,11 +3302,19 @@ export default class AirwallexPaymentService {
         return callback(null, { data: payload });
       }
 
+      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { airwallexIntentId: dataObject.id },
+      });
+      if(!getPaymentIntent) {
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
+
       // --- Redis idempotency guard: dedupe the raw webhook delivery itself ---
       // Airwallex retries webhooks on non-2xx/timeout, and the same event id
       // can arrive more than once. Use the event id if present, else fall back
       // to intent id + status as a coarse dedupe key.
-      const webhookEventId = payload?.id || `${dataObject.id}:${dataObject.status}`;
+      const webhookEventId =
+        payload?.id || `${dataObject.id}:${dataObject.status}`;
       const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
 
       const isNewDelivery = await redisClient.set(
@@ -3338,7 +3358,8 @@ export default class AirwallexPaymentService {
         walletAccountId: dataObject?.metadata?.wallet_account_id || null,
         topupId: dataObject?.metadata?.topup_id || null,
         transactionType: dataObject?.metadata?.transaction_type || null,
-        fundingType: dataObject?.additional_info?.account_funding_data?.type || null,
+        fundingType:
+          dataObject?.additional_info?.account_funding_data?.type || null,
         transferBetweenOwnAccounts:
           dataObject?.additional_info?.account_funding_data
             ?.transfer_between_own_accounts ?? null,
@@ -3364,18 +3385,12 @@ export default class AirwallexPaymentService {
         airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
       };
 
-      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
-        where: { airwallexIntentId: dataObject.id },
-      });
+     
 
       const previousStatus = getPaymentIntent?.status || null;
 
       //get payment intent record and update it with the new data from the webhook, if it doesn't exist create a new record
-      if (getPaymentIntent) {
-        await getPaymentIntent.update(recordPayload);
-      } else {
-        getPaymentIntent = await AirwallexPaymentIntent.create(recordPayload);
-      }
+       await getPaymentIntent.update(recordPayload);
 
       // --- Redis lock: guard the fund split itself, not just the webhook delivery ---
       // This protects against a duplicate/concurrent SUCCEEDED webhook triggering
@@ -3387,69 +3402,28 @@ export default class AirwallexPaymentService {
         previousStatus !== "SUCCEEDED"
       ) {
         console.log(
-          `✅ PaymentIntent ${recordPayload.airwallexIntentId} succeeded for user ${recordPayload.userId}, initiating fund split with connected account`,
-        );
-        const fundSplitLockKey = `airwallex:fundsplit:lock:${recordPayload.airwallexIntentId}`;
-
-        const lockAcquired = await redisClient.set(
-          fundSplitLockKey,
-          "1",
-          "EX",
-          60 * 60 * 24, // 24h TTL; this intent should never need a second split
-          "NX",
+          `✅ PaymentIntent ${recordPayload.airwallexIntentId} succeeded for user ${recordPayload.userId}, enqueuing fund split`,
         );
 
-       if (lockAcquired) {
-         console.log(
-           `🔒 Acquired lock for fund split of intent ${getPaymentIntent.id}, proceeding`,
-         );
-
-         const attemptFundSplit = (attemptNumber = 1, maxAttempts = 3) => {
-           this.fundSplitWithConnectedAccount(
-             {
-               userId: recordPayload.userId,
-               payload: { paymentId: getPaymentIntent.id },
-             },
-             (err, result) => {
-               if (err) {
-                 console.error(
-                   `❌ Fund split attempt ${attemptNumber}/${maxAttempts} failed for intent ${recordPayload.airwallexIntentId}:`,
-                   err.message,
-                 );
-                 if (attemptNumber < maxAttempts) {
-                   setTimeout(
-                     () => attemptFundSplit(attemptNumber + 1, maxAttempts),
-                     attemptNumber * 5000, // 5s, 10s backoff
-                   );
-                 } else {
-                   console.error(
-                     `❌ Fund split permanently failed for intent ${recordPayload.airwallexIntentId} after ${maxAttempts} attempts — manual review needed`,
-                   );
-                   //Initiate a refund for the payment intent since fund split failed
-                   this.refundPaymentIntent({
-                     userId: recordPayload.userId,
-                     payload: { paymentId: getPaymentIntent.id },
-                   });
-                   process.env.SENTRY_ENABLED === "true" &&
-                     Sentry.captureException(err);
-                   redisClient.del(fundSplitLockKey).catch(() => {});
-                 }
-               } else {
-                 console.log(
-                   "✅ Fund split with connected account initiated successfully:",
-                   result?.data,
-                 );
-               }
-             },
-           );
-         };
-
-         attemptFundSplit();
-       } else {
-         console.log(
-           `⚠️ Fund split already triggered/locked for intent ${recordPayload.airwallexIntentId}, skipping`,
-         );
-       }
+        try {
+          await enqueueFundSplit({
+            intentId: recordPayload.airwallexIntentId,
+            userId: recordPayload.userId,
+            paymentId: getPaymentIntent.id,
+          });
+        } catch (enqueueErr) {
+          // Queue itself is unreachable (e.g. Redis down). Log + Sentry now;
+          // the webhook returns 5xx-equivalent via the catch block below is
+          // NOT what we want here — we already saved the PaymentIntent row,
+          // so surface the error but still ack the webhook to avoid Airwallex
+          // retrying and reprocessing an event we've already recorded.
+          console.error(
+            `❌ Failed to enqueue fund split for intent ${recordPayload.airwallexIntentId}:`,
+            enqueueErr?.message || enqueueErr,
+          );
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(enqueueErr);
+        }
       }
 
       return callback(null, { data: payload });
@@ -3463,9 +3437,12 @@ export default class AirwallexPaymentService {
     }
   }
   //handle fund split webhook from Airwallex
-static async handleFundSplitWebhook(payload, headers, callback) {
+  static async handleFundSplitWebhook(payload, headers, callback) {
     try {
-      console.log("📥 Received FundSplit webhook payload:", JSON.stringify(payload));
+      console.log(
+        "📥 Received FundSplit webhook payload:",
+        JSON.stringify(payload),
+      );
 
       const timestamp = headers["x-timestamp"];
       const signature = headers["x-signature"];
@@ -3485,7 +3462,8 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         return callback(null, { data: payload });
       }
 
-      const webhookEventId = payload?.id || `${dataObject.split_id}:${dataObject.status}`;
+      const webhookEventId =
+        payload?.id || `${dataObject.split_id}:${dataObject.status}`;
       const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
 
       const isNewDelivery = await redisClient.set(
@@ -3497,7 +3475,9 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       );
 
       if (!isNewDelivery) {
-        console.log(`⚠️ Duplicate webhook delivery ignored for event ${webhookEventId}`);
+        console.log(
+          `⚠️ Duplicate webhook delivery ignored for event ${webhookEventId}`,
+        );
         return callback(null, { data: payload });
       }
 
@@ -3509,9 +3489,14 @@ static async handleFundSplitWebhook(payload, headers, callback) {
 
       const userId = Number.parseInt(dataObject?.metadata?.user_id, 10);
 
-      let resolvedPaymentId = Number.parseInt(dataObject?.metadata?.payment_id, 10);
-       if (!resolvedPaymentId) {
-        return callback(new Error("PAYMENT_ID_NOT_FOUND_IN_FUND_SPLIT_WEBHOOK"));
+      let resolvedPaymentId = Number.parseInt(
+        dataObject?.metadata?.payment_id,
+        10,
+      );
+      if (!resolvedPaymentId) {
+        return callback(
+          new Error("PAYMENT_ID_NOT_FOUND_IN_FUND_SPLIT_WEBHOOK"),
+        );
       }
 
       let existingSplit = await AirwallexPaymentSplit.findOne({
@@ -3532,8 +3517,12 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         FAILED: 3,
       };
 
-      const previousRank = previousStatus ? STATUS_RANK[previousStatus] ?? null : null;
-      const incomingRank = incomingStatus ? STATUS_RANK[incomingStatus] ?? null : null;
+      const previousRank = previousStatus
+        ? (STATUS_RANK[previousStatus] ?? null)
+        : null;
+      const incomingRank = incomingStatus
+        ? (STATUS_RANK[incomingStatus] ?? null)
+        : null;
 
       const isBackwardOrStaleTransition =
         existingSplit &&
@@ -3588,12 +3577,15 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       return callback(null, { data: existingSplit });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error("❌ Error handling FundSplit webhook:", error?.message || error);
+      console.error(
+        "❌ Error handling FundSplit webhook:",
+        error?.message || error,
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
 
-  static async handlePaymentIntentReturnWebhook(payload, headers, callback){
+  static async handlePaymentIntentReturnWebhook(payload, headers, callback) {
     try {
       const timestamp = headers["x-timestamp"];
       const signature = headers["x-signature"];
@@ -3618,7 +3610,8 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         `ℹ️ Received PaymentIntent return webhook for paymentId: ${paymentId}, userId: ${userId}, airwallexRefundId: ${airwallexRefundId}`,
       );
 
-       const webhookEventId = payload?.id || `${dataObject.id}:${dataObject.status}`;
+      const webhookEventId =
+        payload?.id || `${dataObject.id}:${dataObject.status}`;
       const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
       const isNewDelivery = await redisClient.set(
         webhookDedupeKey,
@@ -3628,10 +3621,12 @@ static async handleFundSplitWebhook(payload, headers, callback) {
         "NX",
       );
       if (!isNewDelivery) {
-        console.log(`ℹ️ Duplicate webhook received for eventId: ${webhookEventId}, skipping processing`);
+        console.log(
+          `ℹ️ Duplicate webhook received for eventId: ${webhookEventId}, skipping processing`,
+        );
         return callback(null, { data: payload });
       }
-       const getRefundData = await AirwallexPaymentIntentRefund.findOne({
+      const getRefundData = await AirwallexPaymentIntentRefund.findOne({
         where: {
           paymentId,
           airwallexRefundId,
@@ -3701,7 +3696,6 @@ static async handleFundSplitWebhook(payload, headers, callback) {
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
   }
 
   // Retrieve PaymentIntent details from Airwallex
