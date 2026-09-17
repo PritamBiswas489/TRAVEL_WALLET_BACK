@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import chalk from 'chalk';
 const { PORT } = process.env;
 import app from '../src/app.js';
+ 
 /**
  * Normalize a port into a number, string, or false.
  */
@@ -77,6 +78,16 @@ const onListening = () => {
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+server.listen(port, async() => {
+	if (process.env.NODE_ENV === "development") {
+	console.log("Starting Airwallex Payment Intent Worker...");
+    const { startAirwallexPaymentIntentWorker } =
+      await import(
+        "../src/workers/airwallexPaymentIntent.worker.js"
+      );
+
+    startAirwallexPaymentIntentWorker();
+  }
+});
 server.on('error', onError);
 server.on('listening', onListening);

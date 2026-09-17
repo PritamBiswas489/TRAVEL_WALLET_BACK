@@ -3286,15 +3286,17 @@ export default class AirwallexPaymentService {
   }
 
   // Handle PaymentIntent webhook from Airwallex
-  static async handlePaymentIntentWebhook(payload, headers, callback) {
-    try {
-      // console.log(
-      //   "📥 Received PaymentIntent webhook payload:",
-      //   JSON.stringify(payload),
-      // );
+ // In your Express/Koa route, capture raw body BEFORE parsing:
+// e.g. app.use(express.raw({ type: 'application/json' }))
+// then pass req.body (Buffer/string) as rawBody separately.
 
+static async handlePaymentIntentWebhook(payload, headers, callback) {
+    try {
+      console.log("Event received:", payload.id);
       const timestamp = headers["x-timestamp"];
       const signature = headers["x-signature"];
+
+      console.log("Received headers:", { timestamp, signature });
 
       const rawBody = JSON.stringify(payload).toString("utf8");
       const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
@@ -3304,151 +3306,167 @@ export default class AirwallexPaymentService {
         return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
 
-      const dataObject = payload?.data?.object;
-      if (!dataObject?.id) {
-        return callback(null, { data: payload });
-      }
+    const dataObject = payload?.data?.object;
+    if (!dataObject?.id) {
+      return callback(null, { data: payload });
+    }
 
-      // --- Redis idempotency guard: dedupe the raw webhook delivery itself ---
-      // Airwallex retries webhooks on non-2xx/timeout, and the same event id
-      // can arrive more than once. Use the event id if present, else fall back
-      // to intent id + status as a coarse dedupe key.
-      const webhookEventId =
-        payload?.id || `${dataObject.id}:${dataObject.status}`;
-      const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
+    // --- Redis idempotency guard ---
+    // Use payload.id (event id) as the dedupe key — it is stable across retries
+    const webhookEventId =
+      payload?.id || `${dataObject.id}:${dataObject.status}`;
+    const webhookDedupeKey = `airwallex:webhook:seen:${webhookEventId}`;
 
-      const isNewDelivery = await redisClient.set(
-        webhookDedupeKey,
+    const isNewDelivery = await redisClient.set(
+      webhookDedupeKey,
+      "1",
+      "EX",
+      60 * 60 * 24, // 24h TTL
+      "NX",
+    );
+
+    if (!isNewDelivery) {
+      console.log(
+        `⚠️ Duplicate webhook delivery ignored for event ${webhookEventId}`,
+      );
+      // ✅ Always return 200 for duplicates to prevent further retries
+      return callback(null, { data: payload });
+    }
+
+    const parseAirwallexDate = (value) => {
+      if (!value) return null;
+      const parsedDate = new Date(value);
+      return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+    };
+
+    const parsedUserId = Number.parseInt(dataObject?.metadata?.user_id, 10);
+
+    const recordPayload = {
+      airwallexIntentId: dataObject?.id,
+      merchantOrderId: dataObject?.merchant_order_id || null,
+      customerId: dataObject?.customer_id || null,
+      requestId: dataObject?.request_id || null,
+      status: dataObject?.status || null,
+      amount: dataObject?.amount ?? null,
+      capturedAmount: dataObject?.captured_amount ?? null,
+      currency: dataObject?.currency || null,
+      baseAmount: dataObject?.base_amount ?? null,
+      baseCurrency: dataObject?.base_currency || null,
+      descriptor: dataObject?.descriptor || null,
+      returnUrl: dataObject?.return_url || null,
+      morEnabled: dataObject?.mor_enabled ?? false,
+      userId: Number.isNaN(parsedUserId) ? null : parsedUserId,
+      walletAccountId: dataObject?.metadata?.wallet_account_id || null,
+      topupId: dataObject?.metadata?.topup_id || null,
+      transactionType: dataObject?.metadata?.transaction_type || null,
+      fundingType:
+        dataObject?.additional_info?.account_funding_data?.type || null,
+      transferBetweenOwnAccounts:
+        dataObject?.additional_info?.account_funding_data
+          ?.transfer_between_own_accounts ?? null,
+      recipientAccountNumber:
+        dataObject?.additional_info?.account_funding_data?.recipient
+          ?.account_number || null,
+      recipientFirstName:
+        dataObject?.additional_info?.account_funding_data?.recipient
+          ?.first_name || null,
+      recipientLastName:
+        dataObject?.additional_info?.account_funding_data?.recipient
+          ?.last_name || null,
+      senderFirstName:
+        dataObject?.additional_info?.account_funding_data?.sender
+          ?.first_name || null,
+      senderLastName:
+        dataObject?.additional_info?.account_funding_data?.sender
+          ?.last_name || null,
+      metadata: dataObject?.metadata || null,
+      additionalInfo: dataObject?.additional_info || null,
+      rawPayload: dataObject || null,
+      airwallexCreatedAt: parseAirwallexDate(dataObject?.created_at),
+      airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
+    };
+
+    const getPaymentIntent = await AirwallexPaymentIntent.findOne({
+      where: { airwallexIntentId: dataObject.id },
+    });
+
+    if (!getPaymentIntent) {
+      return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+    }
+
+    const previousStatus = getPaymentIntent?.status || null;
+
+    await getPaymentIntent.update(recordPayload);
+
+    if(previousStatus === 'SUCCEEDED') {
+      console.log(
+        `ℹ️ PaymentIntent ${recordPayload.airwallexIntentId} was already succeeded, skipping fund split`
+      );
+      return callback(null, { data: payload });
+    }
+
+     
+
+    // --- Redis lock: guard fund split against concurrent SUCCEEDED events ---
+    if (
+      recordPayload?.status === "SUCCEEDED" &&
+      recordPayload?.userId &&
+      previousStatus !== "SUCCEEDED"
+    ) {
+      const fundSplitLockKey = `airwallex:fundsplit:lock:${recordPayload.airwallexIntentId}`;
+      const lockAcquired = await redisClient.set(
+        fundSplitLockKey,
         "1",
         "EX",
-        60 * 60 * 24, // 24h TTL, well beyond any realistic retry window
+        60 * 60, // 1h lock
         "NX",
       );
 
-      if (!isNewDelivery) {
+      if (!lockAcquired) {
         console.log(
-          `⚠️ Duplicate webhook delivery ignored for event ${webhookEventId}`,
+          `⚠️ Fund split already enqueued for intent ${recordPayload.airwallexIntentId}, skipping`,
         );
         return callback(null, { data: payload });
       }
 
-      const parseAirwallexDate = (value) => {
-        if (!value) return null;
-        const parsedDate = new Date(value);
-        return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
-      };
-
-      const parsedUserId = Number.parseInt(dataObject?.metadata?.user_id, 10);
-
-      const recordPayload = {
-        airwallexIntentId: dataObject?.id,
-        merchantOrderId: dataObject?.merchant_order_id || null,
-        customerId: dataObject?.customer_id || null,
-        requestId: dataObject?.request_id || null,
-        status: dataObject?.status || null,
-        amount: dataObject?.amount ?? null,
-        capturedAmount: dataObject?.captured_amount ?? null,
-        currency: dataObject?.currency || null,
-        baseAmount: dataObject?.base_amount ?? null,
-        baseCurrency: dataObject?.base_currency || null,
-        descriptor: dataObject?.descriptor || null,
-        returnUrl: dataObject?.return_url || null,
-        morEnabled: dataObject?.mor_enabled ?? false,
-        userId: Number.isNaN(parsedUserId) ? null : parsedUserId,
-        walletAccountId: dataObject?.metadata?.wallet_account_id || null,
-        topupId: dataObject?.metadata?.topup_id || null,
-        transactionType: dataObject?.metadata?.transaction_type || null,
-        fundingType:
-          dataObject?.additional_info?.account_funding_data?.type || null,
-        transferBetweenOwnAccounts:
-          dataObject?.additional_info?.account_funding_data
-            ?.transfer_between_own_accounts ?? null,
-        recipientAccountNumber:
-          dataObject?.additional_info?.account_funding_data?.recipient
-            ?.account_number || null,
-        recipientFirstName:
-          dataObject?.additional_info?.account_funding_data?.recipient
-            ?.first_name || null,
-        recipientLastName:
-          dataObject?.additional_info?.account_funding_data?.recipient
-            ?.last_name || null,
-        senderFirstName:
-          dataObject?.additional_info?.account_funding_data?.sender
-            ?.first_name || null,
-        senderLastName:
-          dataObject?.additional_info?.account_funding_data?.sender
-            ?.last_name || null,
-        metadata: dataObject?.metadata || null,
-        additionalInfo: dataObject?.additional_info || null,
-        rawPayload: dataObject || null,
-        airwallexCreatedAt: parseAirwallexDate(dataObject?.created_at),
-        airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
-      };
-
-      let getPaymentIntent = await AirwallexPaymentIntent.findOne({
-        where: { airwallexIntentId: dataObject.id },
-      });
-      if(!getPaymentIntent) {
-        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
-      }
-
-      const previousStatus = getPaymentIntent?.status || null;
-
-      //get payment intent record and update it with the new data from the webhook, if it doesn't exist create a new record
-      await getPaymentIntent.update(recordPayload);
-
-      // --- Redis lock: guard the fund split itself, not just the webhook delivery ---
-      // This protects against a duplicate/concurrent SUCCEEDED webhook triggering
-      // a second fund split even if the dedupe key above ever gets a different
-      // event id for what is effectively the same successful intent.
-      if (
-        recordPayload?.status === "SUCCEEDED" &&
-        recordPayload?.userId &&
-        previousStatus !== "SUCCEEDED"
-      ) {
-        console.log(
-          `✅ PaymentIntent ${recordPayload.airwallexIntentId} succeeded for user ${recordPayload.userId}, enqueuing fund split`,
-        );
-
-        try {
-          await enqueueFundSplit({
-            intentId: recordPayload.airwallexIntentId,
-            userId: recordPayload.userId,
-            paymentId: getPaymentIntent.id,
-          
-          });
-        } catch (enqueueErr) {
-          // Queue itself is unreachable (e.g. Redis down). Log + Sentry now;
-          // the webhook returns 5xx-equivalent via the catch block below is
-          // NOT what we want here — we already saved the PaymentIntent row,
-          // so surface the error but still ack the webhook to avoid Airwallex
-          // retrying and reprocessing an event we've already recorded.
-          console.error(
-            `❌ Failed to enqueue fund split for intent ${recordPayload.airwallexIntentId}:`,
-            enqueueErr?.message || enqueueErr,
-          );
-          process.env.SENTRY_ENABLED === "true" &&
-            Sentry.captureException(enqueueErr);
-        }
-      }
-
-      return callback(null, { data: payload });
-    } catch (error) {
-      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      console.error(
-        "❌ Error handling PaymentIntent webhook:",
-        error?.message || error,
+      console.log(
+        `✅ PaymentIntent ${recordPayload.airwallexIntentId} succeeded for user ${recordPayload.userId}, enqueuing fund split`,
       );
-      return callback(new Error("INTERNAL_SERVER_ERROR"));
+
+      try {
+        await enqueueFundSplit({
+          intentId: recordPayload.airwallexIntentId,
+          userId: recordPayload.userId,
+          paymentId: getPaymentIntent.id,
+        });
+      } catch (enqueueErr) {
+        console.error(
+          `❌ Failed to enqueue fund split for intent ${recordPayload.airwallexIntentId}:`,
+          enqueueErr?.message || enqueueErr,
+        );
+        process.env.SENTRY_ENABLED === "true" &&
+          Sentry.captureException(enqueueErr);
+      }
     }
+
+    return callback(null, { data: payload });
+  } catch (error) {
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+    console.error(
+      "❌ Error handling PaymentIntent webhook:",
+      error?.message || error,
+    );
+    return callback(new Error("INTERNAL_SERVER_ERROR"));
   }
+}
+
   //handle fund split webhook from Airwallex
   static async handleFundSplitWebhook(payload, headers, callback) {
     try {
-      console.log(
-        "📥 Received FundSplit webhook payload:",
-        JSON.stringify(payload),
-      );
+      // console.log(
+      //   "📥 Received FundSplit webhook payload:",
+      //   JSON.stringify(payload),
+      // );
 
       const timestamp = headers["x-timestamp"];
       const signature = headers["x-signature"];

@@ -487,7 +487,7 @@ router.post('/airwallex-payment-webhook', async (req, res, next) => {
 router.post('/airwallex-main-global-webhook', async (req, res, next) => {
    try{
    const payload = { ...req.params, ...req.query, ...req.body };
-   console.log('Received Airwallex main global webhook:', payload);
+   console.log('Received Airwallex main global webhook:', payload?.name);
    const kycEventNames = ['account.connected', 'account.submitted', 'account.action_required', 'account.active', 'account.suspended'];
    const depositEventNames = ['deposit.rejected', 'deposit.settled', 'deposit.reversed', 'deposit.pending'];
    const transferEventNames = ['transfer.new', 'transfer.settled', 'transfer.pending', 'transfer.suspended', 'transfer.failed'];
@@ -575,7 +575,7 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       return res.return(response);
    }
 
-   console.log('XXXXXX Received Airwallex main global webhook but event not matched:', payload);
+   console.log('XXXXXX Received Airwallex main global webhook but event not matched Event name:', payload?.name);
    return res.status(200).json({ message: 'Webhook received successfully but event not matched' });
   }catch(error) {
    console.error('Error handling Airwallex main global webhook:', error);
