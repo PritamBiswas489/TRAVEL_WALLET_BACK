@@ -29,6 +29,21 @@ export default function AirwallexPaymentIntent(sequelize, DataTypes) {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
+			rechargeStatus: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: 'recharge_status',
+			},
+			refundRechargeStatus: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: 'refund_recharge_status',
+			},
+			paymentRefundStatus: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: 'payment_refund_status',
+			},
 			amount: {
 				type: DataTypes.DECIMAL(20, 2),
 				allowNull: true,

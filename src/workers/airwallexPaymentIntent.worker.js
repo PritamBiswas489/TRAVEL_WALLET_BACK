@@ -11,6 +11,9 @@ import {
   enqueueRefund,
 } from "../queues/airwallexPaymentIntent.queue.js";
 
+import db from "../databases/models/index.js";
+const { AirwallexPaymentIntent } = db;
+
 const connection = new IORedis({
   ...redisConfig,
   maxRetriesPerRequest: null,
@@ -86,12 +89,27 @@ export function startAirwallexPaymentIntentWorker() {
         `❌ Fund split permanently failed for intent ${job.data.intentId} after ${attemptsAllowed} attempts — enqueueing refund`,
       );
       try {
+
         await enqueueRefund({
           intentId: job.data.intentId,
           userId: job.data.userId,
           paymentId: job.data.paymentId,
           reason: "FUND_SPLIT_EXHAUSTED_RETRIES",
         });
+
+        const [updatedRows] = await AirwallexPaymentIntent.update(
+          {
+            rechargeStatus: "FAILED",
+            paymentRefundStatus: "INITIATED",
+          },
+          { where: { id: job.data.paymentId } },
+        );
+
+        if (!updatedRows) {
+            console.warn(
+              `⚠️ Refund enqueued for intent ${job.data.intentId}, but payment row ${job.data.paymentId} was not updated`,
+            );
+        }
       } catch (enqueueErr) {
         // If even enqueueing the refund fails, this needs a human — it's no
         // longer something the queue can retry its way out of.

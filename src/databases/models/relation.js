@@ -159,7 +159,7 @@ const relation = (db) => {
   AirwallexPaymentIntent.hasOne(AirwallexPaymentSplit, { foreignKey: "paymentId", as: "split" });
   AirwallexPaymentSplit.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 
-  AirwallexPaymentIntent.hasMany(AirwallexPaymentIntentRefund, { foreignKey: "paymentId", as: "refunds" });
+  AirwallexPaymentIntent.hasOne(AirwallexPaymentIntentRefund, { foreignKey: "paymentId", as: "refund" });
   AirwallexPaymentIntentRefund.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 
 };
