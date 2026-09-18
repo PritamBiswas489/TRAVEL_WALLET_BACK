@@ -20,7 +20,10 @@ import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 
 import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
-import { enqueueFundSplit, enqueueRefund  } from "../queues/airwallexPaymentIntent.queue.js";
+import {
+  enqueueFundSplit,
+  enqueueRefund,
+} from "../queues/airwallexPaymentIntent.queue.js";
 
 const {
   sequelize,
@@ -3267,7 +3270,7 @@ export default class AirwallexPaymentService {
             model: AirwallexPaymentIntentRefund,
             as: "refund",
             attributes: { exclude: ["rawPayload", "metadata"] },
-          }
+          },
         ],
         limit,
         offset,
