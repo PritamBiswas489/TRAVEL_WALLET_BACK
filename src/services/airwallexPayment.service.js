@@ -46,9 +46,17 @@ const {
   AirwallexPaymentSplit,
   AirwallexPaymentIntentRefund,
 } = db;
+
 const REFRESH_TIMEOUT = 5000; // 5 seconds
+const TOKEN_CACHE_KEY = 'airwallex_access_token';
+const TOKEN_TTL_SECONDS = 20 * 60; // 20 minutes (token valid for 30 min, refresh before expiry)
 export default class AirwallexPaymentService {
   static async getAirWalletxToken() {
+    const cachedToken = await redisClient.get(TOKEN_CACHE_KEY);
+    if (cachedToken) {
+      console.log(new Date(), "Using cached Airwallex token:");
+      return cachedToken;
+    }
     const apiKey = process.env.AIRWALLEX_API_KEY;
     const clientId = process.env.AIRWALLEX_CLIENT_ID;
     const apiUrl = process.env.AIRWALLEX_API_URL;
@@ -66,6 +74,8 @@ export default class AirwallexPaymentService {
       },
     );
 
+    console.log(new Date(), "Airwallex token generated:");
+    await redisClient.set(TOKEN_CACHE_KEY, res?.data?.token, "EX", TOKEN_TTL_SECONDS);
     return res?.data?.token || null;
   }
   //create airwallex customer account
