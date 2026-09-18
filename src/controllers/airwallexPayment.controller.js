@@ -1073,6 +1073,33 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async handleBalanceUpdateWebhook(request) {
+    const { payload, headers } = request;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handleBalanceUpdateWebhook(
+        payload,
+        headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_HANDLE_BALANCE_UPDATE_WEBHOOK",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Balance update webhook handled successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
 
   static async livenessProactiveStart(request) {
     const {

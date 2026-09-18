@@ -15,7 +15,7 @@ export const AIRWALLEX_QUEUE_NAME = "airwallex-payment-intent";
 
 export const JOB_NAMES = {
   FUND_SPLIT: "fund-split",
-  REFUND_PAYMENT_INTENT: "refund-payment-intent",
+  REFUND_PAYMENT_INTENT: "refund-payment-intent"
 };
 
 export const airwallexQueue = new Queue(AIRWALLEX_QUEUE_NAME, { connection });
@@ -57,5 +57,6 @@ export async function enqueueRefund({ intentId, userId, paymentId, reason }) {
     },
   );
 }
+
 
 export default airwallexQueue;

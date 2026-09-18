@@ -87,6 +87,13 @@ server.listen(port, async() => {
       );
 
     startAirwallexPaymentIntentWorker();
+    const { walletTransactionsUpdateWorker } =
+      await import(
+        "../src/workers/airWallexWalletUpdateWorker.js"
+      );
+
+    walletTransactionsUpdateWorker();
+
   }
 });
 server.on('error', onError);

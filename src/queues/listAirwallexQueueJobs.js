@@ -1,14 +1,21 @@
 import { airwallexQueue } from "../queues/airwallexPaymentIntent.queue.js";
+import { airwallexUpdateTransactionQueue } from "../queues/airwallexTransactionUpdate.queue.js";
 
 const STATES = ["waiting", "active", "delayed", "completed", "failed", "paused"];
 
-async function listAllJobs() {
-  const counts = await airwallexQueue.getJobCounts(...STATES);
+const QUEUES = [
+  { label: "airwallex-payment-intent", queue: airwallexQueue },
+  { label: "airwallex-transaction-update", queue: airwallexUpdateTransactionQueue },
+];
+
+async function listQueueJobs(label, queue) {
+  const counts = await queue.getJobCounts(...STATES);
+  console.log(`\n📦 Queue: ${label}`);
   console.log("📊 Job counts by state:", counts);
   console.log("─".repeat(60));
 
   for (const state of STATES) {
-    const jobs = await airwallexQueue.getJobs([state], 0, 100); // first 100 per state
+    const jobs = await queue.getJobs([state], 0, 100); // first 100 per state
     if (jobs.length === 0) continue;
 
     console.log(`\n🔹 ${state.toUpperCase()} (${jobs.length})`);
@@ -24,6 +31,12 @@ async function listAllJobs() {
         finishedOn: job.finishedOn ? new Date(job.finishedOn).toISOString() : null,
       });
     }
+  }
+}
+
+async function listAllJobs() {
+  for (const { label, queue } of QUEUES) {
+    await listQueueJobs(label, queue);
   }
 
   process.exit(0);

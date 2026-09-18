@@ -38,6 +38,7 @@ function refund({ userId, paymentId }) {
     );
   });
 }
+
 export function startAirwallexPaymentIntentWorker() {
   const worker = new Worker(
     AIRWALLEX_QUEUE_NAME,

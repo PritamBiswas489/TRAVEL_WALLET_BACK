@@ -533,6 +533,12 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       'refund.failed'
    ];
 
+   const balanceUpdateWebhookEventNames = [
+      'balance.va.top_up',
+      'balance.ga.top_up',
+      'balance.adjustment',
+   ];
+
 
    if(kycEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.airwallexKycWebhook({ payload, headers: req.headers });
@@ -572,6 +578,9 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
       return res.return(response);
    }else if(paymentIntentReturnWebhookEventNames.includes(payload?.name)) { //payment intent return events
       const response = await AirwallexPaymentController.handlePaymentIntentReturnWebhook({ payload, headers: req.headers });
+      return res.return(response);
+   }else if(balanceUpdateWebhookEventNames.includes(payload?.name)) { //balance update events
+      const response = await AirwallexPaymentController.handleBalanceUpdateWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
 
