@@ -3268,7 +3268,7 @@ export default class AirwallexPaymentService {
           },
           {
             model: AirwallexPaymentIntentRefund,
-            as: "refund",
+            as: "refunds",
             attributes: { exclude: ["rawPayload", "metadata"] },
           },
         ],
