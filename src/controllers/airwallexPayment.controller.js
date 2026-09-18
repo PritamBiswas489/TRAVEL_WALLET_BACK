@@ -1332,6 +1332,69 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async reverseSplitAmountBySplitId(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.reverseSplitAmountBySplitId(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_REVERSE_SPLIT_AMOUNT_BY_SPLIT_ID",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Split amount reversed by split ID successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async getReverseSplitAmountBySplitId(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getReverseSplitAmountBySplitId(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: err.message || "FAILED_TO_GET_REVERSE_SPLIT_AMOUNT_BY_SPLIT_ID",
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Reversal of split amount retrieved by split ID successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
   static async getAftPaymentList(request) {
     const {
       payload,

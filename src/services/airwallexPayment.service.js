@@ -3250,6 +3250,92 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
+  static async reverseSplitAmountBySplitId({ userId, payload }, callback) {
+    try {
+      const accessToken = await this.getAirWalletxToken();  
+      //for testing purpose 
+      const { splitId } = payload || {};
+
+      const requestPayload = {
+        request_id: uuidv4(),
+        amount: 200,
+        funds_split_id: splitId,
+        metadata: {
+          reason:
+            "reimburse from seller B as the item has been refunded",
+          user_id: userId,
+        },
+      };
+
+      // const reverseSplitCurlCmd =
+      //   `curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/create" ` +
+      //   `-H "Authorization: Bearer ${accessToken}" ` +
+      //   `-H "Content-Type: application/json" ` +
+      //   `-d '${JSON.stringify({ ...requestPayload, request_id: uuidv4() })}'`;
+      // console.log("Airwallex fund split reversal curl:\n", reverseSplitCurlCmd);
+
+      const response = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(requestPayload),
+        },
+      );
+
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          `Airwallex fund split reversal failed: ${JSON.stringify(responseBody)}`,
+        );
+      }
+
+      return callback(null, { data: responseBody });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error in reverseSplitAmountBySplitId:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  static async getReverseSplitAmountBySplitId({ userId, payload }, callback) {
+    try {
+      const accessToken = await this.getAirWalletxToken();
+      const { splitId } = payload || {};
+
+      const response = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals?funds_split_id=${splitId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          `Airwallex get reverse split amount failed: ${JSON.stringify(responseBody)}`,
+        );
+      }
+
+      return callback(null, { data: responseBody });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error in getReverseSplitAmountBySplitId:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
 
   static async getAftPaymentList({ userId, payload }, callback) {
     try {
@@ -3640,6 +3726,9 @@ export default class AirwallexPaymentService {
         { rechargeStatus: incomingStatus },
         { where: { id: resolvedPaymentId } },
       );
+      if(incomingRank === 'SETTLED') {
+           this.updateUserTransactionHistoryTable({ userId: userId }, () => {});
+      }
 
       if (incomingStatus === "FAILED") {
         try {

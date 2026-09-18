@@ -1027,6 +1027,64 @@ router.post("/refund-payment-intent", async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/reverse-split-amount-by-split-id:
+ *   post:
+ *     summary: Reverse a split amount by split ID
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - splitId
+ *             properties:
+ *               splitId:
+ *                 type: string
+ *                 description: Airwallex split ID to reverse the split amount for
+ *                 example: "spt_1234567890"
+ *     responses:
+ *       200:
+ *         description: Success - Split amount reversed by split ID
+*/
+router.post("/reverse-split-amount-by-split-id", async (req, res) => {
+  const response = await AirwallexPaymentController.reverseSplitAmountBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+/**
+ * @swagger
+ * /api/auth/deposit/get-reverse-split-amount-by-split-id:
+ *   get:
+ *     summary: Get the reversal of a split amount by split ID
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: splitId
+ *         schema:
+ *           type: string
+ *           example: "spt_1234567890"
+ *         description: Airwallex split ID to get the reversal of the split amount for
+ *     responses:
+ *       200:
+ *         description: Success - Reversal of split amount retrieved by split ID
+*/
+router.get("/get-reverse-split-amount-by-split-id", async (req, res) => {
+  const response = await AirwallexPaymentController.getReverseSplitAmountBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
 
 /**
  * @swagger
