@@ -20,7 +20,7 @@ import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 
 import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
-import { enqueueFundSplit } from "../queues/airwallexPaymentIntent.queue.js";
+import { enqueueFundSplit, enqueueRefund  } from "../queues/airwallexPaymentIntent.queue.js";
 
 const {
   sequelize,
@@ -3637,6 +3637,24 @@ export default class AirwallexPaymentService {
         { rechargeStatus: incomingStatus },
         { where: { id: resolvedPaymentId } },
       );
+
+      if (incomingStatus === "FAILED") {
+        try {
+          enqueueRefund({
+            intentId: existingSplit?.sourceId,
+            userId: userId,
+            paymentId: resolvedPaymentId,
+            reason: "Refund initiate due to failed split",
+          });
+        } catch (error) {
+          console.error(
+            "❌ Failed to enqueue refund for failed split:",
+            error?.message || error,
+          );
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(error);
+        }
+      }
 
       if (existingSplit?.status !== previousStatus) {
         NotificationService.sendSplitNotification({
