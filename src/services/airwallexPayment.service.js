@@ -22,7 +22,7 @@ import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
 import {
   enqueueFundSplit,
-  enqueueRefund
+  enqueueRefund,
 } from "../queues/airwallexPaymentIntent.queue.js";
 
 import { enqueueUpdateTransactions } from "../queues/airwallexTransactionUpdate.queue.js";
@@ -48,7 +48,7 @@ const {
 } = db;
 
 const REFRESH_TIMEOUT = 5000; // 5 seconds
-const TOKEN_CACHE_KEY = 'airwallex_access_token';
+const TOKEN_CACHE_KEY = "airwallex_access_token";
 const TOKEN_TTL_SECONDS = 20 * 60; // 20 minutes (token valid for 30 min, refresh before expiry)
 export default class AirwallexPaymentService {
   static async getAirWalletxToken() {
@@ -75,7 +75,12 @@ export default class AirwallexPaymentService {
     );
 
     console.log(new Date(), "Airwallex token generated:");
-    await redisClient.set(TOKEN_CACHE_KEY, res?.data?.token, "EX", TOKEN_TTL_SECONDS);
+    await redisClient.set(
+      TOKEN_CACHE_KEY,
+      res?.data?.token,
+      "EX",
+      TOKEN_TTL_SECONDS,
+    );
     return res?.data?.token || null;
   }
   //create airwallex customer account
@@ -1276,8 +1281,11 @@ export default class AirwallexPaymentService {
         },
       );
       setTimeout(() => {
-         try{
-          enqueueUpdateTransactions({ userId: userId, updateFunction: "sandboxAddDeposit" });
+        try {
+          enqueueUpdateTransactions({
+            userId: userId,
+            updateFunction: "sandboxAddDeposit",
+          });
         } catch (error) {
           console.error(
             "❌ Failed to enqueue update transactions for settled split:",
@@ -1586,29 +1594,34 @@ export default class AirwallexPaymentService {
         return callback(new Error(errMsg));
       }
       setTimeout(() => {
-         try {
-           enqueueUpdateTransactions({ userId: fromWalletId, updateFunction: "transferAirwallexConnectedAccount" });
-         } catch (error) {
-           console.error(
-             "❌ Failed to enqueue update transactions for settled split:",
-             error?.message || error,
-           );
-           process.env.SENTRY_ENABLED === "true" &&
-             Sentry.captureException(error);
-         }
+        try {
+          enqueueUpdateTransactions({
+            userId: fromWalletId,
+            updateFunction: "transferAirwallexConnectedAccount",
+          });
+        } catch (error) {
+          console.error(
+            "❌ Failed to enqueue update transactions for settled split:",
+            error?.message || error,
+          );
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(error);
+        }
       }, REFRESH_TIMEOUT);
       setTimeout(() => {
-         try {
-           enqueueUpdateTransactions({ userId: toWalletId, updateFunction: "transferAirwallexConnectedAccount" });
-         } catch (error) {
-           console.error(
-             "❌ Failed to enqueue update transactions for settled split:",
-             error?.message || error,
-           );
-           process.env.SENTRY_ENABLED === "true" &&
-             Sentry.captureException(error);
-         }
-
+        try {
+          enqueueUpdateTransactions({
+            userId: toWalletId,
+            updateFunction: "transferAirwallexConnectedAccount",
+          });
+        } catch (error) {
+          console.error(
+            "❌ Failed to enqueue update transactions for settled split:",
+            error?.message || error,
+          );
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(error);
+        }
       }, REFRESH_TIMEOUT);
 
       const senderUserDetails = await UserService.getUserDetails(fromWalletId);
@@ -2133,8 +2146,15 @@ export default class AirwallexPaymentService {
         return callback(null, { data: { updated: 0 } });
       }
 
-      let upsertCount = 0;
+      const uniqueTransactions = new Map();
       for (const item of transactions) {
+        if (!item?.id) continue;
+        uniqueTransactions.set(item.id, item);
+      }
+
+      let upsertCount = 0;
+      let skippedCount = 0;
+      for (const item of uniqueTransactions.values()) {
         const recordData = {
           userId,
           airwallexAccountId: kycAccount.airwallexAccountId,
@@ -2155,27 +2175,44 @@ export default class AirwallexPaymentService {
             item.transaction_global_type_description || null,
         };
 
-        await sequelize.transaction(async (t) => {
-          const existing = await AirwallexUserTransactionHistory.findOne({
-            where: { apiId: item.id },
-            lock: t.LOCK.UPDATE,
-            transaction: t,
-          });
-          if (existing) {
-            await existing.update(recordData, { transaction: t });
-          } else {
-            await AirwallexUserTransactionHistory.create(recordData, {
-              transaction: t,
-            });
+        let itemProcessed = false;
+        try {
+          await AirwallexUserTransactionHistory.create(recordData);
+
+          itemProcessed = true;
+        } catch (error) {
+          if (error?.name !== "SequelizeUniqueConstraintError") {
+            console.error(error);
+            return;
           }
-        });
-        upsertCount++;
+
+          await AirwallexUserTransactionHistory.update(recordData, {
+            where: {
+              userId,
+              airwallexAccountId: kycAccount.airwallexAccountId,
+              apiId: item.id,
+            },
+          });
+
+          itemProcessed = true;
+        }
+        if (itemProcessed) {
+          upsertCount++;
+        } else {
+          skippedCount++;
+        }
       }
 
       console.log(
         `Updated ${upsertCount} transaction records for userId:`,
         userId,
       );
+      if (skippedCount > 0) {
+        console.log(
+          `Skipped ${skippedCount} transaction records due to non-unique DB errors for userId:`,
+          userId,
+        );
+      }
       return callback(null, { data: { updated: upsertCount } });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
@@ -3213,7 +3250,7 @@ export default class AirwallexPaymentService {
       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
         where: { id: paymentId },
       });
-      if(getPaymentIntent.userId !== userId) {
+      if (getPaymentIntent.userId !== userId) {
         return callback(new Error("PAYMENT_INTENT_USER_MISMATCH"));
       }
 
@@ -3309,8 +3346,8 @@ export default class AirwallexPaymentService {
   }
   static async reverseSplitAmountBySplitId({ userId, payload }, callback) {
     try {
-      const accessToken = await this.getAirWalletxToken();  
-      //for testing purpose 
+      const accessToken = await this.getAirWalletxToken();
+      //for testing purpose
       const { splitId } = payload || {};
 
       const requestPayload = {
@@ -3318,8 +3355,7 @@ export default class AirwallexPaymentService {
         amount: 200,
         funds_split_id: splitId,
         metadata: {
-          reason:
-            "reimburse from seller B as the item has been refunded",
+          reason: "reimburse from seller B as the item has been refunded",
           user_id: userId,
         },
       };
@@ -4002,8 +4038,8 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  static async handleBalanceUpdateWebhook( payload, headers, callback) {
-    try{
+  static async handleBalanceUpdateWebhook(payload, headers, callback) {
+    try {
       if (payload?.account_id) {
         const kycAccount = await AirwallexKycAccount.findOne({
           where: { airwallexAccountId: payload.account_id },
@@ -4011,9 +4047,11 @@ export default class AirwallexPaymentService {
         const userId = kycAccount?.userId || null;
         if (userId) {
           try {
-            
-            enqueueUpdateTransactions({ userId: userId , updateFunction: "handleBalanceUpdateWebhook" });
-           
+            enqueueUpdateTransactions({
+              userId: userId,
+              updateFunction: "handleBalanceUpdateWebhook",
+            });
+
             return callback(null, { data: { userId } });
           } catch (error) {
             console.error(
@@ -4023,14 +4061,12 @@ export default class AirwallexPaymentService {
             process.env.SENTRY_ENABLED === "true" &&
               Sentry.captureException(error);
 
-              return callback(new Error("FAILED_TO_ENQUEUE_UPDATE_TRANSACTIONS"));
+            return callback(new Error("FAILED_TO_ENQUEUE_UPDATE_TRANSACTIONS"));
           }
-           
         }
         return callback(null, { data: { userId: null } });
-
       }
-    }catch (error) {
+    } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
         "❌ Error handling Balance Update webhook:",
@@ -4038,8 +4074,6 @@ export default class AirwallexPaymentService {
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
-
   }
   // Retrieve PaymentIntent details from Airwallex
   static async retrievePaymentIntent({ payload }, callback) {
