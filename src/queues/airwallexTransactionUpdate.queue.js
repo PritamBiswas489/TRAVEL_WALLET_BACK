@@ -28,7 +28,7 @@ export const enqueueUpdateTransactions = async ({   userId, updateFunction  }) =
         JOB_NAMES.UPDATE_WALLET_TRANSACTIONS,
         { userId, updateFunction },
         {
-        jobId: `update-wallet-transactions-${userId}`,
+        jobId: `update-wallet-transactions-${userId}-${Date.now()}`,
         attempts: 3,
         backoff: { type: "exponential", delay: 15000 },
         removeOnComplete: 1000,

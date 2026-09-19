@@ -3785,7 +3785,7 @@ export default class AirwallexPaymentService {
       );
       if(incomingStatus === 'SETTLED') {
         try{
-          enqueueUpdateTransactions({ userId: userId, updateFunction: "handleFundSplitWebhook" });
+          enqueueUpdateTransactions({ userId: userId, updateFunction: "handleFundSplitWebhook_settled" });
         } catch (error) {
           console.error(
             "❌ Failed to enqueue update transactions for settled split:",
