@@ -2134,7 +2134,7 @@ export default class AirwallexPaymentService {
 
       const transactions = await new Promise((resolve, reject) => {
         this.getTransactionHistory(
-          { userId, page: 0, pageSize: 10 },
+          { userId, page: 0, pageSize: 20 },
           (err, result) => {
             if (err) return reject(err);
             resolve(result?.data?.items || []);
