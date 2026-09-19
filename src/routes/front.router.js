@@ -610,12 +610,6 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "balance.ga.top_up", // Wallet balance increase via Global Account (Plus)
       "balance.adjustment", // Balance change due to adjustment (Plus / Minus)
 
-      // Deposit Events
-      "deposit.pending", // Deposit pending (informational)
-      "deposit.settled", // Deposit successfully settled into Wallet (Plus)
-      "deposit.reversed", // Deposit recalled by payer's bank (Minus)
-      "deposit.rejected", // Deposit rejected (informational)
-
       // Customer Balance Transactions (Bank Transfer Payments)
       "customer_balance_transaction.bank_transfer.received", // Bank transfer received (Plus pending)
       "customer_balance_transaction.bank_transfer.succeeded", // Bank transfer accepted onto balance (Plus)
@@ -628,13 +622,8 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "direct_debit.settled", // Debited from Wallet balance (Minus)
       "direct_debit.returned", // Credited back to Wallet balance (Plus)
 
-      // Funds Split
-      "funds_split.settled", // Funds settled into destination wallet (Plus)
-      "funds_split.failed", // Split failed, funds returned (Plus)
-
       // Connected Accounts: Transfers & Charges
       "connected_account_transfer.settled", // Funds settled in target wallet - Latest API (Plus)
-      "transfer.settled", // Funds settled in target wallet - Legacy API (Plus)
       "charge.settled", // Funds settled in target wallet (Plus)
 
       // Wallet Transfers (Beta / Older API)
@@ -658,17 +647,18 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "payment.cancelled", // Funds returned to Wallet (Plus)
     ];
 
-     if (balanceImpactingWebhooks.includes(payload?.name)) {
-       //balance update events
-       try {
-         await AirwallexPaymentController.handleBalanceUpdateWebhook({
-           payload,
-           headers: req.headers,
-         });
-       } catch (error) {
-         console.error("Error handling balance update webhook:", error);
-       }
-     }
+     
+    if (balanceImpactingWebhooks.includes(payload?.name)) {
+      //balance update events
+      try {
+        await AirwallexPaymentController.handleBalanceUpdateWebhook({
+          payload,
+          headers: req.headers,
+        });
+      } catch (error) {
+        console.error("Error handling balance update webhook:", error);
+      }
+    }
 
     if (kycEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.airwallexKycWebhook({
@@ -748,8 +738,6 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
         });
       return res.return(response);
     }
-
-   
 
     console.log(
       "XXXXXX Received Airwallex main global webhook but event not matched Event name:",

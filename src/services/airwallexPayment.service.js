@@ -1783,18 +1783,18 @@ export default class AirwallexPaymentService {
           );
         }
       }
-      // if (useId) {
-      //    try {
-      //      enqueueUpdateTransactions({ userId: useId, updateFunction: "handleAirwallexTransferWebhook" });
-      //    } catch (error) {
-      //      console.error(
-      //        "❌ Failed to enqueue update transactions for settled split:",
-      //        error?.message || error,
-      //      );
-      //      process.env.SENTRY_ENABLED === "true" &&
-      //        Sentry.captureException(error);
-      //    }
-      // }
+      if (useId) {
+         try {
+           enqueueUpdateTransactions({ userId: useId, updateFunction: "handleAirwallexTransferWebhook" });
+         } catch (error) {
+           console.error(
+             "❌ Failed to enqueue update transactions for settled split:",
+             error?.message || error,
+           );
+           process.env.SENTRY_ENABLED === "true" &&
+             Sentry.captureException(error);
+         }
+      }
       console.log(
         "Checking for AirwallexUserTransactionAdditionalDetails with sourceId:",
         payload.data.id,
@@ -1840,22 +1840,22 @@ export default class AirwallexPaymentService {
           const kycAccount = await AirwallexKycAccount.findOne({
             where: { airwallexAccountId: payload.account_id },
           });
-          // if (kycAccount) {
-          //   console.log(
-          //     "Reloading transaction history for userId:",
-          //     kycAccount.userId,
-          //   );
-          //    try {
-          //      enqueueUpdateTransactions({ userId: kycAccount.userId, updateFunction: "handleDepositWebhook" });
-          //    } catch (error) {
-          //      console.error(
-          //        "❌ Failed to enqueue update transactions for settled split:",
-          //        error?.message || error,
-          //      );
-          //      process.env.SENTRY_ENABLED === "true" &&
-          //        Sentry.captureException(error);
-          //    }
-          // }
+          if (kycAccount) {
+            console.log(
+              "Reloading transaction history for userId:",
+              kycAccount.userId,
+            );
+             try {
+               enqueueUpdateTransactions({ userId: kycAccount.userId, updateFunction: "handleDepositWebhook" });
+             } catch (error) {
+               console.error(
+                 "❌ Failed to enqueue update transactions for settled split:",
+                 error?.message || error,
+               );
+               process.env.SENTRY_ENABLED === "true" &&
+                 Sentry.captureException(error);
+             }
+          }
           //======== Start generate card holder =====//
           AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder(
             { userId: kycAccount.userId, payload: {} },
@@ -1988,18 +1988,18 @@ export default class AirwallexPaymentService {
                   { where: { sourceId: payload.data.id } },
                 );
               }
-              // setTimeout(() => {
-              //   try {
-              //     enqueueUpdateTransactions({ userId: get.userId, updateFunction: "handleAirwallexChargesWebhook" });
-              //   } catch (error) {
-              //     console.error(
-              //       "❌ Failed to enqueue update transactions for settled split:",
-              //       error?.message || error,
-              //     );
-              //     process.env.SENTRY_ENABLED === "true" &&
-              //       Sentry.captureException(error);
-              //   }
-              // }, REFRESH_TIMEOUT);
+              setTimeout(() => {
+                try {
+                  enqueueUpdateTransactions({ userId: get.userId, updateFunction: "handleAirwallexChargesWebhook" });
+                } catch (error) {
+                  console.error(
+                    "❌ Failed to enqueue update transactions for settled split:",
+                    error?.message || error,
+                  );
+                  process.env.SENTRY_ENABLED === "true" &&
+                    Sentry.captureException(error);
+                }
+              }, REFRESH_TIMEOUT);
               return callback(null, { data: payload });
             }
           }
@@ -3819,18 +3819,18 @@ export default class AirwallexPaymentService {
         { rechargeStatus: incomingStatus },
         { where: { id: resolvedPaymentId } },
       );
-      // if(incomingStatus === 'SETTLED') {
-      //   try{
-      //     enqueueUpdateTransactions({ userId: userId, updateFunction: "handleFundSplitWebhook_settled" });
-      //   } catch (error) {
-      //     console.error(
-      //       "❌ Failed to enqueue update transactions for settled split:",
-      //       error?.message || error,
-      //     );
-      //     process.env.SENTRY_ENABLED === "true" &&
-      //       Sentry.captureException(error);
-      //   }
-      // }
+      if(incomingStatus === 'SETTLED') {
+        try{
+          enqueueUpdateTransactions({ userId: userId, updateFunction: "handleFundSplitWebhook_settled" });
+        } catch (error) {
+          console.error(
+            "❌ Failed to enqueue update transactions for settled split:",
+            error?.message || error,
+          );
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(error);
+        }
+      }
 
       if (incomingStatus === "FAILED") {
         try {
@@ -4041,13 +4041,15 @@ export default class AirwallexPaymentService {
   static async handleBalanceUpdateWebhook(payload, headers, callback) {
     try {
       if (payload?.account_id) {
+       
         const kycAccount = await AirwallexKycAccount.findOne({
           where: { airwallexAccountId: payload.account_id },
         });
         const userId = kycAccount?.userId || null;
+        
         if (userId) {
           try {
-            enqueueUpdateTransactions({
+             enqueueUpdateTransactions({
               userId: userId,
               updateFunction: "handleBalanceUpdateWebhook",
             });
