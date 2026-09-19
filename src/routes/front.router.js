@@ -658,6 +658,18 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "payment.cancelled", // Funds returned to Wallet (Plus)
     ];
 
+     if (balanceImpactingWebhooks.includes(payload?.name)) {
+       //balance update events
+       try {
+         await AirwallexPaymentController.handleBalanceUpdateWebhook({
+           payload,
+           headers: req.headers,
+         });
+       } catch (error) {
+         console.error("Error handling balance update webhook:", error);
+       }
+     }
+
     if (kycEventNames.includes(payload?.name)) {
       const response = await AirwallexPaymentController.airwallexKycWebhook({
         payload,
@@ -737,15 +749,7 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       return res.return(response);
     }
 
-    if (balanceImpactingWebhooks.includes(payload?.name)) {
-      //balance update events
-      const response =
-        await AirwallexPaymentController.handleBalanceUpdateWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    }
+   
 
     console.log(
       "XXXXXX Received Airwallex main global webhook but event not matched Event name:",
