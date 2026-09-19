@@ -1277,7 +1277,7 @@ export default class AirwallexPaymentService {
       );
       setTimeout(() => {
          try{
-          enqueueUpdateTransactions({ userId: userId });
+          enqueueUpdateTransactions({ userId: userId, updateFunction: "sandboxAddDeposit" });
         } catch (error) {
           console.error(
             "❌ Failed to enqueue update transactions for settled split:",
@@ -1587,7 +1587,7 @@ export default class AirwallexPaymentService {
       }
       setTimeout(() => {
          try {
-           enqueueUpdateTransactions({ userId: fromWalletId });
+           enqueueUpdateTransactions({ userId: fromWalletId, updateFunction: "transferAirwallexConnectedAccount" });
          } catch (error) {
            console.error(
              "❌ Failed to enqueue update transactions for settled split:",
@@ -1599,7 +1599,7 @@ export default class AirwallexPaymentService {
       }, REFRESH_TIMEOUT);
       setTimeout(() => {
          try {
-           enqueueUpdateTransactions({ userId: toWalletId });
+           enqueueUpdateTransactions({ userId: toWalletId, updateFunction: "transferAirwallexConnectedAccount" });
          } catch (error) {
            console.error(
              "❌ Failed to enqueue update transactions for settled split:",
@@ -1772,7 +1772,7 @@ export default class AirwallexPaymentService {
       }
       if (useId) {
          try {
-           enqueueUpdateTransactions({ userId: useId });
+           enqueueUpdateTransactions({ userId: useId, updateFunction: "handleAirwallexTransferWebhook" });
          } catch (error) {
            console.error(
              "❌ Failed to enqueue update transactions for settled split:",
@@ -1833,7 +1833,7 @@ export default class AirwallexPaymentService {
               kycAccount.userId,
             );
              try {
-               enqueueUpdateTransactions({ userId: kycAccount.userId });
+               enqueueUpdateTransactions({ userId: kycAccount.userId, updateFunction: "handleDepositWebhook" });
              } catch (error) {
                console.error(
                  "❌ Failed to enqueue update transactions for settled split:",
@@ -1977,7 +1977,7 @@ export default class AirwallexPaymentService {
               }
               setTimeout(() => {
                 try {
-                  enqueueUpdateTransactions({ userId: get.userId });
+                  enqueueUpdateTransactions({ userId: get.userId, updateFunction: "handleAirwallexChargesWebhook" });
                 } catch (error) {
                   console.error(
                     "❌ Failed to enqueue update transactions for settled split:",
@@ -3785,7 +3785,7 @@ export default class AirwallexPaymentService {
       );
       if(incomingStatus === 'SETTLED') {
         try{
-          enqueueUpdateTransactions({ userId: userId });
+          enqueueUpdateTransactions({ userId: userId, updateFunction: "handleFundSplitWebhook" });
         } catch (error) {
           console.error(
             "❌ Failed to enqueue update transactions for settled split:",
@@ -4012,8 +4012,8 @@ export default class AirwallexPaymentService {
         if (userId) {
           try {
             
-           const d =  await enqueueUpdateTransactions({ userId: userId });
-           console.log(`Enqueued update transactions job for userId: ${userId}, result: ${JSON.stringify(d)}`);
+            enqueueUpdateTransactions({ userId: userId , updateFunction: "handleBalanceUpdateWebhook" });
+           
             return callback(null, { data: { userId } });
           } catch (error) {
             console.error(

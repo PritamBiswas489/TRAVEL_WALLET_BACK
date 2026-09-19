@@ -20,13 +20,13 @@ export const JOB_NAMES = {
 export const airwallexUpdateTransactionQueue = new Queue(AIRWALLEX_QUEUE_NAME, { connection });
 
  
-export const enqueueUpdateTransactions = async ({   userId  }) => {
+export const enqueueUpdateTransactions = async ({   userId, updateFunction  }) => {
     console.log(`Enqueuing update transactions job for userId: ${userId}`);
   try{
     console.log(`Attempting to enqueue update transactions job for userId: ${userId}`);
      return airwallexUpdateTransactionQueue.add(
         JOB_NAMES.UPDATE_WALLET_TRANSACTIONS,
-        { userId },
+        { userId, updateFunction },
         {
         jobId: `update-wallet-transactions-${userId}`,
         attempts: 3,

@@ -579,7 +579,9 @@ router.post('/airwallex-main-global-webhook', async (req, res, next) => {
    }else if(paymentIntentReturnWebhookEventNames.includes(payload?.name)) { //payment intent return events
       const response = await AirwallexPaymentController.handlePaymentIntentReturnWebhook({ payload, headers: req.headers });
       return res.return(response);
-   }else if(balanceUpdateWebhookEventNames.includes(payload?.name)) { //balance update events
+   }
+   
+   if(balanceUpdateWebhookEventNames.includes(payload?.name)) { //balance update events
       const response = await AirwallexPaymentController.handleBalanceUpdateWebhook({ payload, headers: req.headers });
       return res.return(response);
    }
