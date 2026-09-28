@@ -45,6 +45,7 @@ const {
   AirwallexPaymentIntent,
   AirwallexPaymentSplit,
   AirwallexPaymentIntentRefund,
+  AirwallexPaymentSplitReverse
 } = db;
 
 const REFRESH_TIMEOUT = 5000; // 5 seconds
@@ -3396,6 +3397,95 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
+  // Handle the main payment refund process for a given user and payload.
+  static async mainPaymentRefundProcessHandle({ userId, payload }, callback) {
+     try{
+       const { refundPaymentId, refundPaymentAmt } = payload || {};
+
+       console.log("Refund Payment ID:", refundPaymentId);
+       console.log("Refund Payment Amount:", refundPaymentAmt);
+
+       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { id: refundPaymentId, userId },
+        attributes: { exclude: ["rawPayload", "metadata", "additionalInfo"] },
+        include : [
+          {
+            model: AirwallexPaymentSplit,
+            required:  true,
+            attributes: { exclude: ["rawPayload", "metadata", "additionalInfo"] },
+            as: "split"
+          }
+           
+        ]
+       });
+       if(!getPaymentIntent){
+           return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+       }
+        const acceptedRefundSplitStatus = ["RELEASED","SETTLED"];
+        if(getPaymentIntent?.split && !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)){
+              return callback(new Error("INVALID_REFUND_SPLIT_STATUS"));
+        }
+        const refundSplitId = getPaymentIntent?.split?.id;
+        const airwallexSplitId = getPaymentIntent?.split?.airwallexSplitId;
+
+        console.log("Refund Split ID:", refundSplitId);
+        console.log("Airwallex Split ID:", airwallexSplitId); 
+
+        const accessToken = await this.getAirWalletxToken();
+
+
+         const requestPayload = {
+           request_id: uuidv4(),
+           amount: parseFloat(refundPaymentAmt),
+           funds_split_id: airwallexSplitId,
+           metadata: {
+             reason: "Refund from main payment",
+             user_id: userId,
+             paymentId: refundPaymentId,
+             refundSplitId: refundSplitId,
+             airwallexSplitId: airwallexSplitId
+           },
+         };
+
+          const response = await fetch(
+            `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/create`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify(requestPayload),
+            },
+          );
+
+          const responseBody = await response.json();
+          if (!response.ok) {
+              return callback(new Error(responseBody?.message || "FUND_SPLIT_REVERSAL_FAILED"));
+          }
+
+          
+          const createReverseSplitResponse = await AirwallexPaymentSplitReverse.create({
+            requestId: responseBody.request_id,
+            airwallexRevId: responseBody.id,
+            fundsSplitId: airwallexSplitId,
+            paymentId: refundPaymentId,
+            amount: parseFloat(responseBody.amount),
+            status: responseBody.status,
+          });
+           
+        return  callback(null, { data: createReverseSplitResponse });
+
+     }catch (error) {
+       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+       console.error(
+         "❌ Error in mainPaymentRefundProcessHandle:",
+         error?.message || error,
+       );
+       return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  //get reverse split amount by split ID
   static async getReverseSplitAmountBySplitId({ userId, payload }, callback) {
     try {
       const accessToken = await this.getAirWalletxToken();
@@ -3418,6 +3508,8 @@ export default class AirwallexPaymentService {
           `Airwallex get reverse split amount failed: ${JSON.stringify(responseBody)}`,
         );
       }
+
+
 
       return callback(null, { data: responseBody });
     } catch (error) {

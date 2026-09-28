@@ -1030,8 +1030,7 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message:
-                  err.message || "FAILED_TO_PROCESS_FUND_SPLIT_WEBHOOK",
+                message: err.message || "FAILED_TO_PROCESS_FUND_SPLIT_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -1058,7 +1057,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_HANDLE_PAYMENT_INTENT_RETURN_WEBHOOK",
+                message:
+                  err.message ||
+                  "FAILED_TO_HANDLE_PAYMENT_INTENT_RETURN_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -1085,7 +1086,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_HANDLE_BALANCE_UPDATE_WEBHOOK",
+                message:
+                  err.message || "FAILED_TO_HANDLE_BALANCE_UPDATE_WEBHOOK",
                 reason: err.message,
               },
             });
@@ -1375,7 +1377,8 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_REVERSE_SPLIT_AMOUNT_BY_SPLIT_ID",
+                message:
+                  err.message || "FAILED_TO_REVERSE_SPLIT_AMOUNT_BY_SPLIT_ID",
                 reason: err.message,
               },
             });
@@ -1384,6 +1387,39 @@ export default class AirwallexPaymentController {
             status: 200,
             data: response.data,
             message: "Split amount reversed by split ID successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async mainPaymentRefundProcessHandle(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.mainPaymentRefundProcessHandle(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message:
+                  err.message || "FAILED_TO_HANDLE_MAIN_PAYMENT_REFUND_PROCESS",
+                reason: err.message,
+              },
+            });
+          }
+
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: "Main payment refund process handled successfully",
             error: null,
           });
         },
@@ -1406,7 +1442,9 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_GET_REVERSE_SPLIT_AMOUNT_BY_SPLIT_ID",
+                message:
+                  err.message ||
+                  "FAILED_TO_GET_REVERSE_SPLIT_AMOUNT_BY_SPLIT_ID",
                 reason: err.message,
               },
             });
@@ -1414,7 +1452,8 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Reversal of split amount retrieved by split ID successfully",
+            message:
+              "Reversal of split amount retrieved by split ID successfully",
             error: null,
           });
         },

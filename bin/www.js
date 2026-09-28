@@ -94,6 +94,14 @@ server.listen(port, async() => {
 
     walletTransactionsUpdateWorker();
 
+
+	const { startAirWallexRefundWorker } =
+      await import(
+        "../src/workers/airWallexRefundWorker.js"
+      );
+
+	  startAirWallexRefundWorker();
+
   }
 });
 server.on('error', onError);

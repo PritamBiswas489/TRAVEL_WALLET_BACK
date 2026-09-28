@@ -1,11 +1,13 @@
 import { airwallexQueue } from "../queues/airwallexPaymentIntent.queue.js";
 import { airwallexUpdateTransactionQueue } from "../queues/airwallexTransactionUpdate.queue.js";
+import { airwallexRefundQueue } from "../queues/airwallexRefund.queue.js";
 
 const STATES = ["waiting", "active", "delayed", "completed", "failed", "paused"];
 
 const QUEUES = [
   { label: "airwallex-payment-intent", queue: airwallexQueue },
   { label: "airwallex-transaction-update", queue: airwallexUpdateTransactionQueue },
+  { label: "airwallex-refund", queue: airwallexRefundQueue },
 ];
 
 async function listQueueJobs(label, queue) {

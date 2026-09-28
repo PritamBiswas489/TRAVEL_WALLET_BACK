@@ -1058,6 +1058,50 @@ router.post("/reverse-split-amount-by-split-id", async (req, res) => {
   const response = await AirwallexPaymentController.reverseSplitAmountBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
+
+
+
+
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/main-payment-refund-process-handle:
+ *   post:
+ *     summary: Handle main payment refund process
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refundPaymentId
+ *               - refundPaymentAmt
+ *             properties:
+ *               refundPaymentId:
+ *                 type: string
+ *                 description: Airwallex refund payment identifier
+ *                 example: "12"
+ *               refundPaymentAmt:
+ *                 type: number
+ *                 description: Refund amount to process
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Success - Main payment refund process handled
+ */
+router.post("/main-payment-refund-process-handle", async (req, res) => {
+  const response = await AirwallexPaymentController.mainPaymentRefundProcessHandle({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
 /**
  * @swagger
  * /api/auth/deposit/get-reverse-split-amount-by-split-id:
