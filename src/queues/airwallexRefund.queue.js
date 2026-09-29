@@ -21,6 +21,7 @@ export const airwallexRefundQueue = new Queue(AIRWALLEX_QUEUE_NAME, {
 // Define job names for the Airwallex refund queue.
 export const JOB_NAMES = {
   CHECKING_REVERSE_SPLIT_STATUS: "checking-reverse-split-status",
+  REFUND_PAYMENT_INTENT: "refund-payment-intent",
 };
 
 
@@ -29,19 +30,39 @@ export const airWallexQueue = new Queue(AIRWALLEX_QUEUE_NAME, { connection });
 
 
 // Enqueue a job to check the status of a reverse split.
-export const enqueueReverseSplitStatusCheck  =  async ({reverseSplitId, opts = {} }) =>{
-     const intervalMs = opts.intervalMs ?? 1 * 60 * 1000; // 1 minutes
+export const enqueueReverseSplitStatusCheck  =  async ({reverseSplitId, userId,  opts = {} }) =>{
+     const intervalMs = opts.intervalMs ?? 5 * 60 * 1000; // 5 minutes
      const maxAttempts = opts.maxAttempts ?? 12;
 
      return airWallexQueue.add(
        JOB_NAMES.CHECKING_REVERSE_SPLIT_STATUS,
-        { reverseSplitId, attempt: 1, maxAttempts, intervalMs },
+        { reverseSplitId, userId, attempt: 1, maxAttempts, intervalMs },
         {
         // Deterministic jobId per order+attempt avoids accidental duplicate polling
         // chains if enqueueOrderStatusCheck is called twice for the same order.
             jobId: `reverse-split-status:${reverseSplitId}:attempt-1`,
+            delay: intervalMs,
         }
     );
+}
+
+export const enqueueRefundProcess = async ({ reverseSplitDetails, userId }) => {
+    const { id ,  paymentId, amount } = reverseSplitDetails;
+    return airwallexRefundQueue.add(
+        JOB_NAMES.REFUND_PAYMENT_INTENT,
+        {  userId, paymentId, amount },
+        {
+            jobId: `refund-reverse-by-split-id-${id}-paymentid-${paymentId}`,
+            attempts: 3,
+            backoff: { type: "exponential", delay: 15000 },
+            removeOnComplete: 1000,
+            removeOnFail: false,
+        }
+    );
+
+
+
+
 }
 
 

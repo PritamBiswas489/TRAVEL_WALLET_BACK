@@ -6,47 +6,134 @@ import { redisConfig } from "../config/redis.config.js";
 import {
   AIRWALLEX_QUEUE_NAME,
   JOB_NAMES,
-  enqueueReverseSplitStatusCheck,
+  enqueueRefundProcess,
   airWallexQueue,
 } from "../queues/airwallexRefund.queue.js";
 import db from "../databases/models/index.js";
+import AirwallexPaymentService from "../services/airwallexPayment.service.js";
 
 const connection = new IORedis({
   ...redisConfig,
   maxRetriesPerRequest: null,
 });
 
-async function checkReverseSplitStatus(job) {
-  const { reverseSplitId, attempt, maxAttempts, intervalMs } = job.data;
-
-  console.log(`Checking Status......reverseSplitId: ${reverseSplitId}, attempt: ${attempt}`);
-
-  if (attempt >= maxAttempts) {
-    console.log(
-      `[reverse-split-status] reverseSplitId=${reverseSplitId} not settled after ${attempt} attempts. ` +
-        `Reached max attempts — stopping (last status: checking.`,
+async function refundProcessExecute(job) {
+  const {    userId, paymentId, amount  } = job.data;
+  return new Promise((resolve, reject) => {
+    AirwallexPaymentService.refundPaymentIntent(
+      { userId, payload: { paymentId, amount } },
+      (err, result) => (err ? reject(err) : resolve(result)),
     );
-    // Completed, not failed: the job did exactly what it was asked to do
-    // (poll up to maxAttempts times). Handle the "gave up" case downstream
-    // by inspecting job.returnvalue.status, or emit your own event/alert here.
+  });
+}
+//check reverse split status worker function
+async function checkReverseSplitStatus(job) {
+  const {
+     reverseSplitId, 
+     userId,  
+     attempt, 
+     maxAttempts, 
+     intervalMs 
+  } = job.data;
+
+  console.log(
+    `Checking status: reverseSplitId=${reverseSplitId}, attempt=${attempt}`,
+  );
+
+  let checkStatusResponse = null;
+  let apiError = null;
+
+  try {
+    checkStatusResponse = await new Promise((resolve, reject) => {
+      AirwallexPaymentService.getMainPaymentReverseSplitStatusBySplitId(
+        {
+          userId: userId,
+          payload: {
+            splitId: reverseSplitId,
+          },
+        },
+        (err, result) => {
+          if (err) {
+            return reject(err);
+          }
+
+          resolve(result);
+        },
+      );
+    });
+  } catch (error) {
+    apiError = error;
+
+    console.error(
+      `❌ Error checking reverse split status for reverseSplitId=${reverseSplitId}:`,
+      error?.message || error,
+    );
+  }
+
+  //status of the reverse split
+  const status = checkStatusResponse?.data?.status;
+
+  // Settled
+  if (status === "SETTLED") {
+    console.log(`✅ Reverse split settled: ${reverseSplitId}`);
+    //initiate any post-settlement actions if needed
+  
+     enqueueRefundProcess({ reverseSplitDetails: checkStatusResponse?.data, userId });
+     
+
     return {
       reverseSplitId,
-      status: "gave_up",
-      lastStatus: "unknown",
+      userId,
+      status: "settled",
       attempts: attempt,
     };
   }
+
+  // Maximum attempts reached
+  if (attempt >= maxAttempts) {
+    console.log(
+      `[reverse-split-status] reverseSplitId=${reverseSplitId} ` +
+        `not settled after ${attempt} attempts. ` +
+        `Last status: ${status || "unknown"}`,
+    );
+
+    return {
+      reverseSplitId,
+      userId,
+      status: "gave_up",
+      lastStatus: status || "unknown",
+      attempts: attempt,
+      lastError: apiError?.message || null,
+    };
+  }
+
+  // Continue polling even if API failed
   const nextAttempt = attempt + 1;
+
   await airWallexQueue.add(
     JOB_NAMES.CHECKING_REVERSE_SPLIT_STATUS,
-    { reverseSplitId, attempt: nextAttempt, maxAttempts, intervalMs },
+    {
+      reverseSplitId,
+      userId,
+      attempt: nextAttempt,
+      maxAttempts,
+      intervalMs,
+    },
     {
       delay: intervalMs,
       jobId: `reverse-split-status:${reverseSplitId}:attempt-${nextAttempt}`,
     },
   );
-}
 
+  return {
+    reverseSplitId,
+    userId,
+    status: "checking",
+    attempts: attempt,
+    nextAttempt,
+    apiError: apiError?.message || null,
+  };
+}
 /**
  * Starts the AirWallex refund worker to process jobs from the AirWallex refund queue.
  * This worker listens for specific job types defined in JOB_NAMES and handles them accordingly.
@@ -59,6 +146,8 @@ export function startAirWallexRefundWorker() {
       switch (job.name) {
         case JOB_NAMES.CHECKING_REVERSE_SPLIT_STATUS:
           return await checkReverseSplitStatus(job);
+        case JOB_NAMES.REFUND_PAYMENT_INTENT:
+          return await refundProcessExecute(job);
         default:
           // Unknown job name — fail fast rather than silently no-op-ing.
           throw new Error(`Unrecognized job name: ${job.name}`);

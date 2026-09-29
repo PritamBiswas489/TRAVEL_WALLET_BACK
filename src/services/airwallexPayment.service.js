@@ -26,6 +26,7 @@ import {
 } from "../queues/airwallexPaymentIntent.queue.js";
 
 import { enqueueUpdateTransactions } from "../queues/airwallexTransactionUpdate.queue.js";
+import { enqueueReverseSplitStatusCheck } from "../queues/airwallexRefund.queue.js";
 
 const {
   sequelize,
@@ -1785,16 +1786,19 @@ export default class AirwallexPaymentService {
         }
       }
       if (useId) {
-         try {
-           enqueueUpdateTransactions({ userId: useId, updateFunction: "handleAirwallexTransferWebhook" });
-         } catch (error) {
-           console.error(
-             "❌ Failed to enqueue update transactions for settled split:",
-             error?.message || error,
-           );
-           process.env.SENTRY_ENABLED === "true" &&
-             Sentry.captureException(error);
-         }
+        try {
+          enqueueUpdateTransactions({
+            userId: useId,
+            updateFunction: "handleAirwallexTransferWebhook",
+          });
+        } catch (error) {
+          console.error(
+            "❌ Failed to enqueue update transactions for settled split:",
+            error?.message || error,
+          );
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(error);
+        }
       }
       console.log(
         "Checking for AirwallexUserTransactionAdditionalDetails with sourceId:",
@@ -1846,16 +1850,19 @@ export default class AirwallexPaymentService {
               "Reloading transaction history for userId:",
               kycAccount.userId,
             );
-             try {
-               enqueueUpdateTransactions({ userId: kycAccount.userId, updateFunction: "handleDepositWebhook" });
-             } catch (error) {
-               console.error(
-                 "❌ Failed to enqueue update transactions for settled split:",
-                 error?.message || error,
-               );
-               process.env.SENTRY_ENABLED === "true" &&
-                 Sentry.captureException(error);
-             }
+            try {
+              enqueueUpdateTransactions({
+                userId: kycAccount.userId,
+                updateFunction: "handleDepositWebhook",
+              });
+            } catch (error) {
+              console.error(
+                "❌ Failed to enqueue update transactions for settled split:",
+                error?.message || error,
+              );
+              process.env.SENTRY_ENABLED === "true" &&
+                Sentry.captureException(error);
+            }
           }
           //======== Start generate card holder =====//
           AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder(
@@ -1991,7 +1998,10 @@ export default class AirwallexPaymentService {
               }
               setTimeout(() => {
                 try {
-                  enqueueUpdateTransactions({ userId: get.userId, updateFunction: "handleAirwallexChargesWebhook" });
+                  enqueueUpdateTransactions({
+                    userId: get.userId,
+                    updateFunction: "handleAirwallexChargesWebhook",
+                  });
                 } catch (error) {
                   console.error(
                     "❌ Failed to enqueue update transactions for settled split:",
@@ -3274,6 +3284,19 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"));
       }
 
+      const requestPayload = {
+            payment_intent_id: paymentIntentId,
+            request_id: uuidv4(),
+            metadata: {
+              userId,
+              paymentId,
+            },
+          };
+
+      if (payload?.amount) {
+        requestPayload.amount = payload.amount;
+      }
+
       const response = await fetch(
         `${process.env.AIRWALLEX_API_URL}/api/v1/pa/refunds/create`,
         {
@@ -3282,14 +3305,7 @@ export default class AirwallexPaymentService {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({
-            payment_intent_id: paymentIntentId,
-            request_id: uuidv4(),
-            metadata: {
-              userId,
-              paymentId,
-            },
-          }),
+          body: JSON.stringify(requestPayload),
         },
       );
 
@@ -3399,90 +3415,151 @@ export default class AirwallexPaymentService {
   }
   // Handle the main payment refund process for a given user and payload.
   static async mainPaymentRefundProcessHandle({ userId, payload }, callback) {
-     try{
-       const { refundPaymentId, refundPaymentAmt } = payload || {};
+    try {
+      const { refundPaymentId, refundPaymentAmt } = payload || {};
 
-       console.log("Refund Payment ID:", refundPaymentId);
-       console.log("Refund Payment Amount:", refundPaymentAmt);
+      console.log("Refund Payment ID:", refundPaymentId);
+      console.log("Refund Payment Amount:", refundPaymentAmt);
 
-       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
+      const getPaymentIntent = await AirwallexPaymentIntent.findOne({
         where: { id: refundPaymentId, userId },
         attributes: { exclude: ["rawPayload", "metadata", "additionalInfo"] },
-        include : [
+        include: [
           {
             model: AirwallexPaymentSplit,
-            required:  true,
-            attributes: { exclude: ["rawPayload", "metadata", "additionalInfo"] },
-            as: "split"
-          }
-           
-        ]
-       });
-       if(!getPaymentIntent){
-           return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
-       }
-        const acceptedRefundSplitStatus = ["RELEASED","SETTLED"];
-        if(getPaymentIntent?.split && !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)){
-              return callback(new Error("INVALID_REFUND_SPLIT_STATUS"));
-        }
-        const refundSplitId = getPaymentIntent?.split?.id;
-        const airwallexSplitId = getPaymentIntent?.split?.airwallexSplitId;
-
-        console.log("Refund Split ID:", refundSplitId);
-        console.log("Airwallex Split ID:", airwallexSplitId); 
-
-        const accessToken = await this.getAirWalletxToken();
-
-
-         const requestPayload = {
-           request_id: uuidv4(),
-           amount: parseFloat(refundPaymentAmt),
-           funds_split_id: airwallexSplitId,
-           metadata: {
-             reason: "Refund from main payment",
-             user_id: userId,
-             paymentId: refundPaymentId,
-             refundSplitId: refundSplitId,
-             airwallexSplitId: airwallexSplitId
-           },
-         };
-
-          const response = await fetch(
-            `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/create`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify(requestPayload),
+            required: true,
+            attributes: {
+              exclude: ["rawPayload", "metadata", "additionalInfo"],
             },
-          );
+            as: "split",
+          },
+        ],
+      });
+      if (!getPaymentIntent) {
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
+      const acceptedRefundSplitStatus = ["RELEASED", "SETTLED"];
+      if (
+        getPaymentIntent?.split &&
+        !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)
+      ) {
+        return callback(new Error("INVALID_REFUND_SPLIT_STATUS"));
+      }
+      const refundSplitId = getPaymentIntent?.split?.id;
+      const airwallexSplitId = getPaymentIntent?.split?.airwallexSplitId;
 
-          const responseBody = await response.json();
-          if (!response.ok) {
-              return callback(new Error(responseBody?.message || "FUND_SPLIT_REVERSAL_FAILED"));
-          }
+      console.log("Refund Split ID:", refundSplitId);
+      console.log("Airwallex Split ID:", airwallexSplitId);
 
-          
-          const createReverseSplitResponse = await AirwallexPaymentSplitReverse.create({
-            requestId: responseBody.request_id,
-            airwallexRevId: responseBody.id,
-            fundsSplitId: airwallexSplitId,
-            paymentId: refundPaymentId,
-            amount: parseFloat(responseBody.amount),
-            status: responseBody.status,
-          });
-           
-        return  callback(null, { data: createReverseSplitResponse });
+      const accessToken = await this.getAirWalletxToken();
 
-     }catch (error) {
-       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-       console.error(
-         "❌ Error in mainPaymentRefundProcessHandle:",
-         error?.message || error,
-       );
-       return callback(new Error("INTERNAL_SERVER_ERROR"));
+      const requestPayload = {
+        request_id: uuidv4(),
+        amount: parseFloat(refundPaymentAmt),
+        funds_split_id: airwallexSplitId,
+        metadata: {
+          reason: "Refund from main payment",
+          user_id: userId,
+          paymentId: refundPaymentId,
+          refundSplitId: refundSplitId,
+          airwallexSplitId: airwallexSplitId,
+        },
+      };
+
+      const response = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(requestPayload),
+        },
+      );
+
+      const responseBody = await response.json();
+      if (!response.ok) {
+        return callback(
+          new Error(responseBody?.message || "FUND_SPLIT_REVERSAL_FAILED"),
+        );
+      }
+
+      const createReverseSplitResponse =
+        await AirwallexPaymentSplitReverse.create({
+          requestId: responseBody.request_id,
+          airwallexRevId: responseBody.id,
+          fundsSplitId: airwallexSplitId,
+          paymentId: refundPaymentId,
+          amount: parseFloat(responseBody.amount),
+          status: responseBody.status,
+        });
+
+      // Enqueue a job to check the status of the reverse split after creating it.
+      setImmediate(() => {
+        console.log(`Enqueuing reverse split status check for reverseSplitId=${createReverseSplitResponse.id}`);
+        enqueueReverseSplitStatusCheck({ reverseSplitId: createReverseSplitResponse.id, userId : userId });
+      });
+
+      return callback(null, { data: createReverseSplitResponse });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error in mainPaymentRefundProcessHandle:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  static async getMainPaymentReverseSplitStatusBySplitId(
+    { userId, payload },
+    callback,
+  ) {
+    try {
+      const { splitId } = payload || {};
+      const getReverseSplitStatusResponse =
+        await AirwallexPaymentSplitReverse.findOne({
+          where: { id: splitId },
+        });
+
+      if (!getReverseSplitStatusResponse) {
+        return callback(
+          new Error("REVERSE_SPLIT_NOT_FOUND"),
+        );
+      }
+      const airwallexRevId = getReverseSplitStatusResponse.airwallexRevId;
+      const accessToken = await this.getAirWalletxToken();
+      const reverseSplitStatusResponse = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/${airwallexRevId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      const reverseSplitStatusResponseBody = await reverseSplitStatusResponse.json();
+      if (!reverseSplitStatusResponse.ok) {
+        return callback(
+          new Error(
+            reverseSplitStatusResponseBody?.message || "FAILED_TO_GET_REVERSE_SPLIT_STATUS",
+          ),
+        );
+      }
+
+      getReverseSplitStatusResponse.status = reverseSplitStatusResponseBody.status;
+      await getReverseSplitStatusResponse.save();
+
+      return callback(null, { data: getReverseSplitStatusResponse });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error in getMainPaymentReverseSplitStatusBySplitId:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
   //get reverse split amount by split ID
@@ -3508,8 +3585,6 @@ export default class AirwallexPaymentService {
           `Airwallex get reverse split amount failed: ${JSON.stringify(responseBody)}`,
         );
       }
-
-
 
       return callback(null, { data: responseBody });
     } catch (error) {
@@ -3911,9 +3986,12 @@ export default class AirwallexPaymentService {
         { rechargeStatus: incomingStatus },
         { where: { id: resolvedPaymentId } },
       );
-      if(incomingStatus === 'SETTLED') {
-        try{
-          enqueueUpdateTransactions({ userId: userId, updateFunction: "handleFundSplitWebhook_settled" });
+      if (incomingStatus === "SETTLED") {
+        try {
+          enqueueUpdateTransactions({
+            userId: userId,
+            updateFunction: "handleFundSplitWebhook_settled",
+          });
         } catch (error) {
           console.error(
             "❌ Failed to enqueue update transactions for settled split:",
@@ -4133,15 +4211,14 @@ export default class AirwallexPaymentService {
   static async handleBalanceUpdateWebhook(payload, headers, callback) {
     try {
       if (payload?.account_id) {
-       
         const kycAccount = await AirwallexKycAccount.findOne({
           where: { airwallexAccountId: payload.account_id },
         });
         const userId = kycAccount?.userId || null;
-        
+
         if (userId) {
           try {
-             enqueueUpdateTransactions({
+            enqueueUpdateTransactions({
               userId: userId,
               updateFunction: "handleBalanceUpdateWebhook",
             });

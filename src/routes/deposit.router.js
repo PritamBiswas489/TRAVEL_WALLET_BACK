@@ -1102,6 +1102,35 @@ router.post("/main-payment-refund-process-handle", async (req, res) => {
 });
 
 
+
+/**
+ * @swagger
+ * /api/auth/deposit/get-main-payment-reverse-split-status-by-split-id:
+ *   get:
+ *     summary: Get main payment reverse split status by split ID
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: splitId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "1"
+ *         description: Airwallex split ID to get the main payment reverse split status for
+ *     responses:
+ *       200:
+ *         description: Success - Main payment reverse split status retrieved by split ID
+ */
+router.get("/get-main-payment-reverse-split-status-by-split-id", async (req, res) => {
+  const response = await AirwallexPaymentController.getMainPaymentReverseSplitStatusBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
 /**
  * @swagger
  * /api/auth/deposit/get-reverse-split-amount-by-split-id:
