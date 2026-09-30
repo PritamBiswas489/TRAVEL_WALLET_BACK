@@ -169,5 +169,8 @@ export function startAirWallexRefundWorker() {
     console.error("❌ Airwallex worker connection error:", err?.message || err);
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
   });
+   console.log(
+      `👷 Airwallex Refund worker started (queue: ${AIRWALLEX_QUEUE_NAME})`,
+    );
   return;
 }
