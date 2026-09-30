@@ -3865,7 +3865,29 @@ export default class AirwallexPaymentService {
       const paymentList = await AirwallexPaymentIntent.findAndCountAll({
         where: { userId },
         order: [["createdAt", "DESC"]],
-        attributes: { exclude: ["rawPayload", "metadata", "additionalInfo"] },
+         attributes: {
+          exclude: ["rawPayload", "metadata", "additionalInfo"],
+          include: [
+            [
+              db.Sequelize.literal(`(
+                SELECT COALESCE(SUM(r."amount"), 0)
+                FROM "airwallex_payment_split_reverse" r
+                WHERE r."paymentId" = "AirwallexPaymentIntent"."id"
+                  AND r."status" = 'SETTLED'
+              )`),
+              "totalSplitReverseSettled",
+            ],
+            [
+              db.Sequelize.literal(`(
+                SELECT COALESCE(SUM(f."amount"), 0)
+                FROM "airwallex_payment_intent_refund" f
+                WHERE f."paymentIntentId" = "AirwallexPaymentIntent"."airwallexIntentId"
+                  AND f."status" = 'SUCCEEDED'
+              )`),
+              "totalRefundSucceeded",
+            ],
+          ],
+        },
         include: [
           {
             model: AirwallexPaymentSplit,
