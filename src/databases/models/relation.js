@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund, AirwallexPaymentSplitReverse } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -162,6 +162,9 @@ const relation = (db) => {
   AirwallexPaymentIntent.hasMany(AirwallexPaymentIntentRefund, { foreignKey: "paymentId", as: "refunds" });
   AirwallexPaymentIntentRefund.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 
+  
+  AirwallexPaymentIntent.hasMany(AirwallexPaymentSplitReverse, { foreignKey: "paymentId", as: "splitReverses" });
+  AirwallexPaymentSplitReverse.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 };
 
 export default relation;

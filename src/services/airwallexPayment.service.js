@@ -3,7 +3,7 @@ import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
+import fs, { stat } from "fs";
 import path from "path";
 import FormData from "form-data";
 import WalletService from "./wallet.service.js";
@@ -46,7 +46,8 @@ const {
   AirwallexPaymentIntent,
   AirwallexPaymentSplit,
   AirwallexPaymentIntentRefund,
-  AirwallexPaymentSplitReverse
+  AirwallexPaymentSplitReverse,
+  AirwallexPaymentRefundErrorLogs
 } = db;
 
 const REFRESH_TIMEOUT = 5000; // 5 seconds
@@ -2928,8 +2929,30 @@ export default class AirwallexPaymentService {
     }
   }
 
+  static async logAirwallexPaymentRefundError({ userId, methodName, payloadData, errorMessage, errorLogs }, callback) {
+    try {
+      await AirwallexPaymentRefundErrorLogs.create({
+        userId: userId ?? null,
+        methodName: methodName ?? null,
+        payloadData: payloadData ?? null,
+        errorMessage: errorMessage ?? null,
+        errorLogs: errorLogs ?? null,
+      });
+      return callback(null, { data: { SUCCESS: 1 } });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error logging Airwallex payment refund error:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+
+
   static async createAftWalletTopup({ userId, payload }, callback) {
     try {
+      
       const { amount: mainAmount } = payload;
       const getAirwallexCustomerId = await this.getAirwallexCustomerId(userId);
       console.log(
@@ -2939,6 +2962,16 @@ export default class AirwallexPaymentService {
         getAirwallexCustomerId?.airwallexCustomerId,
       );
       if (!getAirwallexCustomerId?.airwallexCustomerId) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "createAftWalletTopup",
+            payloadData: payload,
+            errorMessage: "Airwallex customer ID not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("AIRWALLEX_CUSTOMER_ID_NOT_FOUND"));
       }
       const airwallexCustomerId = getAirwallexCustomerId.airwallexCustomerId;
@@ -2948,9 +2981,29 @@ export default class AirwallexPaymentService {
       console.log("===== airwallex account id ===========");
       // console.log(getKycAccount);
       if (!getKycAccount?.airwallexAccountId) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "createAftWalletTopup",
+            payloadData: payload,
+            errorMessage: "Airwallex account ID not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
       if (getKycAccount?.status !== "ACTIVE") {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "createAftWalletTopup",
+            payloadData: payload,
+            errorMessage: "Airwallex account not approved",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_APPROVED"));
       }
       const airwallexAccountId = getKycAccount.airwallexAccountId;
@@ -2967,6 +3020,16 @@ export default class AirwallexPaymentService {
         "recharge_cost_percentage",
       );
       if (!getCostPercentage?.data?.value) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "createAftWalletTopup",
+            payloadData: payload,
+            errorMessage: "Recharge cost percentage not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("RECHARGE_COST_PERCENTAGE_NOT_FOUND"));
       }
       const addCostPercentage = parseFloat(getCostPercentage?.data?.value) || 0;
@@ -3018,6 +3081,16 @@ export default class AirwallexPaymentService {
       );
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "createAftWalletTopup",
+            payloadData: payload,
+            errorMessage: "Airwallex token not generated",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
@@ -3026,10 +3099,10 @@ export default class AirwallexPaymentService {
         `-H "Authorization: Bearer ${accessToken}" ` +
         `-H "Content-Type: application/json" ` +
         `-d '${JSON.stringify({ ...requestPayload, request_id: uuidv4() })}'`;
-      console.log(
-        "Airwallex create payment intent curl:\n",
-        createPaymentIntentCurlCmd,
-      );
+      // console.log(
+      //   "Airwallex create payment intent curl:\n",
+      //   createPaymentIntentCurlCmd,
+      // );
 
       const response = await fetch(
         `${process.env.AIRWALLEX_API_URL}/api/v1/pa/payment_intents/create`,
@@ -3119,9 +3192,20 @@ export default class AirwallexPaymentService {
       return callback(null, { data: responseBody });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      
       console.error(
         "❌ Error creating AFT wallet topup:",
         error?.message || error,
+      );
+      this.logAirwallexPaymentRefundError(
+        {
+          userId,
+          methodName: "createAftWalletTopup",
+          payloadData: payload,
+          errorMessage: error?.message || "INTERNAL_SERVER_ERROR",
+          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+        },
+        () => {},
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
@@ -3131,6 +3215,16 @@ export default class AirwallexPaymentService {
     try {
       const { paymentId } = payload;
       if (!paymentId) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "fundSplitWithConnectedAccount",
+            payloadData: payload,
+            errorMessage: "Payment ID not provided",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("PAYMENT_ID_NOT_PROVIDED"));
       }
       console.log(
@@ -3145,9 +3239,29 @@ export default class AirwallexPaymentService {
       //for testing purposes, allow forcing a split error based on metadata
       if (getPaymentIntent?.metadata?.throwSplitError) {
         console.log("##### Forcing split error as per metadata #####");
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "fundSplitWithConnectedAccount",
+            payloadData: payload,
+            errorMessage: "Split error forced by metadata",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("SPLIT_ERROR_REQUESTED"));
       }
       if (getPaymentIntent?.status !== "SUCCEEDED") {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "fundSplitWithConnectedAccount",
+            payloadData: payload,
+            errorMessage: "Payment intent status not succeeded",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("PAYMENT_INTENT_NOT_SUCCEEDED"));
       }
       const getKycAccount = await AirwallexKycAccount.findOne({
@@ -3175,6 +3289,16 @@ export default class AirwallexPaymentService {
       const accessToken = await this.getAirWalletxToken();
       console.log("requestPayload", requestPayload);
       if (!accessToken) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "fundSplitWithConnectedAccount",
+            payloadData: payload,
+            errorMessage: "Airwallex token not generated",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
@@ -3183,7 +3307,7 @@ export default class AirwallexPaymentService {
         `-H "Authorization: Bearer ${accessToken}" ` +
         `-H "Content-Type: application/json" ` +
         `-d '${JSON.stringify({ ...requestPayload, request_id: uuidv4() })}'`;
-      console.log("Airwallex fund split curl:\n", fundSplitCurlCmd);
+      // console.log("Airwallex fund split curl:\n", fundSplitCurlCmd);
 
       const response = await fetch(
         `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_splits/create`,
@@ -3251,6 +3375,16 @@ export default class AirwallexPaymentService {
         "❌ Error in fundSplitWithConnectedAccount:",
         error?.message || error,
       );
+      this.logAirwallexPaymentRefundError(
+        {
+          userId,
+          methodName: "fundSplitWithConnectedAccount",
+          payloadData: payload,
+          errorMessage: error?.message || "Unknown error",
+          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+        },
+        () => {},
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
@@ -3262,15 +3396,45 @@ export default class AirwallexPaymentService {
         where: { id: paymentId },
       });
       if (getPaymentIntent.userId !== userId) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "refundPaymentIntent",
+            payloadData: payload,
+            errorMessage: "Payment intent user mismatch",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("PAYMENT_INTENT_USER_MISMATCH"));
       }
 
       if (!getPaymentIntent) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "refundPaymentIntent",
+            payloadData: payload,
+            errorMessage: "Payment intent not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
 
       if (getPaymentIntent?.status !== "SUCCEEDED") {
-        return callback(new Error("PAYMENT_INTENT_REFUND_NOT_SUCCEEDED"));
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "refundPaymentIntent",
+            payloadData: payload,
+            errorMessage: "Payment intent status not succeeded",
+            errorLogs: null,
+          },
+          () => {},
+        );
+        return callback(new Error("PAYMENT_INTENT_STATUS_NOT_SUCCEEDED"));
       }
 
       const paymentIntentId = getPaymentIntent?.airwallexIntentId;
@@ -3281,6 +3445,16 @@ export default class AirwallexPaymentService {
 
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "refundPaymentIntent",
+            payloadData: payload,
+            errorMessage: "Airwallex access token not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"));
       }
 
@@ -3358,12 +3532,35 @@ export default class AirwallexPaymentService {
         "❌ Error in refundPaymentIntent:",
         error?.message || error,
       );
+      this.logAirwallexPaymentRefundError(
+        {
+          userId,
+          methodName: "refundPaymentIntent",
+          payloadData: payload,
+          errorMessage: error?.message || "Unknown error",
+          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+        },
+        () => {},
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
   static async reverseSplitAmountBySplitId({ userId, payload }, callback) {
     try {
       const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "reverseSplitAmountBySplitId",
+            payloadData: payload,
+            errorMessage: "Airwallex access token not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
+        return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"));
+      }
       //for testing purpose
       const { splitId } = payload || {};
 
@@ -3410,6 +3607,16 @@ export default class AirwallexPaymentService {
         "❌ Error in reverseSplitAmountBySplitId:",
         error?.message || error,
       );
+      this.logAirwallexPaymentRefundError(
+        {
+          userId,
+          methodName: "reverseSplitAmountBySplitId",
+          payloadData: payload,
+          errorMessage: error?.message || "Unknown error",
+          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+        },
+        () => {},
+      );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
@@ -3436,6 +3643,16 @@ export default class AirwallexPaymentService {
         ],
       });
       if (!getPaymentIntent) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "mainPaymentRefundProcessHandle",
+            payloadData: payload,
+            errorMessage: "Payment intent not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
       const acceptedRefundSplitStatus = ["RELEASED", "SETTLED"];
@@ -3443,6 +3660,16 @@ export default class AirwallexPaymentService {
         getPaymentIntent?.split &&
         !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)
       ) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "mainPaymentRefundProcessHandle",
+            payloadData: payload,
+            errorMessage: "Invalid refund split status",
+            errorLogs: null,
+          },
+          () => {},
+        );
         return callback(new Error("INVALID_REFUND_SPLIT_STATUS"));
       }
       const refundSplitId = getPaymentIntent?.split?.id;
@@ -3452,6 +3679,19 @@ export default class AirwallexPaymentService {
       console.log("Airwallex Split ID:", airwallexSplitId);
 
       const accessToken = await this.getAirWalletxToken();
+      if(!accessToken){
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "mainPaymentRefundProcessHandle",
+            payloadData: payload,
+            errorMessage: "Airwallex access token not found",
+            errorLogs: null,
+          },
+          () => {},
+        );
+        return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"));
+      }
 
       const requestPayload = {
         request_id: uuidv4(),
@@ -3480,6 +3720,16 @@ export default class AirwallexPaymentService {
 
       const responseBody = await response.json();
       if (!response.ok) {
+        this.logAirwallexPaymentRefundError(
+          {
+            userId,
+            methodName: "mainPaymentRefundProcessHandle",
+            payloadData: payload,
+            errorMessage: responseBody?.message || "FUND_SPLIT_REVERSAL_FAILED",
+            errorLogs: JSON.stringify(responseBody),
+          },
+          () => {},
+        );
         return callback(
           new Error(responseBody?.message || "FUND_SPLIT_REVERSAL_FAILED"),
         );
@@ -3507,6 +3757,16 @@ export default class AirwallexPaymentService {
       console.error(
         "❌ Error in mainPaymentRefundProcessHandle:",
         error?.message || error,
+      );
+      this.logAirwallexPaymentRefundError(
+        {
+          userId,
+          methodName: "mainPaymentRefundProcessHandle",
+          payloadData: payload,
+          errorMessage: error?.message || "INTERNAL_SERVER_ERROR",
+          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+        },
+        () => {},
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
@@ -3611,6 +3871,10 @@ export default class AirwallexPaymentService {
             model: AirwallexPaymentSplit,
             as: "split",
             attributes: { exclude: ["rawPayload", "metadata"] },
+          },
+          {
+            model: AirwallexPaymentSplitReverse,
+            as: "splitReverses"
           },
           {
             model: AirwallexPaymentIntentRefund,

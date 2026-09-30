@@ -1191,7 +1191,6 @@ router.get("/aft-payment-list", async (req, res) => {
   res.return(response);
 });
 
-
 /**
  * @swagger
  * /api/auth/deposit/account-balance:
