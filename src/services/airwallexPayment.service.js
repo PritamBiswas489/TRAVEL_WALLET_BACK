@@ -3655,7 +3655,7 @@ export default class AirwallexPaymentService {
         );
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
-      const acceptedRefundSplitStatus = ["RELEASED", "SETTLED"];
+      const acceptedRefundSplitStatus = ["SETTLED"];
       if (
         getPaymentIntent?.split &&
         !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)
@@ -3670,7 +3670,7 @@ export default class AirwallexPaymentService {
           },
           () => {},
         );
-        return callback(new Error("INVALID_REFUND_SPLIT_STATUS"));
+        return callback(new Error("RECHARGE_STILL_NOT_SETTLED"));
       }
       const refundSplitId = getPaymentIntent?.split?.id;
       const airwallexSplitId = getPaymentIntent?.split?.airwallexSplitId;

@@ -602,6 +602,7 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "refund.accepted",
       "refund.settled",
       "refund.failed",
+      "refund.succeeded"
     ];
 
     const balanceImpactingWebhooks = [
