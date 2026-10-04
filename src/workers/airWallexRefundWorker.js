@@ -11,6 +11,7 @@ import {
 } from "../queues/airwallexRefund.queue.js";
 import db from "../databases/models/index.js";
 import AirwallexPaymentService from "../services/airwallexPayment.service.js";
+import WorkerErrorLogService from "../services/workerErrorLog.service.js";
 
 const connection = new IORedis({
   ...redisConfig,
@@ -163,10 +164,25 @@ export function startAirWallexRefundWorker() {
   });
   worker.on("failed", async (job, err) => {
     console.error(`❌ ${job.name} failed for  (job ${job.id}): ${err.message}`);
+    try {
+      await WorkerErrorLogService.logJobFailure({
+        queue: AIRWALLEX_QUEUE_NAME,
+        job,
+        err,
+      });
+    } catch (logErr) {
+      console.error(
+        `Failed to log job failure for ${job.name} (job ${job.id}): ${logErr.message}`,
+      );
+    }
   });
-  worker.on("error", (err) => {
+  worker.on("error", async (err) => {
     // Connection-level errors (e.g. Redis dropped), not job failures.
     console.error("❌ Airwallex worker connection error:", err?.message || err);
+    await WorkerErrorLogService.logWorkerError({
+      queue: AIRWALLEX_QUEUE_NAME,
+      err,
+    });
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
   });
    console.log(

@@ -11,6 +11,8 @@ import {
   enqueueRefund,
 } from "../queues/airwallexPaymentIntent.queue.js";
 
+import WorkerErrorLogService from "../services/workerErrorLog.service.js";
+
 import db from "../databases/models/index.js";
 const { AirwallexPaymentIntent } = db;
 
@@ -80,6 +82,23 @@ export function startAirwallexPaymentIntentWorker() {
       err?.message || err,
     );
 
+    
+    try{
+        await WorkerErrorLogService.logJobFailure({
+          queue: AIRWALLEX_QUEUE_NAME,
+          job,
+          err,
+      });
+    } catch (logErr) {
+      console.error(
+        `❌ Failed to log job failure for intent ${job.data?.intentId}:`,
+        logErr?.message || logErr,
+      );
+    }
+   
+
+   
+
     const exhausted = job.attemptsMade >= attemptsAllowed;
     if (!exhausted) return; // BullMQ will retry automatically per the backoff config
 
@@ -133,9 +152,14 @@ export function startAirwallexPaymentIntentWorker() {
     }
   });
 
-  worker.on("error", (err) => {
+  worker.on("error", async (err) => {
     // Connection-level errors (e.g. Redis dropped), not job failures.
     console.error("❌ Airwallex worker connection error:", err?.message || err);
+      await WorkerErrorLogService.logWorkerError({
+        queue: AIRWALLEX_QUEUE_NAME,
+        err,
+      });
+     
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
   });
 

@@ -9,6 +9,7 @@ import {
   AIRWALLEX_QUEUE_NAME,
   JOB_NAMES,
 } from "../queues/airwallexTransactionUpdate.queue.js";
+import WorkerErrorLogService from "../services/workerErrorLog.service.js";
 
 const connection = new IORedis({
   ...redisConfig,
@@ -60,6 +61,19 @@ export function walletTransactionsUpdateWorker() {
       `❌ ${job.name} attempt ${job.attemptsMade}/${attemptsAllowed} failed for user ${job.data?.userId}:`,
       err?.message || err,
     );
+   try{
+     await WorkerErrorLogService.logJobFailure({
+      queue: AIRWALLEX_QUEUE_NAME,
+      job,
+      err,
+    });
+
+   } catch (logErr) {
+     console.error(
+       `Failed to log job failure for ${job.name} (job ${job.id}): ${logErr.message}`,
+     );
+   }
+   
 
     const exhausted = job.attemptsMade >= attemptsAllowed;
     if (!exhausted) return; // BullMQ will retry automatically per the backoff config
@@ -67,9 +81,13 @@ export function walletTransactionsUpdateWorker() {
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
   });
 
-  worker.on("error", (err) => {
+  worker.on("error", async (err) => {
     // Connection-level errors (e.g. Redis dropped), not job failures.
     console.error("❌ Airwallex worker connection error:", err?.message || err);
+    await WorkerErrorLogService.logWorkerError({
+      queue: AIRWALLEX_QUEUE_NAME,
+      err,
+    });
     process.env.SENTRY_ENABLED === "true" && Sentry.captureException(err);
   });
 
