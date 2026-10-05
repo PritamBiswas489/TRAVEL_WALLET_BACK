@@ -13,6 +13,7 @@ import { amountUptotwoDecimalPlaces } from "../libraries/utility.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
 import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
 const { User, UserCard, Currency, Op } = db;
+import { translateValue } from "../libraries/tranlateValue.js";
 
 export default class DepositController {
   static async peleCardPaymentConvertToToken(request) {
@@ -60,7 +61,7 @@ export default class DepositController {
               status: 500,
               data: [],
               error: {
-                message: i18n.__("PELECARD_SAVE_CARD_FAILED"),
+                message: translateValue(i18n, "PELECARD_SAVE_CARD_FAILED"),
                 reason: resSaveCardDetails.ERROR,
               },
             };
@@ -68,7 +69,7 @@ export default class DepositController {
           return {
             status: 200,
             data: resSaveCardDetails,
-            message: i18n.__("CARD_DETAILS_SAVED_SUCCESSFULLY"),
+            message: translateValue(i18n, "CARD_DETAILS_SAVED_SUCCESSFULLY"),
             error: {},
           };
         } else {
@@ -80,10 +81,16 @@ export default class DepositController {
               status: 500,
               data: [],
               error: {
-                message:
-                  errorMeaning || i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
-                reason:
-                  errorMeaning || i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
+                message: translateValue(
+                  i18n,
+                  errorMeaning,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
+                reason: translateValue(
+                  i18n,
+                  errorMeaning,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
               },
             };
           } else {
@@ -91,12 +98,16 @@ export default class DepositController {
               status: 500,
               data: [],
               error: {
-                message:
-                  response?.ErrorMessage ||
-                  i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
-                reason:
-                  response?.ErrorMessage ||
-                  i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
+                message: translateValue(
+                  i18n,
+                  response?.ErrorMessage,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
+                reason: translateValue(
+                  i18n,
+                  response?.ErrorMessage,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
               },
             };
           }
@@ -106,7 +117,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
+            message: translateValue(i18n, "PELECARD_CONVERT_TO_TOKEN_FAILED"),
             reason: response?.ERROR || "Unknown error",
           },
         };
@@ -116,7 +127,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -135,8 +146,10 @@ export default class DepositController {
         status: 400,
         data: null,
         error: {
-          message: i18n.__(
-            decryptRequest.error || "FAILED_TO_ACCEPT_REJECT_TRANSFER"
+          message: translateValue(
+            i18n,
+            decryptRequest.error,
+            "FAILED_TO_ACCEPT_REJECT_TRANSFER"
           ),
           reason: "Decryption failed",
         },
@@ -183,7 +196,7 @@ export default class DepositController {
               status: 500,
               data: [],
               error: {
-                message: i18n.__("PELECARD_SAVE_CARD_FAILED"),
+                message: translateValue(i18n, "PELECARD_SAVE_CARD_FAILED"),
                 reason: resSaveCardDetails.ERROR,
               },
             };
@@ -191,7 +204,7 @@ export default class DepositController {
           return {
             status: 200,
             data: buildAes256GcmEncryptRequest(resSaveCardDetails),
-            message: i18n.__("CARD_DETAILS_SAVED_SUCCESSFULLY"),
+            message: translateValue(i18n, "CARD_DETAILS_SAVED_SUCCESSFULLY"),
             error: {},
           };
         } else {
@@ -203,10 +216,16 @@ export default class DepositController {
               status: 500,
               data: [],
               error: {
-                message:
-                  errorMeaning || i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
-                reason:
-                  errorMeaning || i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
+                message: translateValue(
+                  i18n,
+                  errorMeaning,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
+                reason: translateValue(
+                  i18n,
+                  errorMeaning,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
               },
             };
           } else {
@@ -214,12 +233,16 @@ export default class DepositController {
               status: 500,
               data: [],
               error: {
-                message:
-                  response?.ErrorMessage ||
-                  i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
-                reason:
-                  response?.ErrorMessage ||
-                  i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
+                message: translateValue(
+                  i18n,
+                  response?.ErrorMessage,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
+                reason: translateValue(
+                  i18n,
+                  response?.ErrorMessage,
+                  "PELECARD_CONVERT_TO_TOKEN_FAILED"
+                ),
               },
             };
           }
@@ -229,7 +252,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("PELECARD_CONVERT_TO_TOKEN_FAILED"),
+            message: translateValue(i18n, "PELECARD_CONVERT_TO_TOKEN_FAILED"),
             reason: response?.ERROR || "Unknown error",
           },
         };
@@ -239,7 +262,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -260,7 +283,7 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_CARD_NOT_FOUND") },
+          error: { message: translateValue(i18n, "USER_CARD_NOT_FOUND") },
         };
       }
 
@@ -273,7 +296,7 @@ export default class DepositController {
       return {
         status: 200,
         data: updatedUserCard,
-        message: i18n.__("USER_CARD_SET_AS_DEFAULT"),
+        message: translateValue(i18n, "USER_CARD_SET_AS_DEFAULT"),
         error: {},
       };
     } catch (e) {
@@ -281,7 +304,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -300,14 +323,14 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_DEFAULT_CARD_NOT_FOUND") },
+          error: { message: translateValue(i18n, "USER_DEFAULT_CARD_NOT_FOUND") },
         };
       }
 
       return {
         status: 200,
         data: userCard,
-        message: i18n.__("USER_DEFAULT_CARD_FETCHED"),
+        message: translateValue(i18n, "USER_DEFAULT_CARD_FETCHED"),
         error: {},
       };
     } catch (e) {
@@ -315,7 +338,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -342,13 +365,15 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
+          error: {
+            message: translateValue(i18n, "USER_NOT_FOUND", undefined, { id: user.id }),
+          },
         };
       }
       return {
         status: 200,
         data: userWithCards?.cards || [],
-        message: i18n.__("PELECARD_USER_CARD_LIST_FETCHED"),
+        message: translateValue(i18n, "PELECARD_USER_CARD_LIST_FETCHED"),
         error: {},
       };
     } catch (e) {
@@ -356,7 +381,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -383,13 +408,15 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_NOT_FOUND", { id: user.id }) },
+          error: {
+            message: translateValue(i18n, "USER_NOT_FOUND", undefined, { id: user.id }),
+          },
         };
       }
       return {
         status: 200,
         data: buildAes256GcmEncryptRequest(userWithCards?.cards || []),
-        message: i18n.__("PELECARD_USER_CARD_LIST_FETCHED"),
+        message: translateValue(i18n, "PELECARD_USER_CARD_LIST_FETCHED"),
         error: {},
       };
     } catch (e) {
@@ -397,7 +424,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
 
@@ -419,7 +446,7 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_CARD_NOT_FOUND") },
+          error: { message: translateValue(i18n, "USER_CARD_NOT_FOUND") },
         };
       }
 
@@ -428,7 +455,7 @@ export default class DepositController {
       return {
         status: 200,
         data: [],
-        message: i18n.__("USER_CARD_REMOVED_SUCCESSFULLY"),
+        message: translateValue(i18n, "USER_CARD_REMOVED_SUCCESSFULLY"),
         error: {},
       };
     } catch (e) {
@@ -436,7 +463,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -474,7 +501,7 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_CARD_NOT_FOUND") },
+          error: { message: translateValue(i18n, "USER_CARD_NOT_FOUND") },
         };
       }
       const nationalId = "890108566";
@@ -494,7 +521,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("PELECARD_PAYMENT_FAILED"),
+            message: translateValue(i18n, "PELECARD_PAYMENT_FAILED"),
             reason:
               "Get exception error during make payment.check sentry logs.",
           },
@@ -532,8 +559,10 @@ export default class DepositController {
             status: 500,
             data: [],
             error: {
-              message: i18n.__(
+              message: translateValue(
+                i18n,
                 "ADD_TO_WALLET_FAILED",
+                undefined,
                 upgradedData?.PelecardTransactionId
               ),
               reason: savepaymentDetails.ERROR,
@@ -553,8 +582,10 @@ export default class DepositController {
             status: 500,
             data: [],
             error: {
-              message: i18n.__(
+              message: translateValue(
+                i18n,
                 "ADD_TO_WALLET_FAILED",
+                undefined,
                 upgradedData?.PelecardTransactionId
               ),
               reason: updatedWallet.ERROR,
@@ -592,7 +623,7 @@ export default class DepositController {
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
           },
-          message: i18n.__("PELECARD_PAYMENT_SUCCESS"),
+          message: translateValue(i18n, "PELECARD_PAYMENT_SUCCESS"),
           error: {},
         };
       } else {
@@ -600,7 +631,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("PELECARD_PAYMENT_FAILED"),
+            message: translateValue(i18n, "PELECARD_PAYMENT_FAILED"),
             reason: "No statuscode found",
           },
         };
@@ -610,7 +641,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -630,8 +661,10 @@ export default class DepositController {
         status: 400,
         data: null,
         error: {
-          message: i18n.__(
-            decryptRequest.error || "FAILED_TO_ACCEPT_REJECT_TRANSFER"
+          message: translateValue(
+            i18n,
+            decryptRequest.error,
+            "FAILED_TO_ACCEPT_REJECT_TRANSFER"
           ),
           reason: "Decryption failed",
         },
@@ -665,7 +698,7 @@ export default class DepositController {
         return {
           status: 404,
           data: [],
-          error: { message: i18n.__("USER_CARD_NOT_FOUND") },
+          error: { message: translateValue(i18n, "USER_CARD_NOT_FOUND") },
         };
       }
       const nationalId = "890108566";
@@ -685,7 +718,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("PELECARD_PAYMENT_FAILED"),
+            message: translateValue(i18n, "PELECARD_PAYMENT_FAILED"),
             reason:
               "Get exception error during make payment.check sentry logs.",
           },
@@ -723,8 +756,10 @@ export default class DepositController {
             status: 500,
             data: [],
             error: {
-              message: i18n.__(
+              message: translateValue(
+                i18n,
                 "ADD_TO_WALLET_FAILED",
+                undefined,
                 upgradedData?.PelecardTransactionId
               ),
               reason: savepaymentDetails.ERROR,
@@ -744,8 +779,10 @@ export default class DepositController {
             status: 500,
             data: [],
             error: {
-              message: i18n.__(
+              message: translateValue(
+                i18n,
                 "ADD_TO_WALLET_FAILED",
+                undefined,
                 upgradedData?.PelecardTransactionId
               ),
               reason: updatedWallet.ERROR,
@@ -783,7 +820,7 @@ export default class DepositController {
             walletTransactionDetails:
               updatedWallet?.walletTransactionDetails || {},
           }),
-          message: i18n.__("PELECARD_PAYMENT_SUCCESS"),
+          message: translateValue(i18n, "PELECARD_PAYMENT_SUCCESS"),
           error: {},
         };
       } else {
@@ -791,7 +828,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("PELECARD_PAYMENT_FAILED"),
+            message: translateValue(i18n, "PELECARD_PAYMENT_FAILED"),
             reason: "No statuscode found",
           },
         };
@@ -801,7 +838,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -819,7 +856,7 @@ export default class DepositController {
           status: 500,
           data: [],
           error: {
-            message: i18n.__("GET_USER_WALLET_FAILED"),
+            message: translateValue(i18n, "GET_USER_WALLET_FAILED"),
             reason: userWallet.ERROR,
           },
         };
@@ -827,7 +864,7 @@ export default class DepositController {
       return {
         status: 200,
         data: userWallet,
-        message: i18n.__("USER_WALLET_FETCHED_SUCCESSFULLY"),
+        message: translateValue(i18n, "USER_WALLET_FETCHED_SUCCESSFULLY"),
         error: {},
       };
     } catch (e) {
@@ -835,7 +872,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -858,7 +895,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -880,7 +917,7 @@ export default class DepositController {
       return {
         status: 500,
         data: [],
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR"), reason: e.message },
       };
     }
   }

@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import TransferRequestService from "../services/transferRequest.service.js";
 import { buildDecryptRequest } from "../services/crypto.server.js";
 import { buildAes256GcmEncryptRequest } from "../services/crypto.client.service.js";
+import { translateValue } from "../libraries/tranlateValue.js";
 
 export default class TransferRequestController {
   static async sendRequest(request) {
@@ -27,8 +28,10 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "FAILED_TO_SEND_TRANSFER_REQUEST"
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_SEND_TRANSFER_REQUEST"
                 ),
                 reason: err.message,
               },
@@ -37,7 +40,7 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("TRANSFER_REQUEST_EXECUTED_SUCCESSFULLY"),
+            message: translateValue(i18n, "TRANSFER_REQUEST_EXECUTED_SUCCESSFULLY"),
             error: null,
           });
         }
@@ -59,8 +62,10 @@ export default class TransferRequestController {
         status: 400,
         data: null,
         error: {
-          message: i18n.__(
-            decryptRequest.error || "FAILED_TO_ACCEPT_REJECT_TRANSFER"
+          message: translateValue(
+            i18n,
+            decryptRequest.error,
+            "FAILED_TO_ACCEPT_REJECT_TRANSFER"
           ),
           reason: "Decryption failed",
         },
@@ -81,8 +86,10 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "FAILED_TO_SEND_TRANSFER_REQUEST"
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_SEND_TRANSFER_REQUEST"
                 ),
                 reason: err.message,
               },
@@ -91,7 +98,7 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: buildAes256GcmEncryptRequest(response.data),
-            message: i18n.__("TRANSFER_REQUEST_EXECUTED_SUCCESSFULLY"),
+            message: translateValue(i18n, "TRANSFER_REQUEST_EXECUTED_SUCCESSFULLY"),
             error: null,
           });
         }
@@ -124,8 +131,10 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"
                 ),
                 reason: err.message,
               },
@@ -134,8 +143,10 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__(
-              response.data.message || "TRANSFER_APPROVED_SUCCESSFULLY"
+            message: translateValue(
+              i18n,
+              response.data.message,
+              "TRANSFER_APPROVED_SUCCESSFULLY"
             ),
             error: null,
           });
@@ -157,8 +168,10 @@ export default class TransferRequestController {
         status: 400,
         data: null,
         error: {
-          message: i18n.__(
-            decryptRequest.error || "FAILED_TO_ACCEPT_REJECT_TRANSFER"
+          message: translateValue(
+            i18n,
+            decryptRequest.error,
+            "FAILED_TO_ACCEPT_REJECT_TRANSFER"
           ),
           reason: "Decryption failed",
         },
@@ -183,8 +196,10 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_ACCEPT_REJECT_TRANSFER_REQUEST"
                 ),
                 reason: err.message,
               },
@@ -193,8 +208,10 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: buildAes256GcmEncryptRequest(response.data),
-            message: i18n.__(
-              response.data.message || "TRANSFER_APPROVED_SUCCESSFULLY"
+            message: translateValue(
+              i18n,
+              response.data.message,
+              "TRANSFER_APPROVED_SUCCESSFULLY"
             ),
             error: null,
           });
@@ -220,7 +237,7 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_REJECT_TRANSFER_REQUEST"),
+                message: translateValue(i18n, "FAILED_TO_REJECT_TRANSFER_REQUEST"),
                 reason: err.message,
               },
             });
@@ -228,7 +245,7 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("TRANSFER_REQUEST_REJECTED_SUCCESSFULLY"),
+            message: translateValue(i18n, "TRANSFER_REQUEST_REJECTED_SUCCESSFULLY"),
             error: null,
           });
         }
@@ -250,8 +267,10 @@ export default class TransferRequestController {
         status: 400,
         data: null,
         error: {
-          message: i18n.__(
-            decryptRequest.error || "FAILED_TO_ACCEPT_REJECT_TRANSFER"
+          message: translateValue(
+            i18n,
+            decryptRequest.error,
+            "FAILED_TO_ACCEPT_REJECT_TRANSFER"
           ),
           reason: "Decryption failed",
         },
@@ -269,7 +288,7 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_REJECT_TRANSFER_REQUEST"),
+                message: translateValue(i18n, "FAILED_TO_REJECT_TRANSFER_REQUEST"),
                 reason: err.message,
               },
             });
@@ -277,7 +296,7 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: buildAes256GcmEncryptRequest(response.data),
-            message: i18n.__("TRANSFER_REQUEST_REJECTED_SUCCESSFULLY"),
+            message: translateValue(i18n, "TRANSFER_REQUEST_REJECTED_SUCCESSFULLY"),
             error: null,
           });
         }
@@ -304,7 +323,7 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_GET_TRANSFER_REQUEST_HISTORY"),
+                message: translateValue(i18n, "FAILED_TO_GET_TRANSFER_REQUEST_HISTORY"),
                 reason: err.message,
               },
             });
@@ -313,7 +332,7 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("TRANSFER_REQUEST_HISTORY_RETRIEVED_SUCCESSFULLY"),
+            message: translateValue(i18n, "TRANSFER_REQUEST_HISTORY_RETRIEVED_SUCCESSFULLY"),
             error: null,
           });
         }
@@ -338,7 +357,7 @@ export default class TransferRequestController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__("FAILED_TO_GET_TRANSFER_REQUEST"),
+                message: translateValue(i18n, "FAILED_TO_GET_TRANSFER_REQUEST"),
                 reason: err.message,
               },
             });
@@ -346,7 +365,7 @@ export default class TransferRequestController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("TRANSFER_REQUEST_RETRIEVED_SUCCESSFULLY"),
+            message: translateValue(i18n, "TRANSFER_REQUEST_RETRIEVED_SUCCESSFULLY"),
             error: null,
           });
         }

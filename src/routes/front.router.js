@@ -16,8 +16,8 @@ import multer from "multer";
 import DecodeQrCodeService from "../services/decodeQrCode.service.js";
 import BankTransferPaymentController from "../controllers/bankTransferPayment.controller.js";
 import AirwallexPaymentController from "../controllers/airwallexPayment.controller.js";
-
 import { countryCodes } from "../config/countries.js";
+import { fileURLToPath } from "url";
 
 router.use(trackIpAddressDeviceId);
 
@@ -831,5 +831,35 @@ router.get("/retrieve-payment-intent/:paymentIntentId", async (req, res) => {
 
 router.use("/login", loginRouter);
 router.use("/notification", notificationRouter);
+
+/**
+ * @swagger
+ * /api/front/missing-language-keys:
+ *   get:
+ *     summary: Get missing language keys
+ *     tags: [Non authenticated routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Missing language keys fetched successfully
+ */
+router.get("/missing-language-keys", async (req, res) => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  // adjust the relative path to wherever this file sits
+  const MISSING_FILE = path.resolve(__dirname, "../locales/missing-keys.json");
+  let missingKeys = {};
+  if (fs.existsSync(MISSING_FILE)) {
+    missingKeys = JSON.parse(fs.readFileSync(MISSING_FILE, "utf8"));
+  }
+  res.return({
+    status: 200,
+    data: missingKeys,
+    message: "Missing language keys fetched successfully",
+    error: null,
+  });
+});
+
 
 export default router;

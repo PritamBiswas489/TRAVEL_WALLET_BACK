@@ -5,6 +5,7 @@ const i18n = new I18n({
 	locales: ['en', 'he'],
 	defaultLocale: 'en',
 	directory: pathResolve(pathJoin(dirname('./'), 'src', 'locales')),
+	updateFiles: false,
 });
 
 export default i18n;

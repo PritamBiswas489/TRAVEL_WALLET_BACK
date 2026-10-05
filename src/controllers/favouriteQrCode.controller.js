@@ -1,5 +1,6 @@
 import "../config/environment.js";
 import FavouriteQrCodeService from "../services/favouriteQrCode.service.js";
+import { translateValue } from "../libraries/tranlateValue.js";
 export default class FavouriteQrCodeController {
   static async listFavouriteQrCodes(request) {
     const {
@@ -18,8 +19,10 @@ export default class FavouriteQrCodeController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "GET_FAVOURITE_QR_CODES_FAILED"
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "GET_FAVOURITE_QR_CODES_FAILED"
                 ),
                 reason: err.message,
               },
@@ -28,7 +31,7 @@ export default class FavouriteQrCodeController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("GET_FAVOURITE_QR_CODES_SUCCESSFUL"),
+            message: translateValue(i18n, "GET_FAVOURITE_QR_CODES_SUCCESSFUL"),
             error: null,
           });
         }
@@ -53,8 +56,10 @@ export default class FavouriteQrCodeController {
               status: 400,
               data: null,
               error: {
-                message: i18n.__(
-                  err.message || "REMOVE_FAVOURITE_QR_CODE_FAILED"
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "REMOVE_FAVOURITE_QR_CODE_FAILED"
                 ),
                 reason: err.message,
               },
@@ -63,7 +68,7 @@ export default class FavouriteQrCodeController {
           return resolve({
             status: 200,
             data: response.data,
-            message: i18n.__("REMOVE_FAVOURITE_QR_CODE_SUCCESSFUL"),
+            message: translateValue(i18n, "REMOVE_FAVOURITE_QR_CODE_SUCCESSFUL"),
             error: null,
           });
         }

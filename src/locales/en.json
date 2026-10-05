@@ -571,5 +571,7 @@
 	"RECHARGE_COST_PERCENTAGE_NOT_FOUND": "Recharge cost percentage not found.",
 	"FAILED_TO_CREATE_AFT_WALLET_TOPUP": "Failed to create AFT wallet top-up.",
 	"FUND_SPLIT_UPDATE_TITLE": "Recharge status update.",
-	"LANGUAGE_UPDATED_SUCCESSFULLY": "LANGUAGE_UPDATED_SUCCESSFULLY"
+	"LANGUAGE_UPDATED_SUCCESSFULLY": "Language updated successfully.",
+	"AFT_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "AFT payment list fetched successfully",
+	"TESTINGVALUE": "This is a testing value. %s"
 }
