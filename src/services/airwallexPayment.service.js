@@ -3655,7 +3655,7 @@ export default class AirwallexPaymentService {
         );
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
-      const acceptedRefundSplitStatus = ["SETTLED"];
+      const acceptedRefundSplitStatus = ["RELEASED","SETTLED"];
       if (
         getPaymentIntent?.split &&
         !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)

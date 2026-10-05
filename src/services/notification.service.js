@@ -2,12 +2,12 @@ import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 const { Notification, Op, User , AirwallexKycAccount} = db;
-import PushNotificationService from "./pushNotification.service.js";
 import TransferService from "./transfer.service.js";
 import { getcurrencySymbols } from "../libraries/utility.js";
 import TransferRequestService from "./transferRequest.service.js";
 import moment from "moment";
 import il8n from "../config/i18.config.js";
+import { enqueueUserNotification } from "../queues/pushNotification.queue.js";
  
 
 export default class NotificationService {
@@ -53,7 +53,7 @@ export default class NotificationService {
         metadata: transferJSONB,
       });
 
-      PushNotificationService.sendNotification(
+      enqueueUserNotification(
         {
           userId: receiverId,
           title: messageTitle,
@@ -65,12 +65,9 @@ export default class NotificationService {
             senderPhoneNumber: sender?.phoneNumber,
             notificationId: String(notificationData?.id),
           },
-        },
-        (err, res) => {
-          if (err) console.error("Error sending push notification:", err);
-          else console.log("Push notification sent successfully:", res);
-        }
-      );
+        }).catch((err) => {
+          console.error("Error enqueuing user notification:", err);
+        });
 
       //sending notification to sender
        const messageTitleSender =  i18n.__("TRANSFER_NOTIFICATION_TITLE_SENDER");
@@ -88,29 +85,6 @@ export default class NotificationService {
         message: messageBodySender,
         metadata: transferJSONB,
       });
-
-
-      //  PushNotificationService.sendNotification(
-      //   {
-      //     userId: senderId,
-      //     title: messageTitleSender,
-      //     body: messageBodySender,
-      //     data: {
-      //       transferId: String(id),
-      //       action: "SENDER_TRANSFER",
-      //       amount: String(amount) + currencySymbol,
-      //       senderPhoneNumber: sender?.phoneNumber,
-      //       receiverPhoneNumber: receiver?.phoneNumber,
-      //       notificationId: String(sendNotificationData?.id),
-      //     },
-      //   },
-      //   (err, res) => {
-      //     if (err) console.error("Error sending push notification:", err);
-      //     else console.log("Push notification sent successfully:", res);
-      //   }
-      // );
-
-
 
       console.log(
         "Creating wallet transfer notification with data:",
@@ -148,7 +122,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         metadata: transferJSONB,
       });
 
-      PushNotificationService.sendNotification(
+      enqueueUserNotification(
         {
           userId: senderId,
           title: messageTitle,
@@ -160,13 +134,10 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             receiverPhoneNumber: receiver?.phoneNumber,
             notificationId: String(notificationData?.id),
           },
-        },
-        (err, res) => {
-          if (err)
-            console.log("Error sending push notification:", err?.message);
-          else console.log("Push notification sent successfully:", res);
         }
-      );
+      ).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
       console.log(
         "Creating wallet transfer notification with data:",
         transferJSONB
@@ -203,7 +174,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         metadata: transferJSONB,
       });
 
-      PushNotificationService.sendNotification(
+      enqueueUserNotification(
         {
           userId: senderId,
           title: messageTitle,
@@ -215,13 +186,10 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             receiverPhoneNumber: receiver?.phoneNumber,
             notificationId: String(notificationData?.id),
           },
-        },
-        (err, res) => {
-          if (err)
-            console.log("Error sending push notification:", err?.message);
-          else console.log("Push notification sent successfully:", res);
         }
-      );
+      ).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
       console.log(
         "Creating wallet transfer notification with data:",
         transferJSONB
@@ -252,7 +220,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         metadata: transferJSONB,
       });
 
-      PushNotificationService.sendNotification(
+       enqueueUserNotification(
         {
           userId: senderId,
           title: messageTitle,
@@ -265,12 +233,9 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             notificationId: String(notificationData?.id),
           },
         },
-        (err, res) => {
-          if (err)
-            console.error("Error sending push notification:", err?.message);
-          else console.log("Push notification sent successfully:", res);
-        }
-      );
+      ).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
       console.log(
         "Creating wallet transfer notification with data:",
         transferJSONB
@@ -314,7 +279,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        PushNotificationService.sendNotification(
+        enqueueUserNotification(
           {
             userId: receiverId,
             title: messageTitle,
@@ -326,12 +291,10 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
               senderPhoneNumber,
               notificationId: String(notificationData.id),
             },
-          },
-          (err, res) => {
-            if (err) console.error("Error sending push notification:", err);
-            else console.log("Push notification sent successfully:", res);
           }
-        );
+        ).catch((err) => {
+          console.error("Error enqueuing user notification:", err);
+        });
         //sender notification
         const messageTitleSender = i18n.__("TRANSFER_REQUEST_NOTIFICATION_TITLE_SENDER");
         const messageBodySender = i18n.__("TRANSFER_REQUEST_NOTIFICATION_BODY_SENDER", {
@@ -348,26 +311,6 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           message: messageBodySender,
           metadata: transferJSONB,
         });
-
-        // PushNotificationService.sendNotification(
-        //   {
-        //     userId: senderId,
-        //     title: messageTitleSender,
-        //     body: messageBodySender,
-        //     data: {
-        //       transferId: String(result.data.id),
-        //       action: "SENDER_TRANSFER_REQUEST",
-        //       amount: String(amount) + currencySymbol,
-        //       receiverPhoneNumber,
-        //       senderPhoneNumber,
-        //       notificationId: String(senderNotificationData.id),
-        //     },
-        //   },
-        //   (err, res) => {
-        //     if (err) console.error("Error sending push notification:", err);
-        //     else console.log("Push notification sent successfully:", res);
-        //   }
-        // );
 
         console.log(
           "Creating wallet transfer notification with data:",
@@ -420,7 +363,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        PushNotificationService.sendNotification(
+        enqueueUserNotification(
           {
             userId: senderId,
             title: messageTitle,
@@ -432,12 +375,10 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
               receiverPhoneNumber,
               notificationId: String(notificationData.id),
             },
-          },
-          (err, res) => {
-            if (err) console.error("Error sending push notification:", err);
-            else console.log("Push notification sent successfully:", res);
           }
-        );
+        ).catch((err) => {
+          console.error("Error enqueuing user notification:", err);
+        });
 
         console.log(
           "Creating wallet transfer request rejection notification with data:",
@@ -481,7 +422,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        PushNotificationService.sendNotification(
+        enqueueUserNotification(
           {
             userId: senderId,
             title: messageTitle,
@@ -494,11 +435,9 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
               notificationId: String(notificationData.id),
             },
           },
-          (err, res) => {
-            if (err) console.error("Error sending push notification:", err);
-            else console.log("Push notification sent successfully:", res);
-          }
-        );
+        ).catch((err) => {
+          console.error("Error enqueuing user notification:", err);
+        });
 
         console.log(
           "Creating wallet transfer request rejection notification with data:",
@@ -545,7 +484,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        PushNotificationService.sendNotification(
+        enqueueUserNotification(
           {
             userId: senderId,
             title: messageTitle,
@@ -558,11 +497,9 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
               notificationId: String(notificationData.id),
             },
           },
-          (err, res) => {
-            if (err) console.error("Error sending push notification:", err);
-            else console.log("Push notification sent successfully:", res);
-          }
-        );
+        ).catch((err) => {
+          console.error("Error enqueuing user notification:", err);
+        });
 
         console.log(
           "Creating wallet transfer request approval notification with data:",
@@ -833,7 +770,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         message: messageBody,
         metadata: { accountId, status },
       });
-      PushNotificationService.sendNotification(
+      enqueueUserNotification(
         {
           userId,
           title: messageTitle,
@@ -844,12 +781,10 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             status,
             notificationId: String(notificationData.id),
           },
-        },
-        (err, res) => {
-          if (err) console.error("Error sending push notification:", err);
-          else console.log("Push notification sent successfully:", res);
         }
-      );
+      ).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
     }catch(error){
       console.error("Error sending KYC status notification:", error);
     }
@@ -873,7 +808,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         message: messageBody,
         metadata: { status, amount, currency },
       });
-      PushNotificationService.sendNotification(
+      enqueueUserNotification(
         {
           userId,
           title: messageTitle,
@@ -885,12 +820,10 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             currency,
             notificationId: String(notificationData.id),
           },
-        },
-        (err, res) => {
-          if (err) console.error("Error sending push notification:", err);
-          else console.log("Push notification sent successfully:", res);
         }
-      );
+      ).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
     } catch (error) {
       console.error("Error sending fund split notification:", error);
     }
