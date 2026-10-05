@@ -574,5 +574,5 @@
 	"LANGUAGE_UPDATED_SUCCESSFULLY": "Language updated successfully.",
 	"AFT_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "AFT payment list fetched successfully",
 	"TESTINGVALUE": "This is a testing value. %s",
-	"RECHARGE_STILL_NOT_SETTLED": "Recharge is still not settled."
+	"RECHARGE_STILL_NOT_SETTLED": "Recharge is still not complete yet."
 }

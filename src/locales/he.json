@@ -572,5 +572,5 @@
 	"FAILED_TO_CREATE_AFT_WALLET_TOPUP": " יצירת טעינת ארנק AFT נכשלה.",
 	"FUND_SPLIT_UPDATE_TITLE":"סטטוס הטעינה עודכן.",
 	"AFT_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "רשימת תשלומי AFT נמשכה בהצלחה.",
-	"RECHARGE_STILL_NOT_SETTLED": "הטעינה עדיין לא הוסדרה."
+	"RECHARGE_STILL_NOT_SETTLED": "הטעינה עדיין לא הושלמה."
 }
