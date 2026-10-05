@@ -3984,55 +3984,8 @@ export default class AirwallexPaymentService {
         return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
       };
 
-      const parsedUserId = Number.parseInt(dataObject?.metadata?.user_id, 10);
-
-      const recordPayload = {
-        airwallexIntentId: dataObject?.id,
-        merchantOrderId: dataObject?.merchant_order_id || null,
-        customerId: dataObject?.customer_id || null,
-        requestId: dataObject?.request_id || null,
-        status: dataObject?.status || null,
-        amount: dataObject?.amount ?? null,
-        capturedAmount: dataObject?.captured_amount ?? null,
-        currency: dataObject?.currency || null,
-        baseAmount: dataObject?.base_amount ?? null,
-        baseCurrency: dataObject?.base_currency || null,
-        descriptor: dataObject?.descriptor || null,
-        returnUrl: dataObject?.return_url || null,
-        morEnabled: dataObject?.mor_enabled ?? false,
-        userId: Number.isNaN(parsedUserId) ? null : parsedUserId,
-        walletAccountId: dataObject?.metadata?.wallet_account_id || null,
-        topupId: dataObject?.metadata?.topup_id || null,
-        transactionType: dataObject?.metadata?.transaction_type || null,
-        fundingType:
-          dataObject?.additional_info?.account_funding_data?.type || null,
-        transferBetweenOwnAccounts:
-          dataObject?.additional_info?.account_funding_data
-            ?.transfer_between_own_accounts ?? null,
-        recipientAccountNumber:
-          dataObject?.additional_info?.account_funding_data?.recipient
-            ?.account_number || null,
-        recipientFirstName:
-          dataObject?.additional_info?.account_funding_data?.recipient
-            ?.first_name || null,
-        recipientLastName:
-          dataObject?.additional_info?.account_funding_data?.recipient
-            ?.last_name || null,
-        senderFirstName:
-          dataObject?.additional_info?.account_funding_data?.sender
-            ?.first_name || null,
-        senderLastName:
-          dataObject?.additional_info?.account_funding_data?.sender
-            ?.last_name || null,
-        metadata: dataObject?.metadata || null,
-        additionalInfo: dataObject?.additional_info || null,
-        rawPayload: dataObject || null,
-        airwallexCreatedAt: parseAirwallexDate(dataObject?.created_at),
-        airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
-      };
-
       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
-        where: { airwallexIntentId: dataObject.id },
+          where: { airwallexIntentId: dataObject.id },
       });
 
       if (!getPaymentIntent) {
@@ -4041,17 +3994,105 @@ export default class AirwallexPaymentService {
         // block Airwallex's next attempt from actually finding it.
         await redisClient.del(webhookDedupeKey);
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      
       }
 
       const previousStatus = getPaymentIntent?.status || null;
-      await getPaymentIntent.update(recordPayload);
+      const incomingStatus = dataObject.status || null;
 
+      //Status ranking for determining the precedence of different payment intent statuses
+      const STATUS_RANK = {
+        REQUIRES_PAYMENT_METHOD: 1,
+        REQUIRES_CUSTOMER_ACTION: 2,
+        REQUIRES_CAPTURE: 3,
+        PENDING: 4,
+        PENDING_REVIEW: 4,
+        SUCCEEDED: 5,
+        CANCELLED: 5,
+      };
+
+      //previous rank 
+      const previousRank = previousStatus
+        ? (STATUS_RANK[previousStatus] ?? null)
+        : null;
+      //incoming rank
+      const incomingRank = incomingStatus
+        ? (STATUS_RANK[incomingStatus] ?? null)
+        : null;
+
+
+        const isBackwardOrStaleTransition =
+        getPaymentIntent &&
+        previousRank !== null &&
+        incomingRank !== null &&
+        incomingRank <= previousRank &&
+        incomingStatus !== previousStatus;
+
+        if (isBackwardOrStaleTransition) {
+          console.log(
+            `⚠️ Stale or backward transition detected for payment intent ${getPaymentIntent.airwallexIntentId}: ${previousStatus} -> ${incomingStatus}`
+          );
+           return callback(new Error("STALE_OR_BACKWARD_TRANSITION"));
+
+        }
+
+      const parsedUserId = Number.parseInt(dataObject?.metadata?.user_id, 10);
+
+      const recordPayload = {
+            airwallexIntentId: dataObject?.id,
+            merchantOrderId: dataObject?.merchant_order_id || null,
+            customerId: dataObject?.customer_id || null,
+            requestId: dataObject?.request_id || null,
+            status: dataObject?.status || null,
+            amount: dataObject?.amount ?? null,
+            capturedAmount: dataObject?.captured_amount ?? null,
+            currency: dataObject?.currency || null,
+            baseAmount: dataObject?.base_amount ?? null,
+            baseCurrency: dataObject?.base_currency || null,
+            descriptor: dataObject?.descriptor || null,
+            returnUrl: dataObject?.return_url || null,
+            morEnabled: dataObject?.mor_enabled ?? false,
+            userId: Number.isNaN(parsedUserId) ? null : parsedUserId,
+            walletAccountId: dataObject?.metadata?.wallet_account_id || null,
+            topupId: dataObject?.metadata?.topup_id || null,
+            transactionType: dataObject?.metadata?.transaction_type || null,
+            fundingType:
+              dataObject?.additional_info?.account_funding_data?.type || null,
+            transferBetweenOwnAccounts:
+              dataObject?.additional_info?.account_funding_data
+                ?.transfer_between_own_accounts ?? null,
+            recipientAccountNumber:
+              dataObject?.additional_info?.account_funding_data?.recipient
+                ?.account_number || null,
+            recipientFirstName:
+              dataObject?.additional_info?.account_funding_data?.recipient
+                ?.first_name || null,
+            recipientLastName:
+              dataObject?.additional_info?.account_funding_data?.recipient
+                ?.last_name || null,
+            senderFirstName:
+              dataObject?.additional_info?.account_funding_data?.sender
+                ?.first_name || null,
+            senderLastName:
+              dataObject?.additional_info?.account_funding_data?.sender
+                ?.last_name || null,
+            metadata: dataObject?.metadata || null,
+            additionalInfo: dataObject?.additional_info || null,
+            rawPayload: dataObject || null,
+            airwallexCreatedAt: parseAirwallexDate(dataObject?.created_at),
+            airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
+      };
+
+     
+      
       if (previousStatus === "SUCCEEDED") {
         console.log(
           `ℹ️ PaymentIntent ${recordPayload.airwallexIntentId} was already succeeded, skipping fund split`,
         );
         return callback(null, { data: payload });
       }
+
+      await getPaymentIntent.update(recordPayload);
 
       if (
         recordPayload?.status === "SUCCEEDED" &&

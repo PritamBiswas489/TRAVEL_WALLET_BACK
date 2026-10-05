@@ -102,6 +102,13 @@ server.listen(port, async() => {
 
 	  startAirWallexRefundWorker();
 
+	  const { startPushNotificationWorker } =
+      await import(
+        "../src/workers/pushNotification.worker.js"
+      );
+
+	  startPushNotificationWorker();
+
   }
 });
 server.on('error', onError);

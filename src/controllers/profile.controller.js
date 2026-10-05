@@ -7,11 +7,12 @@ import { updatepinValidator } from "../validators/updatepin.validator.js";
 import { verifyPinValidator } from "../validators/verifiy.validator.js";
 import * as Sentry from "@sentry/node";
 import UserService from "../services/user.service.js";
-import PushNotificationService from "../services/pushNotification.service.js";
+ 
 import NotificationService from "../services/notification.service.js";
 import WhitelistMobilesService from "../services/whitelistMobiles.service.js";
 import userSettingsService from "../services/userSettings.service.js";
 import ContactListService from "../services/contactList.service.js";
+import { enqueueUserNotification } from "../queues/pushNotification.queue.js";
 
 const { User, Op, UserKyc, UserWallet, UserFcm, UserCard, WalletPelePayment, WalletTransaction, ApiLogs, Transfer, TransferRequests, UserSettings, Notification  } = db;
 
@@ -436,28 +437,28 @@ export default class ProfileController {
       const body =
         payload?.body ||
         "Dummy push notification for testing purposes.Ignore it.";
-      PushNotificationService.sendNotification(
-        { userId: user.id, title, body, data: { action: "testing_message" } },
-        (err, response) => {
-          if (err) {
-            return resolve({
-              status: 400,
-              data: null,
-              error: {
-                message: i18n.__(err.message),
-                reason: i18n.__("PUSH_NOTIFICATION_ERROR"),
-              },
-            });
-          }
-
-          return resolve({
-            status: 200,
-            data: response,
-            message: i18n.__("PUSH_NOTIFICATION_SUCCESS"),
-            error: {},
-          });
-        },
-      );
+      try {
+        enqueueUserNotification({
+          userId: user.id,
+          title,
+          body,
+          data: { action: "testing_message" },
+        });
+      } catch (e) {
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+        console.error("Error sending push notification:", e);
+        return resolve({
+          status: 500,
+          data: [],
+          error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        });
+      }
+      return resolve({
+        status: 200,
+        data: [],
+        message: i18n.__("PUSH_NOTIFICATION_SENT"),
+        error: {},
+      });
     });
   }
 

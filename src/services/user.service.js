@@ -3,8 +3,8 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import KycService from "./kyc.service.js";
 import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
-import PushNotificationService from "./pushNotification.service.js";
 import moment from "moment-timezone";
+import { enqueueTokenNotification } from "../queues/pushNotification.queue.js";
 
 const { Op, User, UserKyc, UserWallet, UserDevices, UserFcm, UserSettings } = db;
 
@@ -119,22 +119,30 @@ export default class UserService {
         await userFcm.destroy();
       }
       const allDevice = await UserDevices.findAll({ where: { userId: userId } });
-      if(sendNotification && fcmToken){
-        console.log("Sending device logged out notification to FCM token:", fcmToken);
-        PushNotificationService.sendNotificationByFcmToken(
-          {
+      if (sendNotification && fcmToken) {
+        console.log(
+          "Sending device logged out notification to FCM token:",
+          fcmToken,
+        );
+        try {
+          enqueueTokenNotification({
             fcmToken: fcmToken,
-            title: i18n.__("DEVICE_LOGGED_OUT",{ deviceName: deviceName || deviceid  }),
-            body: i18n.__("YOUR_DEVICE_HAS_BEEN_LOGGED_OUT",{ deviceName: deviceName || deviceid }),
+            title: i18n.__("DEVICE_LOGGED_OUT", {
+              deviceName: deviceName || deviceid,
+            }),
+            body: i18n.__("YOUR_DEVICE_HAS_BEEN_LOGGED_OUT", {
+              deviceName: deviceName || deviceid,
+            }),
             data: {
               deviceId: deviceid,
               action: "DEVICE_LOGGED_OUT",
             },
-          },
-          () => {
-            // Notification result ignored intentionally
-          }
-        );
+          });
+        } catch (error) {
+          console.error("Error enqueueing token notification:", error);
+          process.env.SENTRY_ENABLED === "true" &&
+            Sentry.captureException(error);
+        }
       }
       return callback(null, { data:  allDevice });
     } catch (error) {
