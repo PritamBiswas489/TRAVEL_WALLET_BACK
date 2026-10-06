@@ -18,6 +18,7 @@ import BankTransferPaymentController from "../controllers/bankTransferPayment.co
 import AirwallexPaymentController from "../controllers/airwallexPayment.controller.js";
 import { countryCodes } from "../config/countries.js";
 import { fileURLToPath } from "url";
+import i18n from "../config/i18.config.js";
 
 router.use(trackIpAddressDeviceId);
 
@@ -514,6 +515,10 @@ router.post("/airwallex-payment-webhook", async (req, res, next) => {
  */
 router.post("/airwallex-main-global-webhook", async (req, res, next) => {
   try {
+     if(!req?.headers?.i18n) {
+      i18n.setLocale("en")
+      req.headers.i18n = i18n;
+    }
     const payload = { ...req.params, ...req.query, ...req.body };
     console.log("Received Airwallex main global webhook:", payload?.name);
     const kycEventNames = [
@@ -647,8 +652,7 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "payment.funding.failed", // Funding failed (informational)
       "payment.cancelled", // Funds returned to Wallet (Plus)
     ];
-
-     
+   
     if (balanceImpactingWebhooks.includes(payload?.name)) {
       //balance update events
       try {

@@ -275,6 +275,7 @@ export default class AirwallexPaymentController {
 
   static async airwallexKycWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.airwallexKycWebhook(
         { payload, headers },
@@ -284,15 +285,15 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_PROCESS_KYC_WEBHOOK",
+                message: translateValue(i18n, err.message || "FAILED_TO_PROCESS_KYC_WEBHOOK"),
                 reason: err.message,
               },
             });
           }
           return resolve({
             status: 200,
-            data: response.data,
-            message: "KYC Webhook processed successfully",
+            message: translateValue(i18n, "KYC_WEBHOOK_PROCESSED_SUCCESSFULLY"),
+            
             error: null,
           });
         },
@@ -331,7 +332,7 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_UPDATE_ACCOUNT_STATUS",
+                message: translateValue(i18n, err.message || "FAILED_TO_UPDATE_ACCOUNT_STATUS"),
                 reason: err.message,
               },
             });
@@ -339,7 +340,7 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Account status updated successfully",
+            message: translateValue(i18n, "ACCOUNT_STATUS_UPDATED_SUCCESSFULLY"),
             error: null,
           });
         },
@@ -362,7 +363,7 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_SAVE_VERIFIED_KYC_DOCUMENTS",
+                message: translateValue(i18n, err.message || "FAILED_TO_SAVE_VERIFIED_KYC_DOCUMENTS"),
                 reason: err.message,
               },
             });
@@ -370,7 +371,7 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Verified KYC documents saved successfully",
+            message: translateValue(i18n, "VERIFIED_KYC_DOCUMENTS_SAVED_SUCCESSFULLY"),
             error: null,
           });
         },
@@ -414,7 +415,7 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_ADD_DEPOSIT",
+                message: translateValue(i18n, err.message || "FAILED_TO_ADD_DEPOSIT"),
                 reason: err.message,
               },
             });
@@ -422,7 +423,7 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Deposit added successfully",
+            message: translateValue(i18n, "DEPOSIT_ADDED_SUCCESSFULLY"),
             error: null,
           });
         },
@@ -585,6 +586,7 @@ export default class AirwallexPaymentController {
   }
   static async airwallexConnectedTransferWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.airwallexConnectedTransferWebhook(
         payload,
@@ -595,8 +597,10 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message:
-                  err.message || "FAILED_TO_PROCESS_CONNECTED_TRANSFER_WEBHOOK",
+                message: translateValue(
+                  i18n,
+                  err.message || "FAILED_TO_PROCESS_CONNECTED_TRANSFER_WEBHOOK"
+                ),
                 reason: err.message,
               },
             });
@@ -604,7 +608,7 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Connected transfer webhook processed successfully",
+            message: translateValue(i18n, "CONNECTED_TRANSFER_WEBHOOK_PROCESSED_SUCCESSFULLY"),
             error: null,
           });
         },
@@ -736,6 +740,7 @@ export default class AirwallexPaymentController {
   }
   static async handleDepositWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleDepositWebhook(
         payload,
@@ -746,7 +751,7 @@ export default class AirwallexPaymentController {
               status: 400,
               data: null,
               error: {
-                message: err.message || "FAILED_TO_PROCESS_DEPOSIT_WEBHOOK",
+                message: translateValue(i18n, err.message || "FAILED_TO_PROCESS_DEPOSIT_WEBHOOK"),
                 reason: err.message,
               },
             });
@@ -754,7 +759,7 @@ export default class AirwallexPaymentController {
           return resolve({
             status: 200,
             data: response.data,
-            message: "Deposit webhook processed successfully",
+            message: translateValue(i18n, "DEPOSIT_WEBHOOK_PROCESSED_SUCCESSFULLY"),
             error: null,
           });
         },
@@ -887,6 +892,7 @@ export default class AirwallexPaymentController {
 
   static async handleAirwallexChargesWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleAirwallexChargesWebhook(
         payload,
@@ -911,7 +917,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Airwallex charges webhook processed successfully",
+             "AIRWALLEX_CHARGES_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -921,6 +927,7 @@ export default class AirwallexPaymentController {
   }
   static async handleCardHolderWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleCardHolderWebhook(
         payload,
@@ -945,7 +952,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Cardholder webhook processed successfully",
+              "CARDHOLDER_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -955,6 +962,7 @@ export default class AirwallexPaymentController {
   }
   static async handleDebitCardWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleDebitCardWebhook(
         payload,
@@ -979,7 +987,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Debit card webhook processed successfully",
+              "DEBIT_CARD_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -989,6 +997,7 @@ export default class AirwallexPaymentController {
   }
   static async handleCardTransactionsWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleCardTransactionsWebhook(
         payload,
@@ -1013,7 +1022,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Card transactions webhook processed successfully",
+              "CARD_TRANSACTIONS_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1023,6 +1032,7 @@ export default class AirwallexPaymentController {
   }
   static async handleTransactionDisputeWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirWallexVirtualCardSerivice.handleTransactionDisputeWebhook(
         payload,
@@ -1048,7 +1058,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Transaction dispute webhook processed successfully",
+              "TRANSACTION_DISPUTE_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1058,6 +1068,7 @@ export default class AirwallexPaymentController {
   }
   static async handlePaymentIntentWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handlePaymentIntentWebhook(
         payload,
@@ -1082,7 +1093,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Payment intent webhook processed successfully",
+              "PAYMENT_INTENT_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1092,6 +1103,7 @@ export default class AirwallexPaymentController {
   }
   static async handleFundSplitWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleFundSplitWebhook(
         payload,
@@ -1116,7 +1128,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Fund split webhook processed successfully",
+              "FUND_SPLIT_WEBHOOK_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1126,6 +1138,7 @@ export default class AirwallexPaymentController {
   }
   static async handlePaymentIntentReturnWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n;
     return new Promise((resolve) => {
       AirwallexPaymentService.handlePaymentIntentReturnWebhook(
         payload,
@@ -1150,7 +1163,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Payment intent return webhook handled successfully",
+              "PAYMENT_INTENT_RETURN_WEBHOOK_HANDLED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1160,6 +1173,7 @@ export default class AirwallexPaymentController {
   }
   static async handleBalanceUpdateWebhook(request) {
     const { payload, headers } = request;
+    const i18n = headers?.i18n ;
     return new Promise((resolve) => {
       AirwallexPaymentService.handleBalanceUpdateWebhook(
         payload,
@@ -1185,7 +1199,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Balance update webhook handled successfully",
+              "BALANCE_UPDATE_WEBHOOK_HANDLED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1225,7 +1239,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Liveness proactive flow started successfully",
+              "LIVENESS_PROACTIVE_FLOW_STARTED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1267,7 +1281,7 @@ export default class AirwallexPaymentController {
             message:
               translateValue(
                 i18n,
-                "Liveness proactive hosted flow status fetched successfully",
+                "LIVENESS_PROACTIVE_HOSTED_FLOW_STATUS_FETCHED_SUCCESSFULLY",
               ),
             error: null,
           });
@@ -1304,7 +1318,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Liveness check redirect URL fetched successfully",
+              "LIVENESS_CHECK_REDIRECT_URL_FETCHED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1342,7 +1356,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Liveness check error URL fetched successfully",
+              "LIVENESS_CHECK_ERROR_URL_FETCHED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1380,7 +1394,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "AHFI ID saved successfully",
+              "AHFI_ID_SAVED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1419,7 +1433,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "AFT wallet top-up created successfully",
+              "AFT_WALLET_TOPUP_CREATED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1459,7 +1473,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Funds split with connected account successfully",
+              "FUNDS_SPLIT_WITH_CONNECTED_ACCOUNT_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1498,7 +1512,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Payment intent refunded successfully",
+              "PAYMENT_INTENT_REFUNDED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1538,7 +1552,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Split amount reversed by split ID successfully",
+              "SPLIT_AMOUNT_REVERSED_BY_SPLIT_ID_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1578,7 +1592,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Main payment refund process handled successfully",
+              "MAIN_PAYMENT_REFUND_PROCESS_HANDLED_SUCCESSFULLY",
             ),
             error: null,
           });
@@ -1619,7 +1633,7 @@ export default class AirwallexPaymentController {
             message:
               translateValue(
                 i18n,
-                "Main payment reverse split status retrieved by split ID successfully",
+                "MAIN_PAYMENT_REVERSE_SPLIT_STATUS_RETRIEVED_BY_SPLIT_ID_SUCCESSFULLY",
               ),
             error: null,
           });
@@ -1660,7 +1674,7 @@ export default class AirwallexPaymentController {
             message:
               translateValue(
                 i18n,
-                "Reversal of split amount retrieved by split ID successfully",
+                "REVERSAL_OF_SPLIT_AMOUNT_RETRIEVED_BY_SPLIT_ID_SUCCESSFULLY",
               ),
             error: null,
           });
@@ -1738,7 +1752,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "Payment intent retrieved successfully",
+              "PAYMENT_INTENT_RETRIEVED_SUCCESSFULLY",
             ),
             error: null,
           });
