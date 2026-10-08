@@ -145,6 +145,14 @@ export default function AirwallexPaymentIntent(sequelize, DataTypes) {
 				type: DataTypes.DATE,
 				allowNull: true,
 			},
+			cardDetails: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+			},
+			attemptDetails: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+			},
 		},
 		{
 			tableName: "airwallex_payment_intent",

@@ -1442,6 +1442,45 @@ export default class AirwallexPaymentController {
     });
   }
 
+  static async getPaymentIntentDetails(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getPaymentIntentDetails(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_GET_PAYMENT_INTENT_DETAILS",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "PAYMENT_INTENT_DETAILS_RETRIEVED_SUCCESSFULLY",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
   static async fundSplitWithConnectedAccount(request) {
     const {
       payload,
@@ -1714,6 +1753,45 @@ export default class AirwallexPaymentController {
             message: translateValue(
               i18n,
               "AFT_PAYMENT_LIST_FETCHED_SUCCESSFULLY",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async getAftRefundList(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+    const userId = user?.id || 1;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.getAftRefundList(
+        { userId, i18n, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_GET_AFT_REFUND_LIST",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "AFT_REFUND_LIST_FETCHED_SUCCESSFULLY",
             ),
             error: null,
           });

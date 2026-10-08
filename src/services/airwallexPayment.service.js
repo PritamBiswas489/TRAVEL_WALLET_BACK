@@ -27,6 +27,7 @@ import {
 
 import { enqueueUpdateTransactions } from "../queues/airwallexTransactionUpdate.queue.js";
 import { enqueueReverseSplitStatusCheck } from "../queues/airwallexRefund.queue.js";
+import { get } from "http";
 
 const {
   sequelize,
@@ -2929,7 +2930,10 @@ export default class AirwallexPaymentService {
     }
   }
 
-  static async logAirwallexPaymentRefundError({ userId, methodName, payloadData, errorMessage, errorLogs }, callback) {
+  static async logAirwallexPaymentRefundError(
+    { userId, methodName, payloadData, errorMessage, errorLogs },
+    callback,
+  ) {
     try {
       await AirwallexPaymentRefundErrorLogs.create({
         userId: userId ?? null,
@@ -2949,10 +2953,8 @@ export default class AirwallexPaymentService {
     }
   }
 
-
   static async createAftWalletTopup({ userId, payload }, callback) {
     try {
-      
       const { amount: mainAmount } = payload;
       const getAirwallexCustomerId = await this.getAirwallexCustomerId(userId);
       console.log(
@@ -3179,6 +3181,8 @@ export default class AirwallexPaymentService {
         airwallexUpdatedAt: parseAirwallexDate(responseBody?.updated_at),
       };
 
+      
+
       const existingIntent = await AirwallexPaymentIntent.findOne({
         where: { airwallexIntentId: responseBody.id },
       });
@@ -3192,7 +3196,7 @@ export default class AirwallexPaymentService {
       return callback(null, { data: responseBody });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      
+
       console.error(
         "❌ Error creating AFT wallet topup:",
         error?.message || error,
@@ -3203,11 +3207,76 @@ export default class AirwallexPaymentService {
           methodName: "createAftWalletTopup",
           payloadData: payload,
           errorMessage: error?.message || "INTERNAL_SERVER_ERROR",
-          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+          errorLogs:
+            typeof error === "object"
+              ? JSON.stringify({
+                  message: error?.message,
+                  stack: error?.stack,
+                  status: error?.status,
+                  statusText: error?.statusText,
+                })
+              : error || null,
         },
         () => {},
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+  static async getPaymentIntentDetails({ userId, payload }, callback) {
+    try {
+      let airWallexPaymentIntentId = payload?.paymentIntentId || null;
+      if (payload?.paymentId) {
+        const getAirwallexPaymentIntent = await AirwallexPaymentIntent.findOne({
+          where: { id: payload?.paymentId, userId },
+        });
+        if (!getAirwallexPaymentIntent) {
+          return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+        }
+        airWallexPaymentIntentId =
+          getAirwallexPaymentIntent.airwallexIntentId || null;
+      } else if (airWallexPaymentIntentId) {
+        // Restrict lookup to intents owned by the caller
+        const owned = await AirwallexPaymentIntent.findOne({
+          where: { airwallexIntentId: airWallexPaymentIntentId, userId },
+        });
+        if (!owned) {
+          return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+        }
+      }
+      if (!airWallexPaymentIntentId) {
+        return callback(
+          new Error("PAYMENT_ID_OR_PAYMENT_INTENT_ID_NOT_PROVIDED"),
+        );
+      }
+
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const response = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/payment_intents/${encodeURIComponent(airWallexPaymentIntentId)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const responseBody = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          `Airwallex PaymentIntent retrieval failed: ${JSON.stringify(responseBody)}`,
+        );
+      }
+      return callback(null, { data: responseBody });
+    } catch (error) {
+      console.error(
+        "❌ Error getting payment intent details:",
+        error?.message || error,
+      );
+      callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
   static async fundSplitWithConnectedAccount({ userId, payload }, callback) {
@@ -3381,7 +3450,15 @@ export default class AirwallexPaymentService {
           methodName: "fundSplitWithConnectedAccount",
           payloadData: payload,
           errorMessage: error?.message || "Unknown error",
-          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+          errorLogs:
+            typeof error === "object"
+              ? JSON.stringify({
+                  message: error?.message,
+                  stack: error?.stack,
+                  status: error?.status,
+                  statusText: error?.statusText,
+                })
+              : error || null,
         },
         () => {},
       );
@@ -3459,13 +3536,13 @@ export default class AirwallexPaymentService {
       }
 
       const requestPayload = {
-            payment_intent_id: paymentIntentId,
-            request_id: uuidv4(),
-            metadata: {
-              userId,
-              paymentId,
-            },
-          };
+        payment_intent_id: paymentIntentId,
+        request_id: uuidv4(),
+        metadata: {
+          userId,
+          paymentId,
+        },
+      };
 
       if (payload?.amount) {
         requestPayload.amount = payload.amount;
@@ -3538,7 +3615,15 @@ export default class AirwallexPaymentService {
           methodName: "refundPaymentIntent",
           payloadData: payload,
           errorMessage: error?.message || "Unknown error",
-          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+          errorLogs:
+            typeof error === "object"
+              ? JSON.stringify({
+                  message: error?.message,
+                  stack: error?.stack,
+                  status: error?.status,
+                  statusText: error?.statusText,
+                })
+              : error || null,
         },
         () => {},
       );
@@ -3613,7 +3698,15 @@ export default class AirwallexPaymentService {
           methodName: "reverseSplitAmountBySplitId",
           payloadData: payload,
           errorMessage: error?.message || "Unknown error",
-          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+          errorLogs:
+            typeof error === "object"
+              ? JSON.stringify({
+                  message: error?.message,
+                  stack: error?.stack,
+                  status: error?.status,
+                  statusText: error?.statusText,
+                })
+              : error || null,
         },
         () => {},
       );
@@ -3655,7 +3748,7 @@ export default class AirwallexPaymentService {
         );
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
-      const acceptedRefundSplitStatus = ["RELEASED","SETTLED"];
+      const acceptedRefundSplitStatus = ["RELEASED", "SETTLED"];
       if (
         getPaymentIntent?.split &&
         !acceptedRefundSplitStatus.includes(getPaymentIntent.split.status)
@@ -3679,7 +3772,7 @@ export default class AirwallexPaymentService {
       console.log("Airwallex Split ID:", airwallexSplitId);
 
       const accessToken = await this.getAirWalletxToken();
-      if(!accessToken){
+      if (!accessToken) {
         this.logAirwallexPaymentRefundError(
           {
             userId,
@@ -3747,8 +3840,13 @@ export default class AirwallexPaymentService {
 
       // Enqueue a job to check the status of the reverse split after creating it.
       setImmediate(() => {
-        console.log(`Enqueuing reverse split status check for reverseSplitId=${createReverseSplitResponse.id}`);
-        enqueueReverseSplitStatusCheck({ reverseSplitId: createReverseSplitResponse.id, userId : userId });
+        console.log(
+          `Enqueuing reverse split status check for reverseSplitId=${createReverseSplitResponse.id}`,
+        );
+        enqueueReverseSplitStatusCheck({
+          reverseSplitId: createReverseSplitResponse.id,
+          userId: userId,
+        });
       });
 
       return callback(null, { data: createReverseSplitResponse });
@@ -3764,7 +3862,15 @@ export default class AirwallexPaymentService {
           methodName: "mainPaymentRefundProcessHandle",
           payloadData: payload,
           errorMessage: error?.message || "INTERNAL_SERVER_ERROR",
-          errorLogs: typeof error === "object" ? JSON.stringify({ message: error?.message, stack: error?.stack , status: error?.status, statusText: error?.statusText }) : error || null,
+          errorLogs:
+            typeof error === "object"
+              ? JSON.stringify({
+                  message: error?.message,
+                  stack: error?.stack,
+                  status: error?.status,
+                  statusText: error?.statusText,
+                })
+              : error || null,
         },
         () => {},
       );
@@ -3783,9 +3889,7 @@ export default class AirwallexPaymentService {
         });
 
       if (!getReverseSplitStatusResponse) {
-        return callback(
-          new Error("REVERSE_SPLIT_NOT_FOUND"),
-        );
+        return callback(new Error("REVERSE_SPLIT_NOT_FOUND"));
       }
       const airwallexRevId = getReverseSplitStatusResponse.airwallexRevId;
       const accessToken = await this.getAirWalletxToken();
@@ -3800,16 +3904,19 @@ export default class AirwallexPaymentService {
         },
       );
 
-      const reverseSplitStatusResponseBody = await reverseSplitStatusResponse.json();
+      const reverseSplitStatusResponseBody =
+        await reverseSplitStatusResponse.json();
       if (!reverseSplitStatusResponse.ok) {
         return callback(
           new Error(
-            reverseSplitStatusResponseBody?.message || "FAILED_TO_GET_REVERSE_SPLIT_STATUS",
+            reverseSplitStatusResponseBody?.message ||
+              "FAILED_TO_GET_REVERSE_SPLIT_STATUS",
           ),
         );
       }
 
-      getReverseSplitStatusResponse.status = reverseSplitStatusResponseBody.status;
+      getReverseSplitStatusResponse.status =
+        reverseSplitStatusResponseBody.status;
       await getReverseSplitStatusResponse.save();
 
       return callback(null, { data: getReverseSplitStatusResponse });
@@ -3865,8 +3972,8 @@ export default class AirwallexPaymentService {
       const paymentList = await AirwallexPaymentIntent.findAndCountAll({
         where: { userId },
         order: [["createdAt", "DESC"]],
-         attributes: {
-          exclude: ["rawPayload", "metadata", "additionalInfo"],
+        attributes: {
+          exclude: ["rawPayload", "metadata", "additionalInfo", "attemptDetails"],
           include: [
             [
               db.Sequelize.literal(`(
@@ -3896,7 +4003,7 @@ export default class AirwallexPaymentService {
           },
           {
             model: AirwallexPaymentSplitReverse,
-            as: "splitReverses"
+            as: "splitReverses",
           },
           {
             model: AirwallexPaymentIntentRefund,
@@ -3920,6 +4027,61 @@ export default class AirwallexPaymentService {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
         "❌ Error fetching AFT payment list:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+
+  static async getAftRefundList({ userId, i18n, payload }, callback) {
+     try{
+      const page = Math.max(Number.parseInt(payload?.page, 10) || 1, 1);
+      const limit = Math.max(Number.parseInt(payload?.limit, 10) || 10, 1);
+      const status = payload?.status?.toLowerCase() || "all";
+      const offset = (page - 1) * limit;
+      const whereClause = {};
+      if (status === "pending") {
+        whereClause.status = "RECEIVED";
+      } else if (status === "completed") {
+        whereClause.status = {
+          [Op.in]: ["ACCEPTED", "SETTLED", "FAILED","SUCCEEDED"],
+        };
+      } else if (status !== "all") {
+        return callback(new Error("INVALID_REFUND_STATUS_FILTER"));
+      }
+      
+      const refundList = await AirwallexPaymentIntentRefund.findAndCountAll({
+        where: whereClause,
+        order: [["createdAt", "DESC"]],
+        attributes: { exclude: ["rawPayload", "metadata"] },
+        include: [
+          {
+            model: AirwallexPaymentIntent,
+            as: "paymentIntent",
+            where: { userId },
+            required: true,
+            attributes: { exclude: ["rawPayload", "metadata","attemptDetails"] },
+          },
+        ],
+        limit,
+        offset,
+      });
+
+      return callback(null, {
+        data: {
+          total: refundList.count,
+          page,
+          limit,
+          refunds: refundList.rows,
+        },
+      });
+
+
+
+     } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error fetching AFT refund list:",
         error?.message || error,
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
@@ -3985,7 +4147,7 @@ export default class AirwallexPaymentService {
       };
 
       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
-          where: { airwallexIntentId: dataObject.id },
+        where: { airwallexIntentId: dataObject.id },
       });
 
       if (!getPaymentIntent) {
@@ -3994,7 +4156,6 @@ export default class AirwallexPaymentService {
         // block Airwallex's next attempt from actually finding it.
         await redisClient.del(webhookDedupeKey);
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
-      
       }
 
       const previousStatus = getPaymentIntent?.status || null;
@@ -4011,7 +4172,7 @@ export default class AirwallexPaymentService {
         CANCELLED: 5,
       };
 
-      //previous rank 
+      //previous rank
       const previousRank = previousStatus
         ? (STATUS_RANK[previousStatus] ?? null)
         : null;
@@ -4020,77 +4181,96 @@ export default class AirwallexPaymentService {
         ? (STATUS_RANK[incomingStatus] ?? null)
         : null;
 
-
-        const isBackwardOrStaleTransition =
+      const isBackwardOrStaleTransition =
         getPaymentIntent &&
         previousRank !== null &&
         incomingRank !== null &&
         incomingRank <= previousRank &&
         incomingStatus !== previousStatus;
 
-        if (isBackwardOrStaleTransition) {
-          console.log(
-            `⚠️ Stale or backward transition detected for payment intent ${getPaymentIntent.airwallexIntentId}: ${previousStatus} -> ${incomingStatus}`
-          );
-           return callback(new Error("STALE_OR_BACKWARD_TRANSITION"));
-
-        }
+      if (isBackwardOrStaleTransition) {
+        console.log(
+          `⚠️ Stale or backward transition detected for payment intent ${getPaymentIntent.airwallexIntentId}: ${previousStatus} -> ${incomingStatus}`,
+        );
+        return callback(new Error("STALE_OR_BACKWARD_TRANSITION"));
+      }
 
       const parsedUserId = Number.parseInt(dataObject?.metadata?.user_id, 10);
 
       const recordPayload = {
-            airwallexIntentId: dataObject?.id,
-            merchantOrderId: dataObject?.merchant_order_id || null,
-            customerId: dataObject?.customer_id || null,
-            requestId: dataObject?.request_id || null,
-            status: dataObject?.status || null,
-            amount: dataObject?.amount ?? null,
-            capturedAmount: dataObject?.captured_amount ?? null,
-            currency: dataObject?.currency || null,
-            baseAmount: dataObject?.base_amount ?? null,
-            baseCurrency: dataObject?.base_currency || null,
-            descriptor: dataObject?.descriptor || null,
-            returnUrl: dataObject?.return_url || null,
-            morEnabled: dataObject?.mor_enabled ?? false,
-            userId: Number.isNaN(parsedUserId) ? null : parsedUserId,
-            walletAccountId: dataObject?.metadata?.wallet_account_id || null,
-            topupId: dataObject?.metadata?.topup_id || null,
-            transactionType: dataObject?.metadata?.transaction_type || null,
-            fundingType:
-              dataObject?.additional_info?.account_funding_data?.type || null,
-            transferBetweenOwnAccounts:
-              dataObject?.additional_info?.account_funding_data
-                ?.transfer_between_own_accounts ?? null,
-            recipientAccountNumber:
-              dataObject?.additional_info?.account_funding_data?.recipient
-                ?.account_number || null,
-            recipientFirstName:
-              dataObject?.additional_info?.account_funding_data?.recipient
-                ?.first_name || null,
-            recipientLastName:
-              dataObject?.additional_info?.account_funding_data?.recipient
-                ?.last_name || null,
-            senderFirstName:
-              dataObject?.additional_info?.account_funding_data?.sender
-                ?.first_name || null,
-            senderLastName:
-              dataObject?.additional_info?.account_funding_data?.sender
-                ?.last_name || null,
-            metadata: dataObject?.metadata || null,
-            additionalInfo: dataObject?.additional_info || null,
-            rawPayload: dataObject || null,
-            airwallexCreatedAt: parseAirwallexDate(dataObject?.created_at),
-            airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
+        airwallexIntentId: dataObject?.id,
+        merchantOrderId: dataObject?.merchant_order_id || null,
+        customerId: dataObject?.customer_id || null,
+        requestId: dataObject?.request_id || null,
+        status: dataObject?.status || null,
+        amount: dataObject?.amount ?? null,
+        capturedAmount: dataObject?.captured_amount ?? null,
+        currency: dataObject?.currency || null,
+        baseAmount: dataObject?.base_amount ?? null,
+        baseCurrency: dataObject?.base_currency || null,
+        descriptor: dataObject?.descriptor || null,
+        returnUrl: dataObject?.return_url || null,
+        morEnabled: dataObject?.mor_enabled ?? false,
+        userId: Number.isNaN(parsedUserId) ? null : parsedUserId,
+        walletAccountId: dataObject?.metadata?.wallet_account_id || null,
+        topupId: dataObject?.metadata?.topup_id || null,
+        transactionType: dataObject?.metadata?.transaction_type || null,
+        fundingType:
+          dataObject?.additional_info?.account_funding_data?.type || null,
+        transferBetweenOwnAccounts:
+          dataObject?.additional_info?.account_funding_data
+            ?.transfer_between_own_accounts ?? null,
+        recipientAccountNumber:
+          dataObject?.additional_info?.account_funding_data?.recipient
+            ?.account_number || null,
+        recipientFirstName:
+          dataObject?.additional_info?.account_funding_data?.recipient
+            ?.first_name || null,
+        recipientLastName:
+          dataObject?.additional_info?.account_funding_data?.recipient
+            ?.last_name || null,
+        senderFirstName:
+          dataObject?.additional_info?.account_funding_data?.sender
+            ?.first_name || null,
+        senderLastName:
+          dataObject?.additional_info?.account_funding_data?.sender
+            ?.last_name || null,
+        metadata: dataObject?.metadata || null,
+        additionalInfo: dataObject?.additional_info || null,
+        rawPayload: dataObject || null,
+        airwallexCreatedAt: parseAirwallexDate(dataObject?.created_at),
+        airwallexUpdatedAt: parseAirwallexDate(dataObject?.updated_at),
       };
 
-     
-      
       if (previousStatus === "SUCCEEDED") {
         console.log(
           `ℹ️ PaymentIntent ${recordPayload.airwallexIntentId} was already succeeded, skipping fund split`,
         );
         return callback(null, { data: payload });
       }
+
+      const paymentIntentDetails = await new Promise((resolve, reject) => {
+        this.getPaymentIntentDetails(
+          {
+            userId: getPaymentIntent.userId,
+            payload: {
+              paymentIntentId: recordPayload.airwallexIntentId,
+            },
+          },
+          (err, result) => {
+           if(result) {
+                resolve(result);
+           } else {
+                resolve(null);
+           }
+          },
+        );
+      });
+    
+     if(paymentIntentDetails?.data) {
+         recordPayload.attemptDetails = paymentIntentDetails?.data || null;
+         recordPayload.cardDetails = paymentIntentDetails?.data?.latest_payment_attempt?.payment_method || null;
+     }
 
       await getPaymentIntent.update(recordPayload);
 

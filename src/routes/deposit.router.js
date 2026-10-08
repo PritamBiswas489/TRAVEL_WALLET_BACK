@@ -961,6 +961,38 @@ router.post('/create-aft-wallet-topup',async (req, res) => {
 });
 
 
+
+/**
+ * @swagger
+ * /api/auth/deposit/get-airwallex-payment-intent-details:
+ *   get:
+ *     summary: Get Airwallex payment intent details
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: paymentId
+ *         schema:
+ *           type: string
+ *         description: Internal payment ID
+ *       - in: query
+ *         name: paymentIntentId
+ *         schema:
+ *           type: string
+ *         description: Airwallex payment intent ID
+ *     responses:
+ *       200:
+ *         description: Success - Payment intent details retrieved
+ */
+router.get("/get-airwallex-payment-intent-details", async (req, res) => {
+  const response = await AirwallexPaymentController.getPaymentIntentDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
 /**
  * @swagger
  * /api/auth/deposit/fund-split-with-connected-account:
@@ -1188,6 +1220,46 @@ router.get("/get-reverse-split-amount-by-split-id", async (req, res) => {
  */
 router.get("/aft-payment-list", async (req, res) => {
   const response = await AirwallexPaymentController.getAftPaymentList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+/**
+ * @swagger
+ * /api/auth/deposit/aft-refund-list:
+ *   get:
+ *     summary: Get AFT refund list for the authenticated user
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [all, pending, completed]
+ *           default: all
+ *         description: Filter refunds by status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of records per page
+ *     responses:
+ *       200:
+ *         description: Success - AFT refund list retrieved
+ */
+router.get("/aft-refund-list", async (req, res) => {
+  const response = await AirwallexPaymentController.getAftRefundList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
 

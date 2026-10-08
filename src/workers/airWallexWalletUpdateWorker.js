@@ -45,7 +45,7 @@ export function walletTransactionsUpdateWorker() {
     },
     {
       connection,
-      concurrency: 5,
+      concurrency: 4,
     },
   );
 
