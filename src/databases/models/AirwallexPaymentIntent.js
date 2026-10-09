@@ -153,6 +153,24 @@ export default function AirwallexPaymentIntent(sequelize, DataTypes) {
 				type: DataTypes.JSONB,
 				allowNull: true,
 			},
+			totalRefundAmount: {
+				type: DataTypes.DECIMAL(20, 2),
+				allowNull: true,
+			},
+			isCompleteRefund: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: false,
+			},
+			totalReverseSplitAmount: {
+				type: DataTypes.DECIMAL(20, 2),
+				allowNull: true,
+			},
+			isCompleteReverseSplit: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: false,
+			},
 		},
 		{
 			tableName: "airwallex_payment_intent",

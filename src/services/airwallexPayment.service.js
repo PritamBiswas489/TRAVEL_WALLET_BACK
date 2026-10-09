@@ -26,7 +26,7 @@ import {
 } from "../queues/airwallexPaymentIntent.queue.js";
 
 import { enqueueUpdateTransactions } from "../queues/airwallexTransactionUpdate.queue.js";
-import { enqueueReverseSplitStatusCheck } from "../queues/airwallexRefund.queue.js";
+import { enqueueReverseSplitStatusCheck, enqueueUpdateReverseSplitRefundPaymentIntentRecord } from "../queues/airwallexRefund.queue.js";
 import { get } from "http";
 
 const {
@@ -2233,6 +2233,136 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
+  static async updatePaymentIntentRefundAndReverseSplitRecord({ payload, userId },callback) {
+    try {
+      let airWallexPaymentIntentId = payload?.paymentIntentId || null;
+      let paymentIntentRecord;
+      if (payload?.paymentId) {
+        paymentIntentRecord = await AirwallexPaymentIntent.findOne({
+          include:[
+            {
+              model: AirwallexPaymentSplit,
+              as: "split",
+            },
+          ],
+          where: { id: payload?.paymentId, userId },
+
+        });
+        if (!paymentIntentRecord) {
+          return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+        }
+        airWallexPaymentIntentId =
+          paymentIntentRecord.airwallexIntentId || null;
+      } else if (airWallexPaymentIntentId) {
+        paymentIntentRecord = await AirwallexPaymentIntent.findOne({
+           include:[
+            {
+              model: AirwallexPaymentSplit,
+              as: "split",
+            },
+          ],
+          where: { airwallexIntentId: airWallexPaymentIntentId, userId },
+        });
+        if (!paymentIntentRecord) {
+          return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+        }
+      }
+      if (!airWallexPaymentIntentId) {
+        return callback(
+          new Error("PAYMENT_ID_OR_PAYMENT_INTENT_ID_NOT_PROVIDED"),
+        );
+      }
+
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const response = await axios.get(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/refunds`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          params: { payment_intent_id: airWallexPaymentIntentId, page_size:1000 },
+        },
+      );
+      const refunds = Array.isArray(response.data?.items)
+        ? response.data.items
+        : [];
+
+     
+      const totalRefundAmount = refunds.reduce(
+        (sum, refund) =>
+          refund.status === "SUCCEEDED" ? sum + Number(refund.amount || 0) : sum,
+        0,
+      );
+       if(paymentIntentRecord.splitAmount === totalRefundAmount) {
+        paymentIntentRecord.isCompleteRefund =  true;         
+       }
+       paymentIntentRecord.totalRefundAmount = totalRefundAmount;
+
+
+     
+       let totalSplitAmount = 0;
+       let isCompleteReverseSplit = false;
+       let reverseSplitItems =   [];
+       if(paymentIntentRecord?.split?.airwallexSplitId){
+           const reverseSplitStatusResponse = await fetch(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/?funds_split_id=${paymentIntentRecord.split.airwallexSplitId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+         const reverseSplitStatusResponseBody =   await reverseSplitStatusResponse.json();
+         reverseSplitItems.push(...(reverseSplitStatusResponseBody?.items || []));
+         
+         totalSplitAmount = reverseSplitItems.reduce(
+           (sum, item) =>
+             item.status === "SETTLED" ? sum + Number(item.amount || 0) : sum,
+           0,
+         );
+         isCompleteReverseSplit = totalSplitAmount === paymentIntentRecord.splitAmount;
+       }
+
+       paymentIntentRecord.totalReverseSplitAmount = totalSplitAmount;
+       paymentIntentRecord.isCompleteReverseSplit = isCompleteReverseSplit;
+
+
+
+
+      await  paymentIntentRecord.save();
+
+     
+
+      return callback(null, {
+        data: {
+          paymentIntentId: airWallexPaymentIntentId,
+          totalRefundAmount: paymentIntentRecord.totalRefundAmount,
+          isCompleteRefund: paymentIntentRecord.isCompleteRefund,
+          totalReverseSplitAmount: paymentIntentRecord.totalReverseSplitAmount,
+          isCompleteReverseSplit: paymentIntentRecord.isCompleteReverseSplit,
+          refunds,
+          totalSplitAmount,
+          isCompleteReverseSplit,
+          reverseSplitItems,
+        },
+      });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "Error updating payment intent refund and reverse split record:",
+        error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
   static async getWalletTransactionHistory(
     { userId, page, limit, filter },
     callback,
@@ -3181,8 +3311,6 @@ export default class AirwallexPaymentService {
         airwallexUpdatedAt: parseAirwallexDate(responseBody?.updated_at),
       };
 
-      
-
       const existingIntent = await AirwallexPaymentIntent.findOne({
         where: { airwallexIntentId: responseBody.id },
       });
@@ -3973,7 +4101,12 @@ export default class AirwallexPaymentService {
         where: { userId },
         order: [["createdAt", "DESC"]],
         attributes: {
-          exclude: ["rawPayload", "metadata", "additionalInfo", "attemptDetails"],
+          exclude: [
+            "rawPayload",
+            "metadata",
+            "additionalInfo",
+            "attemptDetails",
+          ],
           include: [
             [
               db.Sequelize.literal(`(
@@ -4034,22 +4167,22 @@ export default class AirwallexPaymentService {
   }
 
   static async getAftRefundList({ userId, i18n, payload }, callback) {
-     try{
+    try {
       const page = Math.max(Number.parseInt(payload?.page, 10) || 1, 1);
       const limit = Math.max(Number.parseInt(payload?.limit, 10) || 10, 1);
       const status = payload?.status?.toLowerCase() || "all";
       const offset = (page - 1) * limit;
       const whereClause = {};
       if (status === "pending") {
-        whereClause.status = { [Op.in]: ["ACCEPTED","RECEIVED"] };
+        whereClause.status = { [Op.in]: ["ACCEPTED", "RECEIVED"] };
       } else if (status === "completed") {
         whereClause.status = {
-          [Op.in]: [ "SETTLED", "FAILED","SUCCEEDED"],
+          [Op.in]: ["SETTLED", "FAILED", "SUCCEEDED"],
         };
       } else if (status !== "all") {
         return callback(new Error("INVALID_REFUND_STATUS_FILTER"));
       }
-      
+
       const refundList = await AirwallexPaymentIntentRefund.findAndCountAll({
         where: whereClause,
         order: [["createdAt", "DESC"]],
@@ -4060,7 +4193,9 @@ export default class AirwallexPaymentService {
             as: "paymentIntent",
             where: { userId },
             required: true,
-            attributes: { exclude: ["rawPayload", "metadata","attemptDetails"] },
+            attributes: {
+              exclude: ["rawPayload", "metadata", "attemptDetails"],
+            },
           },
         ],
         limit,
@@ -4075,10 +4210,7 @@ export default class AirwallexPaymentService {
           refunds: refundList.rows,
         },
       });
-
-
-
-     } catch (error) {
+    } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
         "❌ Error fetching AFT refund list:",
@@ -4258,19 +4390,21 @@ export default class AirwallexPaymentService {
             },
           },
           (err, result) => {
-           if(result) {
-                resolve(result);
-           } else {
-                resolve(null);
-           }
+            if (result) {
+              resolve(result);
+            } else {
+              resolve(null);
+            }
           },
         );
       });
-    
-     if(paymentIntentDetails?.data) {
-         recordPayload.attemptDetails = paymentIntentDetails?.data || null;
-         recordPayload.cardDetails = paymentIntentDetails?.data?.latest_payment_attempt?.payment_method || null;
-     }
+
+      if (paymentIntentDetails?.data) {
+        recordPayload.attemptDetails = paymentIntentDetails?.data || null;
+        recordPayload.cardDetails =
+          paymentIntentDetails?.data?.latest_payment_attempt?.payment_method ||
+          null;
+      }
 
       await getPaymentIntent.update(recordPayload);
 
@@ -4534,6 +4668,10 @@ export default class AirwallexPaymentService {
           amount: String(existingSplit?.amount),
           currency: existingSplit?.currency,
         });
+        enqueueUpdateReverseSplitRefundPaymentIntentRecord({
+          paymentId: resolvedPaymentId,
+          userId: userId,
+        });
       } else {
         console.log(
           `ℹ️ Split ${dataObject.split_id} status unchanged (${existingSplit?.status}), skipping notification`,
@@ -4671,6 +4809,11 @@ export default class AirwallexPaymentService {
             },
           },
         );
+        // Enqueue a job to update the reverse split refund payment intent record in the background.
+        enqueueUpdateReverseSplitRefundPaymentIntentRecord({
+          paymentId,
+          userId,
+        });
       } else {
         // No local refund record yet — could be a genuine race (webhook
         // arriving before our own refund-creation write lands) rather than

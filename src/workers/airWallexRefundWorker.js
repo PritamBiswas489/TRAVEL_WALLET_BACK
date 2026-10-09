@@ -17,7 +17,17 @@ const connection = new IORedis({
   ...redisConfig,
   maxRetriesPerRequest: null,
 });
-
+// Worker function to update the reverse split refund payment intent record in the background.
+async function updateReverseSplitRefundPaymentIntentRecord(job) {
+  const { paymentId, userId } = job.data;
+  return new Promise((resolve, reject) => {
+    AirwallexPaymentService.updatePaymentIntentRefundAndReverseSplitRecord(
+      { payload: { paymentId: paymentId }, userId },
+      (err, result) => (err ? reject(err) : resolve(result)),
+    );
+  });
+}
+// Worker function to process the refund
 async function refundProcessExecute(job) {
   const {    userId, paymentId, amount  } = job.data;
   return new Promise((resolve, reject) => {
@@ -149,6 +159,8 @@ export function startAirWallexRefundWorker() {
           return await checkReverseSplitStatus(job);
         case JOB_NAMES.REFUND_PAYMENT_INTENT:
           return await refundProcessExecute(job);
+        case JOB_NAMES.UPDATE_REVERSE_SPLIT_REFUND_PAYMENT_INTENT_RECORD:
+          return await updateReverseSplitRefundPaymentIntentRecord(job);
         default:
           // Unknown job name — fail fast rather than silently no-op-ing.
           throw new Error(`Unrecognized job name: ${job.name}`);

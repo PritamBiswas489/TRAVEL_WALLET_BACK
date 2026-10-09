@@ -1568,6 +1568,43 @@ router.post("/update-user-transaction-history-table", async (req, res) => {
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/update-payment-intent-refund-and-reverse-split-record:
+ *   post:
+ *     summary: Update payment intent refund and reverse split records
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               paymentId:
+ *                 type: string
+ *                 description: Internal payment ID
+ *               paymentIntentId:
+ *                 type: string
+ *                 description: Airwallex payment intent ID
+ *             oneOf:
+ *               - required: [paymentId]
+ *               - required: [paymentIntentId]
+ *     responses:
+ *       200:
+ *         description: Payment intent refund and reverse split records updated
+ */
+router.post("/update-payment-intent-refund-and-reverse-split-record", async (req, res) => {
+  const response = await AirwallexPaymentController.updatePaymentIntentRefundAndReverseSplitRecord({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
 
 
 

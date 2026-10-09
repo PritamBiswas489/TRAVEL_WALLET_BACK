@@ -694,6 +694,46 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async updatePaymentIntentRefundAndReverseSplitRecord(request){
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    const userId = user?.id;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.updatePaymentIntentRefundAndReverseSplitRecord(
+        { userId, payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_UPDATE_PAYMENT_INTENT_REFUND_AND_REVERSE_SPLIT_RECORD",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "PAYMENT_INTENT_REFUND_AND_REVERSE_SPLIT_RECORD_UPDATED_SUCCESSFULLY",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+
+  }
   static async getWalletTransactionHistory(request) {
     const {
       headers: { i18n },

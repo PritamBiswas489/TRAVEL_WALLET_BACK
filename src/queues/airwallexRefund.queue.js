@@ -22,6 +22,7 @@ export const airwallexRefundQueue = new Queue(AIRWALLEX_QUEUE_NAME, {
 export const JOB_NAMES = {
   CHECKING_REVERSE_SPLIT_STATUS: "checking-reverse-split-status",
   REFUND_PAYMENT_INTENT: "refund-payment-intent",
+  UPDATE_REVERSE_SPLIT_REFUND_PAYMENT_INTENT_RECORD: "update-reverse-split-refund-payment-intent-record",
 };
 
 
@@ -64,6 +65,19 @@ export const enqueueRefundProcess = async ({ reverseSplitDetails, userId }) => {
 
 
 }
+export const enqueueUpdateReverseSplitRefundPaymentIntentRecord = async ({ paymentId,  userId }) => {
+    return airwallexRefundQueue.add(
+        JOB_NAMES.UPDATE_REVERSE_SPLIT_REFUND_PAYMENT_INTENT_RECORD,
+        { paymentId, userId },
+        {
+            jobId: `update-reverse-split-refund-payment-intent-record-${paymentId}-time-${Date.now()}`,
+            attempts: 3,
+            backoff: { type: "exponential", delay: 15000 },
+            removeOnComplete: 1000,
+            removeOnFail: false,
+        }
+    );
+};
 
 
 
