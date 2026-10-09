@@ -4041,10 +4041,10 @@ export default class AirwallexPaymentService {
       const offset = (page - 1) * limit;
       const whereClause = {};
       if (status === "pending") {
-        whereClause.status = "RECEIVED";
+        whereClause.status = { [Op.in]: ["ACCEPTED","RECEIVED"] };
       } else if (status === "completed") {
         whereClause.status = {
-          [Op.in]: ["ACCEPTED", "SETTLED", "FAILED","SUCCEEDED"],
+          [Op.in]: [ "SETTLED", "FAILED","SUCCEEDED"],
         };
       } else if (status !== "all") {
         return callback(new Error("INVALID_REFUND_STATUS_FILTER"));
