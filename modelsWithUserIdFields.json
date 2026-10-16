@@ -1,0 +1,382 @@
+[
+  {
+    "model": "AirwallexCardholder",
+    "table": "airwallex_card_holders",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexCardTransactions",
+    "table": "airwallex_card_transactions",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "user_id"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexCustomers",
+    "table": "airwallex_customers",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexKycAccount",
+    "table": "airwallex_kyc_account",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexPaymentIntent",
+    "table": "airwallex_payment_intent",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexPaymentRefundErrorLogs",
+    "table": "airwallex_payment_refund_error_logs",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexQrCodeTransaction",
+    "table": "airwallex_qr_code_transaction",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexTransactionDispute",
+    "table": "airwallex_transaction_dispute",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "user_id"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexUserDebitCards",
+    "table": "airwallex_user_debit_cards",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "AirwallexUserTransactionHistory",
+    "table": "airwallex_user_transaction_history",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "ApiLogs",
+    "table": "api_logs",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "BankTransferTransactions",
+    "table": "bank_transfer_transactions",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "BugReports",
+    "table": "bug_reports",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "favouriteQrCodes",
+    "table": "favourite_qr_codes",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "Feedbacks",
+    "table": "feedbacks",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "KesspayKyc",
+    "table": "kesspay_kyc",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "kessPayTransactionInfos",
+    "table": "kesspay_transaction_infos",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "kycVerifiedDocuments",
+    "table": "kyc_verified_documents",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "NinePayTransactionInfos",
+    "table": "ninepay_transaction_infos",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "Notification",
+    "table": "notifications",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "PisoPayTransactionInfos",
+    "table": "pisopy_transaction_infos",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "PisopyPaymentErrorLogs",
+    "table": "pisopy_payment_error_logs",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "Suggestions",
+    "table": "suggestions",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "ThaiPayments",
+    "table": "thai_payments",
+    "fields": [
+      {
+        "attribute": "user_id",
+        "databaseColumn": "user_id"
+      }
+    ]
+  },
+  {
+    "model": "UserCard",
+    "table": "user_cards",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserContactList",
+    "table": "user_contact_list",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserDevices",
+    "table": "user_devices",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserFcm",
+    "table": "user_fcm",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserKyc",
+    "table": "user_kyc",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserOwnGeneratedQrCodes",
+    "table": "user_own_generated_qr_codes",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserSettings",
+    "table": "user_settings",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "UserThaiWalletIds",
+    "table": "user_thai_wallet_ids",
+    "fields": [
+      {
+        "attribute": "user_id",
+        "databaseColumn": "user_id"
+      }
+    ]
+  },
+  {
+    "model": "UserWallet",
+    "table": "user_wallets",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "WalletAirwallexPayments",
+    "table": "wallet_airwallex_payments",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "WalletPelePayment",
+    "table": "wallet_pele_payments",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "WalletTransaction",
+    "table": "wallet_transactions",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "WhitelistMobiles",
+    "table": "whitelist_mobiles",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "userId"
+      }
+    ]
+  },
+  {
+    "model": "WorkerErrorLogs",
+    "table": "worker_error_logs",
+    "fields": [
+      {
+        "attribute": "userId",
+        "databaseColumn": "user_id"
+      }
+    ]
+  }
+]

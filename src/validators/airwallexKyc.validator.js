@@ -37,6 +37,12 @@ const csvOrArrayOf = (allowedValues) =>
     }),
   ).optional();
 
+const csvOrArray = () =>
+  joi.alternatives().try(
+    joi.array().items(joi.string()),
+    joi.string().custom((value) => value.split(",").map((v) => v.trim())),
+  ).optional();
+
 export const airwallexKycValidator = async (data) => {
   try {
     const schema = joi.object({
@@ -98,9 +104,7 @@ export const airwallexKycValidator = async (data) => {
       collectionFrom: csvOrArrayOf(COLLECTION_FROM_VALUES).messages({
         "any.only": "INVALID_COLLECTION_FROM",
       }),
-      payoutCountryCodes: csvOrArrayOf(COUNTRY_CODES).messages({
-        "any.only": "INVALID_PAYOUT_COUNTRY_CODE",
-      }),
+      payoutCountryCodes: csvOrArray(),
       payoutTo: csvOrArrayOf(PAYOUT_TO_VALUES).messages({
         "any.only": "INVALID_PAYOUT_TO",
       }),

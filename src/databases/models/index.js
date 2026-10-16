@@ -25,23 +25,59 @@ const baseFilename = _basename(fileURLToPath(import.meta.url));
 })();
 
 const db = {};
+const modelWithUserIdFields = [];
+ 
 // Dynamically import all model files in the current directory except the current file 
 await (async () => {
-	const modelDirectoryPath = dirname(fileURLToPath(import.meta.url));
-	const allModelFiles = readdirSync(modelDirectoryPath).filter((file) => file.indexOf('.') !== 0 && file !== baseFilename && file.slice(-3) === '.js' && file !== 'relation.js');
-	
-	// eslint-disable-next-line no-restricted-syntax
-	for (const file of allModelFiles) {
-		
-		const modelFile = join(modelDirectoryPath, file);
-		// eslint-disable-next-line no-await-in-loop
-		const { default: model } = await import(pathToFileURL(modelFile));
+  const modelDirectoryPath = dirname(fileURLToPath(import.meta.url));
+  const allModelFiles = readdirSync(modelDirectoryPath).filter(
+    (file) =>
+      file.indexOf(".") !== 0 &&
+      file !== baseFilename &&
+      file.slice(-3) === ".js" &&
+      file !== "relation.js",
+  );
 
-		
-		
-		db[model.name] = model(sequelize, DataTypes);
-		// console.log(db);
-	}
+  // eslint-disable-next-line no-restricted-syntax
+  for (const file of allModelFiles) {
+    const modelFile = join(modelDirectoryPath, file);
+    // eslint-disable-next-line no-await-in-loop
+    const { default: model } = await import(pathToFileURL(modelFile));
+
+    const sequelizeModel = model(sequelize, DataTypes);
+    db[model.name] = sequelizeModel;
+
+    const targetFields = new Set(["userid", "user_id", "userId"]);
+
+    const matchingModels = [sequelizeModel]
+          .map((matchedModel) => {
+        const matchingFields = Object.entries(matchedModel.rawAttributes)
+          .filter(([attributeName, attribute]) => {
+            const attributeNames = [
+              attributeName,
+              attribute.field,
+              attribute.fieldName,
+            ];
+
+            return attributeNames.some((name) =>
+              targetFields.has(name?.toLowerCase()),
+            );
+          })
+          .map(([attributeName, attribute]) => ({
+            attribute: attributeName,
+            databaseColumn: attribute.field || attributeName,
+          }));
+
+        return {
+          model: matchedModel.name,
+          table: matchedModel.getTableName(),
+          fields: matchingFields, 
+        };
+      })
+      .filter((item) => item.fields.length > 0);
+
+    modelWithUserIdFields.push(...matchingModels);
+  }
 })();
 relation(db);
 //Sequelize sync means it will create the tables in the database if they do not exist, based on the models defined.
@@ -54,5 +90,10 @@ db.fn = fn;
 db.Sequelize = Sequelize;
 // Sequelize instance is added to the db object for easy access
 db.sequelize = sequelize;
+db.modelWithUserIdFields = modelWithUserIdFields;
 
 export default db;
+
+
+
+

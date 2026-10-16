@@ -1,6 +1,6 @@
 export default function FavouriteQrCodes(sequelize, DataTypes) {
   const FavouriteQrCodes = sequelize.define(
-    "favouriteQrCodes",
+    "FavouriteQrCodes",
     {
       id: {
         type: DataTypes.INTEGER,

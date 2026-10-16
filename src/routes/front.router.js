@@ -610,6 +610,12 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "refund.succeeded"
     ];
 
+    const offboardingWebhookEventNames = [
+      "account.offboarding.pending",
+      "account.offboarding.completed",
+      "account.offboarding.cancelled",
+    ];
+
     const balanceImpactingWebhooks = [
       // Direct Balance Events
       "balance.va.top_up", // Wallet balance increase via Virtual Account (Plus)
@@ -741,6 +747,13 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
           payload,
           headers: req.headers,
         });
+      return res.return(response);
+    } else if (offboardingWebhookEventNames.includes(payload?.name)) {
+      //offboarding events
+      const response = await AirwallexPaymentController.handleOffboardingWebhook({
+        payload,
+        headers: req.headers,
+      });
       return res.return(response);
     }
 

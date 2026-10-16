@@ -26,7 +26,10 @@ import {
 } from "../queues/airwallexPaymentIntent.queue.js";
 
 import { enqueueUpdateTransactions } from "../queues/airwallexTransactionUpdate.queue.js";
-import { enqueueReverseSplitStatusCheck, enqueueUpdateReverseSplitRefundPaymentIntentRecord } from "../queues/airwallexRefund.queue.js";
+import {
+  enqueueReverseSplitStatusCheck,
+  enqueueUpdateReverseSplitRefundPaymentIntentRecord,
+} from "../queues/airwallexRefund.queue.js";
 import { get } from "http";
 
 const {
@@ -48,7 +51,8 @@ const {
   AirwallexPaymentSplit,
   AirwallexPaymentIntentRefund,
   AirwallexPaymentSplitReverse,
-  AirwallexPaymentRefundErrorLogs
+  AirwallexPaymentRefundErrorLogs,
+  AirwallexCustomerOffboardingRecord
 } = db;
 
 const REFRESH_TIMEOUT = 5000; // 5 seconds
@@ -2233,20 +2237,22 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  static async updatePaymentIntentRefundAndReverseSplitRecord({ payload, userId },callback) {
+  static async updatePaymentIntentRefundAndReverseSplitRecord(
+    { payload, userId },
+    callback,
+  ) {
     try {
       let airWallexPaymentIntentId = payload?.paymentIntentId || null;
       let paymentIntentRecord;
       if (payload?.paymentId) {
         paymentIntentRecord = await AirwallexPaymentIntent.findOne({
-          include:[
+          include: [
             {
               model: AirwallexPaymentSplit,
               as: "split",
             },
           ],
           where: { id: payload?.paymentId, userId },
-
         });
         if (!paymentIntentRecord) {
           return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
@@ -2255,7 +2261,7 @@ export default class AirwallexPaymentService {
           paymentIntentRecord.airwallexIntentId || null;
       } else if (airWallexPaymentIntentId) {
         paymentIntentRecord = await AirwallexPaymentIntent.findOne({
-           include:[
+          include: [
             {
               model: AirwallexPaymentSplit,
               as: "split",
@@ -2285,61 +2291,62 @@ export default class AirwallexPaymentService {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-          params: { payment_intent_id: airWallexPaymentIntentId, page_size:1000 },
+          params: {
+            payment_intent_id: airWallexPaymentIntentId,
+            page_size: 1000,
+          },
         },
       );
       const refunds = Array.isArray(response.data?.items)
         ? response.data.items
         : [];
 
-     
       const totalRefundAmount = refunds.reduce(
         (sum, refund) =>
-          refund.status === "SUCCEEDED" ? sum + Number(refund.amount || 0) : sum,
+          refund.status === "SUCCEEDED"
+            ? sum + Number(refund.amount || 0)
+            : sum,
         0,
       );
-       if(paymentIntentRecord.splitAmount === totalRefundAmount) {
-        paymentIntentRecord.isCompleteRefund =  true;         
-       }
-       paymentIntentRecord.totalRefundAmount = totalRefundAmount;
+      if (paymentIntentRecord.splitAmount === totalRefundAmount) {
+        paymentIntentRecord.isCompleteRefund = true;
+      }
+      paymentIntentRecord.totalRefundAmount = totalRefundAmount;
 
-
-     
-       let totalSplitAmount = 0;
-       let isCompleteReverseSplit = false;
-       let reverseSplitItems =   [];
-       if(paymentIntentRecord?.split?.airwallexSplitId){
-           const reverseSplitStatusResponse = await fetch(
-        `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/?funds_split_id=${paymentIntentRecord.split.airwallexSplitId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+      let totalSplitAmount = 0;
+      let isCompleteReverseSplit = false;
+      let reverseSplitItems = [];
+      if (paymentIntentRecord?.split?.airwallexSplitId) {
+        const reverseSplitStatusResponse = await fetch(
+          `${process.env.AIRWALLEX_API_URL}/api/v1/pa/funds_split_reversals/?funds_split_id=${paymentIntentRecord.split.airwallexSplitId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
           },
-        },
-      );
+        );
 
-         const reverseSplitStatusResponseBody =   await reverseSplitStatusResponse.json();
-         reverseSplitItems.push(...(reverseSplitStatusResponseBody?.items || []));
-         
-         totalSplitAmount = reverseSplitItems.reduce(
-           (sum, item) =>
-             item.status === "SETTLED" ? sum + Number(item.amount || 0) : sum,
-           0,
-         );
-         isCompleteReverseSplit = totalSplitAmount === paymentIntentRecord.splitAmount;
-       }
+        const reverseSplitStatusResponseBody =
+          await reverseSplitStatusResponse.json();
+        reverseSplitItems.push(
+          ...(reverseSplitStatusResponseBody?.items || []),
+        );
 
-       paymentIntentRecord.totalReverseSplitAmount = totalSplitAmount;
-       paymentIntentRecord.isCompleteReverseSplit = isCompleteReverseSplit;
+        totalSplitAmount = reverseSplitItems.reduce(
+          (sum, item) =>
+            item.status === "SETTLED" ? sum + Number(item.amount || 0) : sum,
+          0,
+        );
+        isCompleteReverseSplit =
+          totalSplitAmount === paymentIntentRecord.splitAmount;
+      }
 
+      paymentIntentRecord.totalReverseSplitAmount = totalSplitAmount;
+      paymentIntentRecord.isCompleteReverseSplit = isCompleteReverseSplit;
 
-
-
-      await  paymentIntentRecord.save();
-
-     
+      await paymentIntentRecord.save();
 
       return callback(null, {
         data: {
@@ -4934,6 +4941,122 @@ export default class AirwallexPaymentService {
         error?.message || error,
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+
+  static async offboardingAirewallexAccount(request, callback) {
+    try {
+      const { airwallexAccountId, comment, reason_code, customerName, customerPhone, customerEmail } = request?.payload || {};
+      if (!airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_ID_REQUIRED"));
+      }
+
+      console.log(`Offboarding Airwallex account with id ${airwallexAccountId}`);
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const response = await axios.post(
+        `${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${encodeURIComponent(airwallexAccountId)}/offboardings/create`,
+        {
+          comment: comment || "Account no longer needed",
+          reason_code: reason_code || "OTHER",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const offboardingRecord = await AirwallexCustomerOffboardingRecord.create({
+        accountId:airwallexAccountId,
+        apiId: response.data?.id || null,
+        status: response.data?.status || null,
+        comment: comment || null,
+        customerName: customerName || null,
+        customerPhone: customerPhone || null,
+        customerEmail: customerEmail || null,
+      });
+      
+
+      return callback(null, { data: response.data, offboardingRecord });
+    } catch (error) {
+      console.error(
+        "❌ Error offboarding Airwallex account:",
+        error?.message || error,
+      );
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return callback(
+        new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
+      );
+    }
+  }
+  static async handleOffboardingWebhook(request, callback) {
+    let webhookDedupeKey = null;
+
+    try {
+      const { payload } = request || {};
+      if (!payload) {
+        return callback(new Error("PAYLOAD_REQUIRED"));
+      }
+
+      console.log(`Handling offboarding webhook with payload: ${JSON.stringify(payload)}`);
+
+      const apiId = payload?.data?.id;
+      const status = payload?.data?.status;
+      if (!apiId || !status) {
+        return callback(null, { data: payload, offboardingRecord: null });
+      }
+
+      webhookDedupeKey = `airwallex:webhook:seen:offboarding:${apiId}:${status}`;
+      const isNewDelivery = await redisClient.set(
+        webhookDedupeKey,
+        "1",
+        "EX",
+        60 * 60 * 24,
+        "NX",
+      );
+
+      if (!isNewDelivery) {
+        return callback(null, { data: payload });
+      }
+
+      const offboardingRecord = await AirwallexCustomerOffboardingRecord.findOne({
+        where: { apiId },
+      });
+      if (!offboardingRecord) {
+        await redisClient.del(webhookDedupeKey);
+        webhookDedupeKey = null;
+        return callback(new Error("OFFBOARDING_RECORD_NOT_FOUND"));
+      }
+
+      if (offboardingRecord.status !== status) {
+        await offboardingRecord.update({ status });
+      }
+
+      return callback(null, { data: payload, offboardingRecord });
+
+    } catch (error) {
+      if (webhookDedupeKey) {
+        try {
+          await redisClient.del(webhookDedupeKey);
+        } catch (cleanupError) {
+          console.error(
+            "❌ Failed to clear offboarding webhook idempotency key:",
+            cleanupError?.message || cleanupError,
+          );
+        }
+      }
+      console.error(
+        "❌ Error handling offboarding webhook:",
+        error?.message || error,
+      );
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return callback(
+        new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
+      );
     }
   }
 }
