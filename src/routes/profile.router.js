@@ -794,6 +794,27 @@ router.post("/set-send-money-restriction",async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/profile/execute-user-account-removal:
+ *   post:
+ *     summary: Execute user account removal
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *     responses:
+ *       200:
+ *         description: Success - User account removal executed
+ */
+router.post("/execute-user-account-removal", async (req, res) => {
+   const response = await ProfileController.executeUserAccountRemoval({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
 
 
 

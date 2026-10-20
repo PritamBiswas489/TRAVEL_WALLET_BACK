@@ -23,6 +23,7 @@ export const JOB_NAMES = {
   CHECKING_REVERSE_SPLIT_STATUS: "checking-reverse-split-status",
   REFUND_PAYMENT_INTENT: "refund-payment-intent",
   UPDATE_REVERSE_SPLIT_REFUND_PAYMENT_INTENT_RECORD: "update-reverse-split-refund-payment-intent-record",
+  DELETE_ACCOUNT_REFUND: "delete-account-refund",   
 };
 
 
@@ -71,6 +72,19 @@ export const enqueueUpdateReverseSplitRefundPaymentIntentRecord = async ({ payme
         { paymentId, userId },
         {
             jobId: `update-reverse-split-refund-payment-intent-record-${paymentId}-time-${Date.now()}`,
+            attempts: 3,
+            backoff: { type: "exponential", delay: 15000 },
+            removeOnComplete: 1000,
+            removeOnFail: false,
+        }
+    );
+};
+export const enqueueDeleteAccountRefund = async ({ userId , amount, paymentId }) => {
+    return airwallexRefundQueue.add(
+        JOB_NAMES.DELETE_ACCOUNT_REFUND,
+        { userId, amount, paymentId },
+        {
+            jobId: `delete-account-refund-${userId}-time-${Date.now()}`,
             attempts: 3,
             backoff: { type: "exponential", delay: 15000 },
             removeOnComplete: 1000,

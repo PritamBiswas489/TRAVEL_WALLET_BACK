@@ -2,6 +2,7 @@ import "../config/environment.js";
 import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
+import { enqueueDeleteAccountRefund } from "../queues/airwallexRefund.queue.js";
 const { AirwallexPaymentIntent, sequelize, Op } = db;
 
 export default class UserFullRefundService {
@@ -100,19 +101,7 @@ export default class UserFullRefundService {
 
         try {
           const refundResponse = await new Promise((resolve, reject) => {
-            AirwallexPaymentService.mainPaymentRefundProcessHandle(
-              {
-                userId,
-                payload: {
-                  refundPaymentId: intent.id,
-                  refundPaymentAmt: amount,
-                },
-              },
-              (error, response) => {
-                if (error) return reject(error);
-                resolve(response);
-              },
-            ).catch(reject);
+            enqueueDeleteAccountRefund({ userId, amount, paymentId: intent.id }).then(resolve).catch(reject);
           });
           data.push({
             ...allocationResult,

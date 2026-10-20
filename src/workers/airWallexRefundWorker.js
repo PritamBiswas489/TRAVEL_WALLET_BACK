@@ -37,6 +37,16 @@ async function refundProcessExecute(job) {
     );
   });
 }
+
+async function deleteAccountRefund(job) {
+  const { userId, amount, paymentId } = job.data;
+  return new Promise((resolve, reject) => {
+    AirwallexPaymentService.mainPaymentRefundProcessHandle(
+      { userId, payload: { refundPaymentAmt: amount, refundPaymentId: paymentId } },
+      (err, result) => (err ? reject(err) : resolve(result)),
+    );
+  });
+}
 //check reverse split status worker function
 async function checkReverseSplitStatus(job) {
   const {
@@ -161,6 +171,8 @@ export function startAirWallexRefundWorker() {
           return await refundProcessExecute(job);
         case JOB_NAMES.UPDATE_REVERSE_SPLIT_REFUND_PAYMENT_INTENT_RECORD:
           return await updateReverseSplitRefundPaymentIntentRecord(job);
+        case JOB_NAMES.DELETE_ACCOUNT_REFUND:
+          return await deleteAccountRefund(job);
         default:
           // Unknown job name — fail fast rather than silently no-op-ing.
           throw new Error(`Unrecognized job name: ${job.name}`);

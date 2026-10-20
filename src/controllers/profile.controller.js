@@ -310,6 +310,30 @@ export default class ProfileController {
     }
   }
 
+  static async executeUserAccountRemoval(request) {
+    const {
+      headers: { i18n },
+      user,
+    } = request;
+
+    try {
+      const res = await UserAccRemoveService.executeUserAccountRemoval(user.id);
+      return {
+        status: 200,
+        data: res?.data || [],
+        message: i18n.__("USER_ACCOUNT_REMOVAL_EXECUTED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+
   /**
    * Remove user account
    */
