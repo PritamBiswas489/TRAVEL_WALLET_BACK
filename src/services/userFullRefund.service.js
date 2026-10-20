@@ -33,7 +33,7 @@ export default class UserFullRefundService {
           ],
         ],
       },
-      order: [["createdAt", "ASC"]], // oldest first (FIFO)
+      order: [["createdAt", "DESC"]], // newest first (LIFO)
       transaction,
       lock: transaction ? transaction.LOCK.UPDATE : undefined, // prevents double refunds
     });
@@ -83,7 +83,6 @@ export default class UserFullRefundService {
       const data = [];
       for (const { intent, amount } of allocations) {
          data.push({ paymentId: intent.id, splitAmount: intent.splitAmount, amount });
-
       }
       return callback(null, { data });
     } catch (error) {
