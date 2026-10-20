@@ -1672,7 +1672,7 @@ export default class AirwallexPaymentController {
             data: response.data,
             message: translateValue(
               i18n,
-              "MAIN_PAYMENT_REFUND_PROCESS_HANDLED_SUCCESSFULLY",
+              "REFUND_PROCESS_SUCCESSFULLY_INITIATED",
             ),
             error: null,
           });

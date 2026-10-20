@@ -58,36 +58,81 @@ export default class UserFullRefundService {
   }
 
   static async userBalanceFullRefund(userId, callback) {
+    let result;
     try {
-      let refundablePaymentIntents;
-      let allocations;
-       const getAccountBa =
-        (await new Promise((resolve, reject) => {
-          AirwallexPaymentService.getAccountBalance({ userId: userId, i18n: null }, (err, result) => {
-            if (err) return reject(err);
-            resolve(result?.data || {});
-          });
-        })) || {};
-      const currentBalance = getAccountBa?.ILS || 0;
-      if(currentBalance <= 0){
-         throw new Error("INSUFFICIENT_BALANCE.");
-      }
-      await sequelize.transaction(async (t) => {
-        refundablePaymentIntents =
-          await UserFullRefundService.getRefundablePaymentIntents(userId, t);
-        allocations = UserFullRefundService.allocateRefund(
-          refundablePaymentIntents,
-          currentBalance, // replace 0 with actual wallet balance
+      const accountBalance = await new Promise((resolve, reject) => {
+        AirwallexPaymentService.getAccountBalance(
+          { userId, i18n: null },
+          (error, response) => {
+            if (error) return reject(error);
+            resolve(response?.data || {});
+          },
         );
       });
+      const currentBalance = Number(accountBalance?.ILS);
+      if (!Number.isFinite(currentBalance) || currentBalance <= 0) {
+        throw new Error("INSUFFICIENT_BALANCE.");
+      }
+
+      const allocations = await sequelize.transaction(async (transaction) => {
+        const refundablePaymentIntents =
+          await UserFullRefundService.getRefundablePaymentIntents(
+            userId,
+            transaction,
+          );
+        return UserFullRefundService.allocateRefund(
+          refundablePaymentIntents,
+          currentBalance,
+        );
+      });
+
+      if (allocations.length === 0) {
+        throw new Error("NO_REFUNDABLE_PAYMENT_INTENTS.");
+      }
+
       const data = [];
       for (const { intent, amount } of allocations) {
-         data.push({ paymentId: intent.id, splitAmount: intent.splitAmount, amount });
+        const allocationResult = {
+          paymentId: intent.id,
+          splitAmount: intent.splitAmount,
+          amount,
+        };
+
+        try {
+          const refundResponse = await new Promise((resolve, reject) => {
+            AirwallexPaymentService.mainPaymentRefundProcessHandle(
+              {
+                userId,
+                payload: {
+                  refundPaymentId: intent.id,
+                  refundPaymentAmt: amount,
+                },
+              },
+              (error, response) => {
+                if (error) return reject(error);
+                resolve(response);
+              },
+            ).catch(reject);
+          });
+          data.push({
+            ...allocationResult,
+            status: "initiated",
+            reverseSplit: refundResponse?.data,
+          });
+        } catch (error) {
+          data.push({
+            ...allocationResult,
+            status: "failed",
+            error: error?.message || "REFUND_PROCESS_FAILED",
+          });
+        }
       }
-      return callback(null, { data });
+
+      result = { data };
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      callback(error);
+      return callback(error);
     }
+    return callback(null, result);
   }
 }
