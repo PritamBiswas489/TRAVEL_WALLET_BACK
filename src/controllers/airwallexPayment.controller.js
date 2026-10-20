@@ -2,6 +2,7 @@ import "../config/environment.js";
 import AirwallexPaymentService from "../services/airwallexPayment.service.js";
 import AirWallexVirtualCardSerivice from "../services/airWallexVirtualCard.service.js";
 import { translateValue } from "../libraries/tranlateValue.js";
+import UserFullRefundService from "../services/userFullRefund.service.js";
 
 export default class AirwallexPaymentController {
   static async createMerchantOrderIdRequestId(request) {
@@ -1909,6 +1910,46 @@ export default class AirwallexPaymentController {
             message: translateValue(
               i18n,
               "OFFBOARDING_WEBHOOK_HANDLED_SUCCESSFULLY",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+  }
+  static async userBalanceFullRefund(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    const userId = user.id; 
+
+    return new Promise((resolve) => {
+      UserFullRefundService.userBalanceFullRefund(
+        userId,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_PROCESS_USER_BALANCE_FULL_REFUND",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "USER_BALANCE_FULL_REFUND_PROCESSED_SUCCESSFULLY",
             ),
             error: null,
           });

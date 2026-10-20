@@ -1606,6 +1606,35 @@ router.post("/update-payment-intent-refund-and-reverse-split-record", async (req
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/user-balance-full-refund:
+ *   post:
+ *     summary: Allocate a full refund to a payment intent
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             additionalProperties: true
+ *             description: Refund allocation data required by the payment service
+ *     responses:
+ *       200:
+ *         description: Full refund allocation processed
+ */
+router.post("/user-balance-full-refund", async (req, res) => {
+  const response = await AirwallexPaymentController.userBalanceFullRefund({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
 
 
 
