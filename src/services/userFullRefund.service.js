@@ -54,7 +54,7 @@ export default class UserFullRefundService {
       remaining -= refundNow;
     }
 
-    return { allocations, unallocated: remaining / 100 };
+    return allocations;
   }
 
   static async userBalanceFullRefund(userId, callback) {
