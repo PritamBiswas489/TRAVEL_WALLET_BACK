@@ -69,6 +69,9 @@ export default class UserFullRefundService {
           });
         })) || {};
       const currentBalance = getAccountBa?.ILS || 0;
+      if(currentBalance <= 0){
+         throw new Error("INSUFFICIENT_BALANCE.");
+      }
       await sequelize.transaction(async (t) => {
         refundablePaymentIntents =
           await UserFullRefundService.getRefundablePaymentIntents(userId, t);
@@ -77,7 +80,12 @@ export default class UserFullRefundService {
           currentBalance, // replace 0 with actual wallet balance
         );
       });
-      return callback(null, { data: {refundablePaymentIntents, allocations, currentBalance } });
+      const data = [];
+      for (const { intent, amount } of allocations) {
+         data.push({ paymentId: intent.id, splitAmount: intent.splitAmount, amount });
+
+      }
+      return callback(null, { data });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       callback(error);
