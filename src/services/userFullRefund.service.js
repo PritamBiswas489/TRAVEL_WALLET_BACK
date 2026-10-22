@@ -3,6 +3,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
 import { enqueueDeleteAccountRefund } from "../queues/airwallexRefund.queue.js";
+import ActiveOperationService, { OP_TYPE } from "./activeOperations.service.js";
 const { AirwallexPaymentIntent, sequelize, Op } = db;
 
 export default class UserFullRefundService {
@@ -100,13 +101,36 @@ export default class UserFullRefundService {
         };
 
         try {
-          const refundResponse = await new Promise((resolve, reject) => {
-            enqueueDeleteAccountRefund({ userId, amount, paymentId: intent.id }).then(resolve).catch(reject);
-          });
+          const operationId = `payment:${intent.id}`;
+          const operationStarted = await ActiveOperationService.start(
+            userId,
+            OP_TYPE.REFUND,
+            operationId,
+          );
+
+          if (!operationStarted) {
+            data.push({ ...allocationResult, status: "initiated" });
+            continue;
+          }
+
+          try {
+            await enqueueDeleteAccountRefund({
+              userId,
+              amount,
+              paymentId: intent.id,
+            });
+          } catch (error) {
+            await ActiveOperationService.end(
+              userId,
+              OP_TYPE.REFUND,
+              operationId,
+            );
+            throw error;
+          }
+
           data.push({
             ...allocationResult,
             status: "initiated",
-            reverseSplit: refundResponse?.data,
           });
         } catch (error) {
           data.push({

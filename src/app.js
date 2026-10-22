@@ -1,5 +1,6 @@
 import "../instrument.js"; 
 import "./config/environment.js";
+import "./utils/processErrorLogger.js";
 
 import express, { Router, json, urlencoded } from "express";
 import compression from "compression";

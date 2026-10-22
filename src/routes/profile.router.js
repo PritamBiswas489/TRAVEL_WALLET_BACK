@@ -839,6 +839,23 @@ router.delete("/delete", async (req, res) => {
   const response = await ProfileController.removeAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
+/**
+ * @swagger
+ * /api/auth/profile/check-pending-payment-refund-process-in-queue:
+ *   get:
+ *     summary: Check if there is a pending payment refund process in the queue
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     responses:
+ *       200:
+ *         description: Success - Pending payment refund process status
+ */
+router.get('/check-pending-payment-refund-process-in-queue', async (req, res) => {
+  const response = await ProfileController.checkPendingPaymentRefundProcessInQueue({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
 
 
 

@@ -30,7 +30,7 @@ import {
   enqueueReverseSplitStatusCheck,
   enqueueUpdateReverseSplitRefundPaymentIntentRecord,
 } from "../queues/airwallexRefund.queue.js";
-import { get } from "http";
+import ActiveOperationService, { OP_TYPE } from "./activeOperations.service.js";
 
 const {
   sequelize,
@@ -3745,6 +3745,11 @@ export default class AirwallexPaymentService {
         "❌ Error in refundPaymentIntent:",
         error?.message || error,
       );
+      await ActiveOperationService.end(
+        userId,
+        OP_TYPE.REFUND,
+        `payment:${payload?.paymentId}`,
+      );
       this.logAirwallexPaymentRefundError(
         {
           userId,
@@ -3853,6 +3858,13 @@ export default class AirwallexPaymentService {
   static async mainPaymentRefundProcessHandle({ userId, payload }, callback) {
     try {
       const { refundPaymentId, refundPaymentAmt } = payload || {};
+
+      // Start the active operation for the refund process
+      await ActiveOperationService.start(
+        userId,
+        OP_TYPE.REFUND,
+        `payment:${refundPaymentId}`,
+      );
 
       console.log("Refund Payment ID:", refundPaymentId);
       console.log("Refund Payment Amount:", refundPaymentAmt);
@@ -3991,6 +4003,11 @@ export default class AirwallexPaymentService {
       console.error(
         "❌ Error in mainPaymentRefundProcessHandle:",
         error?.message || error,
+      );
+      ActiveOperationService.end(
+        userId,
+        OP_TYPE.REFUND,
+        `payment:${payload?.refundPaymentId}`,
       );
       this.logAirwallexPaymentRefundError(
         {
@@ -4958,11 +4975,19 @@ export default class AirwallexPaymentService {
             },
           },
         );
+        
         // Enqueue a job to update the reverse split refund payment intent record in the background.
         enqueueUpdateReverseSplitRefundPaymentIntentRecord({
           paymentId,
           userId,
         });
+        if(typeof incomingRank !== "undefined" && parseInt(incomingRank) === 3){
+            ActiveOperationService.end(
+            userId,
+            OP_TYPE.REFUND,
+            `payment:${paymentId}`,
+          );
+        }
       } else {
         // No local refund record yet — could be a genuine race (webhook
         // arriving before our own refund-creation write lands) rather than
@@ -4990,6 +5015,11 @@ export default class AirwallexPaymentService {
       console.error(
         "❌ Error handling PaymentIntent return webhook:",
         error?.message || error,
+      );
+      ActiveOperationService.end(
+        payload?.data?.object?.metadata?.userId,
+        OP_TYPE.REFUND,
+        `payment:${payload?.data?.object?.metadata?.paymentId}`,
       );
 
       // Roll back the dedupe key if this attempt failed partway through —

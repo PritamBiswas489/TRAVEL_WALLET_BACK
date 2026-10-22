@@ -14,6 +14,7 @@ import userSettingsService from "../services/userSettings.service.js";
 import ContactListService from "../services/contactList.service.js";
 import { enqueueUserNotification } from "../queues/pushNotification.queue.js";
 import UserAccRemoveService from "../services/userAccRemoveService.js";
+import ActiveOperationService, { OP_TYPE } from "../services/activeOperations.service.js";
 
 const { User, Op, UserKyc, UserWallet, UserFcm, UserCard, WalletPelePayment, WalletTransaction, ApiLogs, Transfer, TransferRequests, UserSettings, Notification  } = db;
 
@@ -1096,5 +1097,41 @@ export default class ProfileController {
         },
       );
     });
+  }
+  static async checkPendingPaymentRefundProcessInQueue(request) {
+    const {
+      headers: { i18n },
+      user,
+      payload,
+    } = request;
+
+    try {
+      const [counts, listRefunds, listPayment] = await Promise.all([
+        ActiveOperationService.getCounts(user.id),
+        ActiveOperationService.list(user.id, OP_TYPE.REFUND),
+        ActiveOperationService.list(user.id, OP_TYPE.PAYMENT),
+      ]);
+      return {
+        status: 200,
+        data: {
+          counts,
+          listRefunds,
+          listPayment,
+        },
+        message: i18n.__("PENDING_PAYMENT_REFUND_PROCESS_STATUS"),
+        error: null,
+      };
+    } catch (err) {
+      return {
+        status: 400,
+        data: null,
+        error: {
+          message: i18n.__(
+            err.message || "FAILED_TO_CHECK_PENDING_PAYMENT_REFUND_PROCESS",
+          ),
+          reason: err.message,
+        },
+      };
+    }
   }
 }

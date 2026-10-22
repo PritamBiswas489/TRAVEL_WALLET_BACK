@@ -11,6 +11,9 @@ import {
 } from "../queues/airwallexRefund.queue.js";
 import db from "../databases/models/index.js";
 import AirwallexPaymentService from "../services/airwallexPayment.service.js";
+import ActiveOperationService, {
+  OP_TYPE,
+} from "../services/activeOperations.service.js";
 import WorkerErrorLogService from "../services/workerErrorLog.service.js";
 
 const connection = new IORedis({
@@ -47,6 +50,24 @@ async function deleteAccountRefund(job) {
     );
   });
 }
+
+async function endDeleteAccountRefundOperation(job) {
+  const { userId, paymentId } = job.data;
+  try {
+    await ActiveOperationService.end(
+      userId,
+      OP_TYPE.REFUND,
+      `payment:${paymentId}`,
+    );
+  } catch (error) {
+    console.error(
+      `Failed to end active refund operation for payment ${paymentId}:`,
+      error?.message || error,
+    );
+    process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+  }
+}
+
 //check reverse split status worker function
 async function checkReverseSplitStatus(job) {
   const {
@@ -183,11 +204,16 @@ export function startAirWallexRefundWorker() {
       concurrency: 5,
     },
   );
-  worker.on("completed", (job) => {
+  worker.on("completed", async (job) => {
     console.log(`✅ ${job.name} completed for  (job ${job.id})`);
   });
   worker.on("failed", async (job, err) => {
     console.error(`❌ ${job.name} failed for  (job ${job.id}): ${err.message}`);
+    if ( (job.name === JOB_NAMES.DELETE_ACCOUNT_REFUND || job.name === JOB_NAMES.REFUND_PAYMENT_INTENT) && 
+      job.attemptsMade >= (job.opts.attempts || 1)
+    ) {
+      await endDeleteAccountRefundOperation(job);
+    }
     try {
       await WorkerErrorLogService.logJobFailure({
         queue: AIRWALLEX_QUEUE_NAME,
