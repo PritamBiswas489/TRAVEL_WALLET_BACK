@@ -4930,6 +4930,7 @@ export default class AirwallexPaymentService {
           ACCEPTED: 2,
           SETTLED: 3,
           FAILED: 3,
+          SUCCEEDED: 3
         };
 
         const previousRank = previousStatus
