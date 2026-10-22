@@ -15,5 +15,8 @@
   "[invalid_argument] account_details.individual_details.account_usage.payout_country_codes is not of the expected type; please refer to our API documentation (source: account_details.individual_details.account_usage.payout_country_codes)": "[invalid_argument] account_details.individual_details.account_usage.payout_country_codes is not of the expected type; please refer to our API documentation (source: account_details.individual_details.account_usage.payout_country_codes)",
   "PAYLOAD_REQUIRED": "PAYLOAD_REQUIRED",
   "OFFBOARDING_WEBHOOK_HANDLED_SUCCESSFULLY": "OFFBOARDING_WEBHOOK_HANDLED_SUCCESSFULLY",
-  "USER_BALANCE_FULL_REFUND_PROCESSED_SUCCESSFULLY": "USER_BALANCE_FULL_REFUND_PROCESSED_SUCCESSFULLY"
+  "USER_BALANCE_FULL_REFUND_PROCESSED_SUCCESSFULLY": "USER_BALANCE_FULL_REFUND_PROCESSED_SUCCESSFULLY",
+  "KYC_WEBHOOK_PROCESSED_SUCCESSFULLY": "KYC_WEBHOOK_PROCESSED_SUCCESSFULLY",
+  "PAYMENT_ATTEMPT_WEBHOOK_PROCESSED_SUCCESSFULLY": "PAYMENT_ATTEMPT_WEBHOOK_PROCESSED_SUCCESSFULLY",
+  "PAYMENT_INTENT_NOT_FOUND": "PAYMENT_INTENT_NOT_FOUND"
 }

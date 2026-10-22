@@ -616,6 +616,23 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "account.offboarding.cancelled",
     ];
 
+    const paymentAttemptWebhookEventNames = [
+      "payment_attempt.authentication_failed",
+      "payment_attempt.authentication_redirected",
+      "payment_attempt.authorization_failed",
+      "payment_attempt.authorized",
+      "payment_attempt.cancelled",
+      "payment_attempt.capture_failed",
+      "payment_attempt.capture_requested",
+      "payment_attempt.expired",
+      "payment_attempt.failed_to_process",
+      "payment_attempt.paid",
+      "payment_attempt.pending_authorization",
+      "payment_attempt.received",
+      "payment_attempt.risk_declined",
+      "payment_attempt.settled",
+    ];
+
     const balanceImpactingWebhooks = [
       // Direct Balance Events
       "balance.va.top_up", // Wallet balance increase via Virtual Account (Plus)
@@ -729,6 +746,14 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       //payment intent events
       const response =
         await AirwallexPaymentController.handlePaymentIntentWebhook({
+          payload,
+          headers: req.headers,
+        });
+      return res.return(response);
+    } else if (paymentAttemptWebhookEventNames.includes(payload?.name)) {
+      //payment attempt events
+      const response =
+        await AirwallexPaymentController.handlePaymentAttemptWebhook({
           payload,
           headers: req.headers,
         });

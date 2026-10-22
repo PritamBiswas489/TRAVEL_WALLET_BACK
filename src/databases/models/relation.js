@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund, AirwallexPaymentSplitReverse } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund, AirwallexPaymentSplitReverse, AirwallexPaymentAttemptRecords } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -156,14 +156,16 @@ const relation = (db) => {
   AirwallexUserTransactionHistory.hasOne(AirwallexUserTransactionAdditionalDetails, { foreignKey: "sourceId", sourceKey: "apiSource", as: "additionalDetails" });
   AirwallexUserTransactionAdditionalDetails.belongsTo(AirwallexUserTransactionHistory, { foreignKey: "sourceId", targetKey: "apiSource", as: "transactionHistory" });
 
-  AirwallexPaymentIntent.hasOne(AirwallexPaymentSplit, { foreignKey: "paymentId", as: "split" });
+  AirwallexPaymentIntent.hasOne(AirwallexPaymentSplit, { foreignKey: "paymentId", as: "split", onDelete: "CASCADE" });
   AirwallexPaymentSplit.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 
-  AirwallexPaymentIntent.hasMany(AirwallexPaymentIntentRefund, { foreignKey: "paymentId", as: "refunds" });
-  AirwallexPaymentIntentRefund.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
+  AirwallexPaymentIntent.hasMany(AirwallexPaymentIntentRefund, { foreignKey: "paymentId", as: "refunds", onDelete: "CASCADE" });
+  AirwallexPaymentIntentRefund.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent"});
+  AirwallexPaymentIntent.hasMany(AirwallexPaymentAttemptRecords, { foreignKey: "paymentId", as: "attemptRecords", onDelete: "CASCADE" });
+  AirwallexPaymentAttemptRecords.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 
   
-  AirwallexPaymentIntent.hasMany(AirwallexPaymentSplitReverse, { foreignKey: "paymentId", as: "splitReverses" });
+  AirwallexPaymentIntent.hasMany(AirwallexPaymentSplitReverse, { foreignKey: "paymentId", as: "splitReverses" , onDelete: "CASCADE" });
   AirwallexPaymentSplitReverse.belongsTo(AirwallexPaymentIntent, { foreignKey: "paymentId", as: "paymentIntent" });
 };
 

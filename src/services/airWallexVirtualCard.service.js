@@ -145,10 +145,10 @@ export default class AirWallexVirtualCardSerivice {
                         "  -d '" + JSON.stringify(updatePayload) + "'",
                     ].join("\n");
                     const curlFilePath = path.resolve("airwallex-cardholder-create-curl.txt");
-                    fs.writeFileSync(
-                        curlFilePath,
-                        '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
-                    );
+                    // fs.writeFileSync(
+                    //     curlFilePath,
+                    //     '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
+                    // );
                 } catch (_) {
                     /* non-blocking */
                 }
@@ -216,10 +216,10 @@ export default class AirWallexVirtualCardSerivice {
                     '  -H "x-on-behalf-of: ' + getAirwallexKycAccount.airwallexAccountId + '"',
                 ].join("\n");
                 const curlFilePath = path.resolve("airwallex-cardholders-list-curl.txt");
-                fs.writeFileSync(
-                    curlFilePath,
-                    '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
-                );
+                // fs.writeFileSync(
+                //     curlFilePath,
+                //     '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
+                // );
             } catch (_) {
                 /* non-blocking */
             }
@@ -331,10 +331,10 @@ export default class AirWallexVirtualCardSerivice {
                     `  -d '${JSON.stringify(body)}'`
                 ].join('\n');
                 const curlFilePath = path.resolve("airwallex-cardholders-card-create.txt");
-                fs.writeFileSync(
-                    curlFilePath,
-                    '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
-                );
+                // fs.writeFileSync(
+                //     curlFilePath,
+                //     '# Generated: ' + new Date().toISOString() + '\n\n' + curlCmd + '\n',
+                // );
             } catch (_) {
                 /* non-blocking */
             }

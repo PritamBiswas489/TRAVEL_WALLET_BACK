@@ -1142,6 +1142,41 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async handlePaymentAttemptWebhook(request){
+    const { payload, headers } = request;
+    const i18n = headers?.i18n;
+    return new Promise((resolve) => {
+      AirwallexPaymentService.handlePaymentAttemptWebhook(
+        payload,
+        headers,
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_PROCESS_PAYMENT_ATTEMPT_WEBHOOK",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "PAYMENT_ATTEMPT_WEBHOOK_PROCESSED_SUCCESSFULLY",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+  }
   static async handleFundSplitWebhook(request) {
     const { payload, headers } = request;
     const i18n = headers?.i18n;

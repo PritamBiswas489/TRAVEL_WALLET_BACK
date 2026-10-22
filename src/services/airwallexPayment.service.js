@@ -52,7 +52,8 @@ const {
   AirwallexPaymentIntentRefund,
   AirwallexPaymentSplitReverse,
   AirwallexPaymentRefundErrorLogs,
-  AirwallexCustomerOffboardingRecord
+  AirwallexCustomerOffboardingRecord,
+  AirwallexPaymentAttemptRecords
 } = db;
 
 const REFRESH_TIMEOUT = 5000; // 5 seconds
@@ -470,7 +471,7 @@ export default class AirwallexPaymentService {
           `-H "Content-Type: application/json" ` +
           `-H "Authorization: Bearer ${accessToken}" ` +
           `-d '${JSON.stringify(createAccountPayload)}'`;
-        console.log("Airwallex create account curl:", createAccountCurlCmd);
+        // console.log("Airwallex create account curl:", createAccountCurlCmd);
 
         let createResponse;
         try {
@@ -599,11 +600,11 @@ export default class AirwallexPaymentService {
           `  -H "Authorization: Bearer ${accessToken}" \\`,
           `  -d '${JSON.stringify(updatePayload)}'`,
         ].join("\n");
-        const curlFilePath = path.resolve("airwallex-kyc-update-curl.txt");
-        fs.writeFileSync(
-          curlFilePath,
-          `# Generated: ${new Date().toISOString()}\n\n${curlCmd}\n`,
-        );
+        // const curlFilePath = path.resolve("airwallex-kyc-update-curl.txt");
+        // fs.writeFileSync(
+        //   curlFilePath,
+        //   `# Generated: ${new Date().toISOString()}\n\n${curlCmd}\n`,
+        // );
       } catch (_) {
         /* non-blocking */
       }
@@ -4150,6 +4151,11 @@ export default class AirwallexPaymentService {
             as: "refunds",
             attributes: { exclude: ["rawPayload", "metadata"] },
           },
+          {
+            model: AirwallexPaymentAttemptRecords,
+            as: "attemptRecords",
+            attributes: { exclude: ["webhookData"] }
+          }
         ],
         limit,
         offset,
@@ -4485,6 +4491,142 @@ export default class AirwallexPaymentService {
         );
       }
 
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+  }
+
+  static async handlePaymentAttemptWebhook(payload, headers, callback) {
+    let webhookDedupeKey = null;
+
+    try {
+      const timestamp = headers?.["x-timestamp"];
+      const signature = headers?.["x-signature"];
+      const rawBody = JSON.stringify(payload).toString("utf8");
+      const secret = process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET;
+
+      if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
+        console.error("PaymentAttempt webhook signature verification failed");
+        return callback(
+          new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"),
+        );
+      }
+
+      const dataObject = payload?.data?.object;
+      const paymentIntentId = dataObject?.payment_intent_id;
+      if (!dataObject?.id || !paymentIntentId) {
+        return callback(new Error("INVALID_PAYMENT_ATTEMPT_WEBHOOK"));
+      }
+
+      const webhookEventId =
+        payload?.id ||
+        `${dataObject.id}:${payload?.name}:${dataObject.updated_at || dataObject.status || ""}`;
+      webhookDedupeKey = `airwallex:webhook:seen:payment_attempt:${webhookEventId}`;
+      const isNewDelivery = await redisClient.set(
+        webhookDedupeKey,
+        "1",
+        "EX",
+        60 * 60 * 24,
+        "NX",
+      );
+      if (!isNewDelivery) {
+        console.log(
+          `⚠️ Duplicate payment attempt webhook ignored for event ${webhookEventId}`,
+        );
+        return callback(null, { data: payload });
+      }
+
+      const paymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { airwallexIntentId: paymentIntentId },
+      });
+      if (!paymentIntent) {
+        await redisClient.del(webhookDedupeKey);
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
+
+      const parseAirwallexDate = (value) => {
+        if (value == null) return null;
+        const parsedDate = new Date(value);
+        return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+      };
+      const attemptFields = {
+        amount: dataObject.amount,
+        capturedAmount: dataObject.captured_amount,
+        refundedAmount: dataObject.refunded_amount,
+        currency: dataObject.currency,
+        status:
+          dataObject.status ||
+          payload?.name?.replace("payment_attempt.", "").toUpperCase(),
+        authorizationCode: dataObject.authorization_code,
+        paymentConsentId: dataObject.payment_consent_id,
+        providerOriginalResponseCode: dataObject.provider_original_response_code,
+        providerTransactionId: dataObject.provider_transaction_id,
+        settleVia: dataObject.settle_via,
+        authenticationData: dataObject.authentication_data,
+        paymentMethod: dataObject.payment_method,
+        paymentMethodOptions: dataObject.payment_method_options,
+        attemptCreatedAt: parseAirwallexDate(dataObject.created_at),
+        attemptUpdatedAt: parseAirwallexDate(dataObject.updated_at),
+      };
+      const recordPayload = {
+        paymentId: paymentIntent.id,
+        attemptId: dataObject.id,
+        paymentIntentId,
+        ...Object.fromEntries(
+          Object.entries(attemptFields).filter(([, value]) => value !== undefined),
+        ),
+      };
+      const attemptRecord = await sequelize.transaction(async (transaction) => {
+        await AirwallexPaymentAttemptRecords.findOrCreate({
+          where: { attemptId: dataObject.id },
+          defaults: { ...recordPayload, webhookData: [] },
+          transaction,
+        });
+
+        const record = await AirwallexPaymentAttemptRecords.findOne({
+          where: { attemptId: dataObject.id },
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        });
+        if (!record) {
+          throw new Error("PAYMENT_ATTEMPT_RECORD_NOT_FOUND");
+        }
+        const webhookHistory = Array.isArray(record.webhookData)
+          ? record.webhookData
+          : [];
+        if (webhookHistory.some((event) => event?.id === webhookEventId)) {
+          return record;
+        }
+
+        await record.update(
+          {
+            ...recordPayload,
+            webhookData: [
+              ...webhookHistory,
+              payload?.id ? payload : { ...payload, id: webhookEventId },
+            ],
+          },
+          { transaction },
+        );
+        return record;
+      });
+
+      return callback(null, { data: attemptRecord });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error handling PaymentAttempt webhook:",
+        error?.message || error,
+      );
+      if (webhookDedupeKey) {
+        try {
+          await redisClient.del(webhookDedupeKey);
+        } catch (cleanupError) {
+          console.error(
+            "❌ Failed to clean up payment attempt webhook dedupe key:",
+            cleanupError?.message || cleanupError,
+          );
+        }
+      }
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
