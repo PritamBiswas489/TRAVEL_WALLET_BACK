@@ -16,8 +16,8 @@
   "type": "module",
   "dependencies": {
     "@noble/ciphers": "^2.0.0",
-    "@sentry/node": "^9.30.0",
-    "@sentry/profiling-node": "^9.30.0",
+    "@sentry/node": "^11.9.0",
+    "@sentry/profiling-node": "^11.9.0",
     "@sentry/tracing": "^7.120.3",
     "axios": "^1.9.0",
     "bcrypt": "^6.0.0",
@@ -53,12 +53,15 @@
     "sequelize": "^6.37.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "twilio": "^3.69.0",
+    "twilio": "^6.2.0",
     "umzug": "^3.8.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
     "prettier": "^3.5.3"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
   }
 }
