@@ -849,6 +849,8 @@ router.get('/check-pending-payment-refund-process-in-queue', async (req, res) =>
  *       required: false
  *       content:
  *         application/json:
+ *           schema:
+ *             type: object
  *     responses:
  *       200:
  *         description: Success - User account removal executed
