@@ -94,7 +94,6 @@ export default class UserAccRemoveService {
           status: 200,
           data: {
             action: "deleteProfile",
-            currentBalance,
             message: i18n.__("DELETE_PROFILE"),
           },
         };
@@ -160,7 +159,6 @@ export default class UserAccRemoveService {
             status: 200,
             data: {
               action: "deleteProfile",
-              currentBalance,
               message: i18n.__("DELETE_PROFILE"),
             },
           };
