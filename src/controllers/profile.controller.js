@@ -313,12 +313,13 @@ export default class ProfileController {
 
   static async executeUserAccountRemoval(request) {
     const {
+      payload,
       headers: { i18n },
       user,
     } = request;
 
     try {
-      const res = await UserAccRemoveService.executeUserAccountRemoval(user.id);
+      const res = await UserAccRemoveService.executeUserAccountRemoval(user.id, i18n, payload);
       return {
         status: 200,
         data: res?.data || [],

@@ -582,5 +582,10 @@
 	"FAILED_REFUND_TITLE": "ההחזר נכשל",
 	"FAILED_REFUND_BODY": "לצערנו, לא ניתן היה לעבד את ההחזר שלך בסך {{amount}}. לקבלת עזרה, פנה לתמיכה.",
 	"SUCCEEDED_REFUND_TITLE": "ההחזר בוצע בהצלחה",
-	"SUCCEEDED_REFUND_BODY": "ההחזר שלך בסך {{amount}} בוצע בהצלחה. תודה על הסבלנות."
+	"SUCCEEDED_REFUND_BODY": "ההחזר שלך בסך {{amount}} בוצע בהצלחה. תודה על הסבלנות.",
+	"WAIT_FOR_ACTIVE_PAYMENT_AND_REFUND_OPERATION": "אנא המתן לסיום פעולות תשלום והחזר פעילות.",
+	"WAIT_FOR_ACTIVE_PAYMENT_OPERATION": "אנא המתן לסיום פעולות תשלום פעילות.",
+	"WAIT_FOR_ACTIVE_REFUND_OPERATION": "אנא המתן לסיום פעולות החזר פעילות.",
+	"EXECUTE_REFUND": "יתרת החשבון הנוכחית שלך היא {{currentBalance}}.אנא בצע את ההחזר לפני מחיקת הפרופיל שלך. לאחר שההחזר הושלם, תוכל להמשיך למחיקת הפרופיל שלך.",
+	"DELETE_PROFILE": "אנא אשר את מחיקת החשבון שלך. לאחר המחיקה, החשבון שלך וכל הנתונים הקשורים אליו יימחקו לצמיתות."
 }

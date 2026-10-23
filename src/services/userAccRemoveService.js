@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
 import UserService from "./user.service.js";
+import ActiveOperationService, { OP_TYPE } from "./activeOperations.service.js";
 const { modelWithUserIdFields, sequelize, User, AirwallexKycAccount } = db;
 
 export default class UserAccRemoveService {
@@ -86,12 +87,55 @@ export default class UserAccRemoveService {
       throw error;
     }
   }
-  static async executeUserAccountRemoval(userId) {
+  static async executeUserAccountRemoval(userId, i18n, payload) {
     try {
+      if (payload?.forceDelete) {
+        return {
+          status: 200,
+          data: {
+            action: "deleteProfile",
+            currentBalance,
+            message: i18n.__("DELETE_PROFILE"),
+          },
+        };
+      }
       const getKycAccount = await AirwallexKycAccount.findOne({
         where: { userId: userId },
       });
       if (getKycAccount?.airwallexAccountId) {
+        const hasActivePaymentOperation =
+          await ActiveOperationService.hasActive(userId, OP_TYPE.PAYMENT);
+        const hasActiveRefundOperation = await ActiveOperationService.hasActive(
+          userId,
+          OP_TYPE.REFUND,
+        );
+        if (hasActivePaymentOperation && hasActiveRefundOperation) {
+          return {
+            status: 200,
+            data: {
+              action: "waitForActivePaymentAndRefundOperation",
+              message: i18n.__("WAIT_FOR_ACTIVE_PAYMENT_AND_REFUND_OPERATION"),
+            },
+          };
+        }
+        if (hasActivePaymentOperation) {
+          return {
+            status: 200,
+            data: {
+              action: "waitForActivePaymentOperation",
+              message: i18n.__("WAIT_FOR_ACTIVE_PAYMENT_OPERATION"),
+            },
+          };
+        }
+        if (hasActiveRefundOperation) {
+          return {
+            status: 200,
+            data: {
+              action: "waitForActiveRefundOperation",
+              message: i18n.__("WAIT_FOR_ACTIVE_REFUND_OPERATION"),
+            },
+          };
+        }
         const accountBalance = await new Promise((resolve, reject) => {
           AirwallexPaymentService.getAccountBalance(
             { userId, i18n: null },
@@ -108,6 +152,7 @@ export default class UserAccRemoveService {
             data: {
               action: "executeRefund",
               currentBalance,
+              message: i18n.__("EXECUTE_REFUND", { currentBalance }),
             },
           };
         } else {
@@ -116,6 +161,7 @@ export default class UserAccRemoveService {
             data: {
               action: "deleteProfile",
               currentBalance,
+              message: i18n.__("DELETE_PROFILE"),
             },
           };
         }
@@ -125,6 +171,7 @@ export default class UserAccRemoveService {
         status: 200,
         data: {
           action: "deleteProfile",
+          message: i18n.__("DELETE_PROFILE"),
         },
       };
     } catch (error) {

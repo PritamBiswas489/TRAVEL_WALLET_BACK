@@ -584,5 +584,10 @@
 	"FAILED_REFUND_TITLE": "Refund Failed",
 	"FAILED_REFUND_BODY": "Unfortunately, your refund of {{amount}} could not be processed. Please contact support for assistance.",
 	"SUCCEEDED_REFUND_TITLE": "Refund Successful",
-	"SUCCEEDED_REFUND_BODY": "Your refund of {{amount}} was successful. Thank you for your patience."
+	"SUCCEEDED_REFUND_BODY": "Your refund of {{amount}} was successful. Thank you for your patience.",
+	"WAIT_FOR_ACTIVE_PAYMENT_AND_REFUND_OPERATION": "Please wait for active payment and refund operations to complete.",
+	"WAIT_FOR_ACTIVE_PAYMENT_OPERATION": "Please wait for active payment operations to complete.",
+	"WAIT_FOR_ACTIVE_REFUND_OPERATION": "Please wait for active refund operations to complete.",
+	"EXECUTE_REFUND": "Your account current balance is {{currentBalance}}.Please execute the refund before deleting your profile.After the refund is completed, you can proceed with deleting your profile.",
+	"DELETE_PROFILE": "Please confirm the deletion of your Account.After deletion, your account and all associated data will be permanently removed."
 }
