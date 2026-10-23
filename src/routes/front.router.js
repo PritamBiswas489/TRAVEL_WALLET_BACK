@@ -584,6 +584,7 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "issuing.transaction_dispute.lost",
     ];
     const paymentIntentWebhookEventNames = [
+      "payment_intent.cancelled",
       "payment_intent.created",
       "payment_intent.requires_payment_method",
       "payment_intent.updated",

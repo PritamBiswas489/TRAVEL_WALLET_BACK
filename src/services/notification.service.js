@@ -16,10 +16,18 @@ export default class NotificationService {
       if (error)
         return console.error("Error fetching transfer details:", error);
 
-      const { senderId, receiverId, amount, currency, sender, receiver, id, message, createdAt } =
-        result.data;
+      const {
+        senderId,
+        receiverId,
+        amount,
+        currency,
+        sender,
+        receiver,
+        id,
+        message,
+        createdAt,
+      } = result.data;
 
-        
       const transferJSONB = result.data.get({ plain: true });
       const currencySymbol = getcurrencySymbols(currency) || currency;
       const messageTitle = i18n.__("TRANSFER_NOTIFICATION_TITLE");
@@ -33,15 +41,17 @@ export default class NotificationService {
 
       const createAtTimeMoment = moment.parseZone(createdAt);
       const expiredTime = createAtTimeMoment.add(24, "hours");
-      transferJSONB.expiredTime = expiredTime.format("YYYY-MM-DD HH:mm:ss.SSSZ");
-     
+      transferJSONB.expiredTime = expiredTime.format(
+        "YYYY-MM-DD HH:mm:ss.SSSZ",
+      );
+
       // const transferCreatedTime = DateTime.fromISO(createdAt, { zone: "utc" });
       // const expiredTime = transferCreatedTime.plus({ hours: 24 });
 
       // console.log("transferCreatedTime", transferCreatedTime);
       // console.log("Expired Time", expiredTime.toFormat("yyyy-MM-dd HH:mm:ss.SSSZZ"));
 
-      if(message) {
+      if (message) {
         messageBody += `\n\n${message}`;
       }
 
@@ -53,32 +63,31 @@ export default class NotificationService {
         metadata: transferJSONB,
       });
 
-      enqueueUserNotification(
-        {
-          userId: receiverId,
-          title: messageTitle,
-          body: messageBody,
-          data: {
-            transferId: String(id),
-            action: "TRANSFER",
-            amount: String(amount) + currencySymbol,
-            senderPhoneNumber: sender?.phoneNumber,
-            notificationId: String(notificationData?.id),
-          },
-        }).catch((err) => {
-          console.error("Error enqueuing user notification:", err);
-        });
+      enqueueUserNotification({
+        userId: receiverId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          transferId: String(id),
+          action: "TRANSFER",
+          amount: String(amount) + currencySymbol,
+          senderPhoneNumber: sender?.phoneNumber,
+          notificationId: String(notificationData?.id),
+        },
+      }).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
 
       //sending notification to sender
-       const messageTitleSender =  i18n.__("TRANSFER_NOTIFICATION_TITLE_SENDER");
-       const messageBodySender = i18n.__("TRANSFER_NOTIFICATION_BODY_SENDER", {
-         amount: String(amount) + currencySymbol,
-         senderName: sender?.name || "",
-         senderPhoneNumber: sender?.phoneNumber,
-         receiverName: receiver?.name || "",
-         receiverPhoneNumber: receiver?.phoneNumber,
-       });
-       const sendNotificationData = await Notification.create({
+      const messageTitleSender = i18n.__("TRANSFER_NOTIFICATION_TITLE_SENDER");
+      const messageBodySender = i18n.__("TRANSFER_NOTIFICATION_BODY_SENDER", {
+        amount: String(amount) + currencySymbol,
+        senderName: sender?.name || "",
+        senderPhoneNumber: sender?.phoneNumber,
+        receiverName: receiver?.name || "",
+        receiverPhoneNumber: receiver?.phoneNumber,
+      });
+      const sendNotificationData = await Notification.create({
         userId: senderId,
         type: "SENDER_TRANSFER",
         title: messageTitleSender,
@@ -88,11 +97,15 @@ export default class NotificationService {
 
       console.log(
         "Creating wallet transfer notification with data:",
-        transferJSONB
+        transferJSONB,
       );
     });
   }
-static async walletTransferRejectionBySenderNotification(transferId, i18n, autoRejected = false) {
+  static async walletTransferRejectionBySenderNotification(
+    transferId,
+    i18n,
+    autoRejected = false,
+  ) {
     TransferService.getTransferById(transferId, async (error, result) => {
       if (error)
         return console.error("Error fetching transfer details:", error);
@@ -100,13 +113,18 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
       const { senderId, amount, currency, receiver } = result.data;
       const transferJSONB = result.data.get({ plain: true });
       const currencySymbol = getcurrencySymbols(currency) || currency;
-      const messageTitle = i18n.__("TRANSFER_REJECTION_NOTIFICATION_TITLE_BY_SENDER");
-      let messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_BY_SENDER", {
-        amount: String(amount) + currencySymbol,
-        receiverPhoneNumber: receiver?.phoneNumber,
-        receiverName: receiver?.name || "",
-      });
-      if(autoRejected) {
+      const messageTitle = i18n.__(
+        "TRANSFER_REJECTION_NOTIFICATION_TITLE_BY_SENDER",
+      );
+      let messageBody = i18n.__(
+        "TRANSFER_REJECTION_NOTIFICATION_BODY_BY_SENDER",
+        {
+          amount: String(amount) + currencySymbol,
+          receiverPhoneNumber: receiver?.phoneNumber,
+          receiverName: receiver?.name || "",
+        },
+      );
+      if (autoRejected) {
         messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_AUTO", {
           amount: String(amount) + currencySymbol,
           receiverPhoneNumber: receiver?.phoneNumber,
@@ -122,29 +140,31 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         metadata: transferJSONB,
       });
 
-      enqueueUserNotification(
-        {
-          userId: senderId,
-          title: messageTitle,
-          body: messageBody,
-          data: {
-            transferId: String(result.data.id),
-            action: "TRANSFER_REJECTION_BY_SENDER",
-            amount: String(amount) + currencySymbol,
-            receiverPhoneNumber: receiver?.phoneNumber,
-            notificationId: String(notificationData?.id),
-          },
-        }
-      ).catch((err) => {
+      enqueueUserNotification({
+        userId: senderId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          transferId: String(result.data.id),
+          action: "TRANSFER_REJECTION_BY_SENDER",
+          amount: String(amount) + currencySymbol,
+          receiverPhoneNumber: receiver?.phoneNumber,
+          notificationId: String(notificationData?.id),
+        },
+      }).catch((err) => {
         console.error("Error enqueuing user notification:", err);
       });
       console.log(
         "Creating wallet transfer notification with data:",
-        transferJSONB
+        transferJSONB,
       );
     });
   }
-  static async walletTransferRejectionNotification(transferId, i18n, autoRejected = false) {
+  static async walletTransferRejectionNotification(
+    transferId,
+    i18n,
+    autoRejected = false,
+  ) {
     TransferService.getTransferById(transferId, async (error, result) => {
       if (error)
         return console.error("Error fetching transfer details:", error);
@@ -158,7 +178,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         receiverPhoneNumber: receiver?.phoneNumber,
         receiverName: receiver?.name || "",
       });
-      if(autoRejected) {
+      if (autoRejected) {
         messageBody = i18n.__("TRANSFER_REJECTION_NOTIFICATION_BODY_AUTO", {
           amount: String(amount) + currencySymbol,
           receiverPhoneNumber: receiver?.phoneNumber,
@@ -174,29 +194,27 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         metadata: transferJSONB,
       });
 
-      enqueueUserNotification(
-        {
-          userId: senderId,
-          title: messageTitle,
-          body: messageBody,
-          data: {
-            transferId: String(result.data.id),
-            action: "TRANSFER_REJECTION",
-            amount: String(amount) + currencySymbol,
-            receiverPhoneNumber: receiver?.phoneNumber,
-            notificationId: String(notificationData?.id),
-          },
-        }
-      ).catch((err) => {
+      enqueueUserNotification({
+        userId: senderId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          transferId: String(result.data.id),
+          action: "TRANSFER_REJECTION",
+          amount: String(amount) + currencySymbol,
+          receiverPhoneNumber: receiver?.phoneNumber,
+          notificationId: String(notificationData?.id),
+        },
+      }).catch((err) => {
         console.error("Error enqueuing user notification:", err);
       });
       console.log(
         "Creating wallet transfer notification with data:",
-        transferJSONB
+        transferJSONB,
       );
     });
   }
-  
+
   static async walletTransferAcceptanceNotification(transferId, i18n) {
     TransferService.getTransferById(transferId, async (error, result) => {
       if (error)
@@ -220,25 +238,23 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         metadata: transferJSONB,
       });
 
-       enqueueUserNotification(
-        {
-          userId: senderId,
-          title: messageTitle,
-          body: messageBody,
-          data: {
-            transferId: String(result.data.id),
-            action: "TRANSFER_ACCEPTED",
-            amount: String(amount) + currencySymbol,
-            receiverPhoneNumber: receiver?.phoneNumber,
-            notificationId: String(notificationData?.id),
-          },
+      enqueueUserNotification({
+        userId: senderId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          transferId: String(result.data.id),
+          action: "TRANSFER_ACCEPTED",
+          amount: String(amount) + currencySymbol,
+          receiverPhoneNumber: receiver?.phoneNumber,
+          notificationId: String(notificationData?.id),
         },
-      ).catch((err) => {
+      }).catch((err) => {
         console.error("Error enqueuing user notification:", err);
       });
       console.log(
         "Creating wallet transfer notification with data:",
-        transferJSONB
+        transferJSONB,
       );
     });
   }
@@ -249,7 +265,8 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         if (error)
           return console.error("Error fetching transfer details:", error);
 
-        const { senderId, receiverId, amount, currency , createdAt } = result.data;
+        const { senderId, receiverId, amount, currency, createdAt } =
+          result.data;
         const transferJSONB = result.data.get({ plain: true });
         const senderPhoneNumber = result?.data?.sender?.phoneNumber;
         const receiverPhoneNumber = result?.data?.receiver?.phoneNumber;
@@ -265,10 +282,12 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
 
         const createAtTimeMoment = moment.parseZone(createdAt);
         const expiredTime = createAtTimeMoment.add(24, "hours");
-        transferJSONB.expiredTime = expiredTime.format("YYYY-MM-DD HH:mm:ss.SSSZ");
+        transferJSONB.expiredTime = expiredTime.format(
+          "YYYY-MM-DD HH:mm:ss.SSSZ",
+        );
 
         if (message) {
-          messageBody += `\n\n${message}`;  
+          messageBody += `\n\n${message}`;
         }
 
         const notificationData = await Notification.create({
@@ -279,31 +298,34 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        enqueueUserNotification(
-          {
-            userId: receiverId,
-            title: messageTitle,
-            body: messageBody,
-            data: {
-              transferId: String(result.data.id),
-              action: "TRANSFER_REQUEST",
-              amount: String(amount) + currencySymbol,
-              senderPhoneNumber,
-              notificationId: String(notificationData.id),
-            },
-          }
-        ).catch((err) => {
+        enqueueUserNotification({
+          userId: receiverId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            transferId: String(result.data.id),
+            action: "TRANSFER_REQUEST",
+            amount: String(amount) + currencySymbol,
+            senderPhoneNumber,
+            notificationId: String(notificationData.id),
+          },
+        }).catch((err) => {
           console.error("Error enqueuing user notification:", err);
         });
         //sender notification
-        const messageTitleSender = i18n.__("TRANSFER_REQUEST_NOTIFICATION_TITLE_SENDER");
-        const messageBodySender = i18n.__("TRANSFER_REQUEST_NOTIFICATION_BODY_SENDER", {
-          amount: String(amount) + currencySymbol,
-          senderPhoneNumber,
-          receiverPhoneNumber,
-          senderName: result?.data?.sender?.name || "",
-          receiverName: result?.data?.receiver?.name || "",
-        });
+        const messageTitleSender = i18n.__(
+          "TRANSFER_REQUEST_NOTIFICATION_TITLE_SENDER",
+        );
+        const messageBodySender = i18n.__(
+          "TRANSFER_REQUEST_NOTIFICATION_BODY_SENDER",
+          {
+            amount: String(amount) + currencySymbol,
+            senderPhoneNumber,
+            receiverPhoneNumber,
+            senderName: result?.data?.sender?.name || "",
+            receiverName: result?.data?.receiver?.name || "",
+          },
+        );
         const senderNotificationData = await Notification.create({
           userId: senderId,
           type: "SENDER_TRANSFER_REQUEST",
@@ -314,19 +336,23 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
 
         console.log(
           "Creating wallet transfer notification with data:",
-          transferJSONB
+          transferJSONB,
         );
-      }
+      },
     );
   }
-  static async transferRequestRejectionNotification(transferRequestId, i18n, autoRejected) {
+  static async transferRequestRejectionNotification(
+    transferRequestId,
+    i18n,
+    autoRejected,
+  ) {
     TransferRequestService.getTransferRequestById(
       transferRequestId,
       async (error, result) => {
         if (error)
           return console.error(
             "Error fetching transfer request details:",
-            error
+            error,
           );
 
         const { senderId, amount, currency, receiver } = result.data;
@@ -334,7 +360,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         const receiverPhoneNumber = receiver?.phoneNumber;
         const currencySymbol = getcurrencySymbols(currency) || currency;
         const messageTitle = i18n.__(
-          "TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE"
+          "TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE",
         );
         let messageBody = i18n.__(
           "TRANSFER_REQUEST_REJECTION_NOTIFICATION_BODY",
@@ -342,7 +368,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
             receiverName: receiver?.name || "",
-          }
+          },
         );
         if (autoRejected) {
           messageBody = i18n.__(
@@ -351,7 +377,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
               amount: String(amount) + currencySymbol,
               receiverPhoneNumber,
               receiverName: receiver?.name || "",
-            }
+            },
           );
         }
 
@@ -363,39 +389,40 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        enqueueUserNotification(
-          {
-            userId: senderId,
-            title: messageTitle,
-            body: messageBody,
-            data: {
-              transferId: String(result.data.id),
-              action: "TRANSFER_REQUEST_REJECTION",
-              amount: String(amount) + currencySymbol,
-              receiverPhoneNumber,
-              notificationId: String(notificationData.id),
-            },
-          }
-        ).catch((err) => {
+        enqueueUserNotification({
+          userId: senderId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            transferId: String(result.data.id),
+            action: "TRANSFER_REQUEST_REJECTION",
+            amount: String(amount) + currencySymbol,
+            receiverPhoneNumber,
+            notificationId: String(notificationData.id),
+          },
+        }).catch((err) => {
           console.error("Error enqueuing user notification:", err);
         });
 
         console.log(
           "Creating wallet transfer request rejection notification with data:",
-          transferJSONB
+          transferJSONB,
         );
-      }
+      },
     );
   }
 
-  static async transferRequestRejectionBySenderNotification(transferRequestId, i18n)  {
-     TransferRequestService.getTransferRequestById(
+  static async transferRequestRejectionBySenderNotification(
+    transferRequestId,
+    i18n,
+  ) {
+    TransferRequestService.getTransferRequestById(
       transferRequestId,
       async (error, result) => {
         if (error)
           return console.error(
             "Error fetching transfer request details:",
-            error
+            error,
           );
 
         const { senderId, amount, currency, receiver } = result.data;
@@ -403,7 +430,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         const receiverPhoneNumber = receiver?.phoneNumber;
         const currencySymbol = getcurrencySymbols(currency) || currency;
         const messageTitle = i18n.__(
-          "SENDER_TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE"
+          "SENDER_TRANSFER_REQUEST_REJECTION_NOTIFICATION_TITLE",
         );
         let messageBody = i18n.__(
           "SENDER_TRANSFER_REQUEST_REJECTION_NOTIFICATION_BODY",
@@ -411,9 +438,9 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
             receiverName: receiver?.name || "",
-          }
+          },
         );
-        
+
         const notificationData = await Notification.create({
           userId: senderId,
           type: "SENDER_TRANSFER_REQUEST_REJECTION",
@@ -422,32 +449,27 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        enqueueUserNotification(
-          {
-            userId: senderId,
-            title: messageTitle,
-            body: messageBody,
-            data: {
-              transferId: String(result.data.id),
-              action: "SENDER_TRANSFER_REQUEST_REJECTION",
-              amount: String(amount) + currencySymbol,
-              receiverPhoneNumber,
-              notificationId: String(notificationData.id),
-            },
+        enqueueUserNotification({
+          userId: senderId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            transferId: String(result.data.id),
+            action: "SENDER_TRANSFER_REQUEST_REJECTION",
+            amount: String(amount) + currencySymbol,
+            receiverPhoneNumber,
+            notificationId: String(notificationData.id),
           },
-        ).catch((err) => {
+        }).catch((err) => {
           console.error("Error enqueuing user notification:", err);
         });
 
         console.log(
           "Creating wallet transfer request rejection notification with data:",
-          transferJSONB
+          transferJSONB,
         );
-      }
+      },
     );
-
-
-
   }
 
   static async transferRequestApprovalNotification(transferRequestId, i18n) {
@@ -457,7 +479,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         if (error)
           return console.error(
             "Error fetching transfer request details:",
-            error
+            error,
           );
 
         const { senderId, amount, currency, receiver } = result.data;
@@ -465,7 +487,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         const receiverPhoneNumber = receiver?.phoneNumber;
         const currencySymbol = getcurrencySymbols(currency) || currency;
         const messageTitle = i18n.__(
-          "TRANSFER_REQUEST_APPROVAL_NOTIFICATION_TITLE"
+          "TRANSFER_REQUEST_APPROVAL_NOTIFICATION_TITLE",
         );
         const messageBody = i18n.__(
           "TRANSFER_REQUEST_APPROVAL_NOTIFICATION_BODY",
@@ -473,7 +495,7 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             amount: String(amount) + currencySymbol,
             receiverPhoneNumber,
             receiverName: receiver?.name || "",
-          }
+          },
         );
 
         const notificationData = await Notification.create({
@@ -484,28 +506,26 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
           metadata: transferJSONB,
         });
 
-        enqueueUserNotification(
-          {
-            userId: senderId,
-            title: messageTitle,
-            body: messageBody,
-            data: {
-              transferId: String(result.data.id),
-              action: "TRANSFER_REQUEST_APPROVAL",
-              amount: String(amount) + currencySymbol,
-              receiverPhoneNumber,
-              notificationId: String(notificationData.id),
-            },
+        enqueueUserNotification({
+          userId: senderId,
+          title: messageTitle,
+          body: messageBody,
+          data: {
+            transferId: String(result.data.id),
+            action: "TRANSFER_REQUEST_APPROVAL",
+            amount: String(amount) + currencySymbol,
+            receiverPhoneNumber,
+            notificationId: String(notificationData.id),
           },
-        ).catch((err) => {
+        }).catch((err) => {
           console.error("Error enqueuing user notification:", err);
         });
 
         console.log(
           "Creating wallet transfer request approval notification with data:",
-          transferJSONB
+          transferJSONB,
         );
-      }
+      },
     );
   }
 
@@ -520,32 +540,37 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
 
       // Add remainingTime calculation for notifications with expiredTime
       const now = moment();
-      const notificationsWithRemainingTime = notifications.map(notification => {
-        const meta = notification.metadata;
-        let remainingTime = null;
-        if (meta && meta.expiredTime) {
-          const expiredMoment = moment(meta.expiredTime, "YYYY-MM-DD HH:mm:ss.SSSZ");
-          const diffSeconds = expiredMoment.diff(now, "seconds");
-          if (diffSeconds > 0) {
-            const duration = moment.duration(diffSeconds, "seconds");
-            if (duration.asDays() >= 1) {
-              remainingTime = `${Math.floor(duration.asDays())} day(s)`;
-            } else if (duration.asHours() >= 1) {
-              remainingTime = `${Math.floor(duration.asHours())} hour(s)`;
-            } else if (duration.asMinutes() >= 1) {
-              remainingTime = `${Math.floor(duration.asMinutes())} min(s)`;
+      const notificationsWithRemainingTime = notifications.map(
+        (notification) => {
+          const meta = notification.metadata;
+          let remainingTime = null;
+          if (meta && meta.expiredTime) {
+            const expiredMoment = moment(
+              meta.expiredTime,
+              "YYYY-MM-DD HH:mm:ss.SSSZ",
+            );
+            const diffSeconds = expiredMoment.diff(now, "seconds");
+            if (diffSeconds > 0) {
+              const duration = moment.duration(diffSeconds, "seconds");
+              if (duration.asDays() >= 1) {
+                remainingTime = `${Math.floor(duration.asDays())} day(s)`;
+              } else if (duration.asHours() >= 1) {
+                remainingTime = `${Math.floor(duration.asHours())} hour(s)`;
+              } else if (duration.asMinutes() >= 1) {
+                remainingTime = `${Math.floor(duration.asMinutes())} min(s)`;
+              } else {
+                remainingTime = `${Math.floor(duration.asSeconds())} sec(s)`;
+              }
             } else {
-              remainingTime = `${Math.floor(duration.asSeconds())} sec(s)`;
+              remainingTime = "Expired";
             }
-          } else {
-            remainingTime = "Expired";
           }
-        }
-        return {
-          ...notification.toJSON(),
-          remainingTime,
-        };
-      });
+          return {
+            ...notification.toJSON(),
+            remainingTime,
+          };
+        },
+      );
 
       return notificationsWithRemainingTime;
     } catch (error) {
@@ -590,14 +615,14 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         { isRead: true },
         {
           where: {
-        userId,
-        isRead: false,
-        [Op.or]: [
-          { metadata: null }, 
-          { metadata: { status: { [Op.ne]: 'pending' } } }
-        ],
+            userId,
+            isRead: false,
+            [Op.or]: [
+              { metadata: null },
+              { metadata: { status: { [Op.ne]: "pending" } } },
+            ],
           },
-        }
+        },
       );
       return updatedCount > 0;
     } catch (error) {
@@ -630,14 +655,14 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
   static async getNotificationBellIconColor(userId) {
     try {
       const hasUnreadNotifications = await Notification.count({
-        where: { userId, metadata: { status: { [Op.eq]: 'pending' } } },
+        where: { userId, metadata: { status: { [Op.eq]: "pending" } } },
       });
       return hasUnreadNotifications > 0 ? "green" : "red";
     } catch (error) {
       console.error("Error fetching notification bell icon color:", error);
       return "red";
     }
-  } 
+  }
   static async getLastPendingTransferNotification(userId) {
     // console.log(
     //   "Fetching last pending transfer notification for user:",
@@ -657,15 +682,21 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         {
           replacements: { userId },
           type: db.Sequelize.QueryTypes.SELECT,
-        }
+        },
       );
-      const { transfer, ...notificationWithoutTransfer } = notifications[0] || {};
-      return { ...notificationWithoutTransfer, metadata: { ...notificationWithoutTransfer.metadata, status: transfer.status } };
-
+      const { transfer, ...notificationWithoutTransfer } =
+        notifications[0] || {};
+      return {
+        ...notificationWithoutTransfer,
+        metadata: {
+          ...notificationWithoutTransfer.metadata,
+          status: transfer.status,
+        },
+      };
     } catch (error) {
       console.error(
         "Error fetching last pending transfer notification:",
-        error
+        error,
       );
       return null;
     }
@@ -680,34 +711,37 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             id: transferid,
           },
         },
-       });
-       const senderTransferNotification = await Notification.findOne({
-         where: {
-           type: "SENDER_TRANSFER",
-           isRead: false,
-           metadata: {
-             id: transferid,
-           },
-         },
-       });
-       if (notification) {
-         notification.set("metadata", { ...notification.metadata, status });
-         await notification.save();
-         
-       }
-       if (senderTransferNotification) {
-         senderTransferNotification.set("metadata", { ...senderTransferNotification.metadata, status });
-         await senderTransferNotification.save();
-         
-       }
-       return { notification, senderTransferNotification };
+      });
+      const senderTransferNotification = await Notification.findOne({
+        where: {
+          type: "SENDER_TRANSFER",
+          isRead: false,
+          metadata: {
+            id: transferid,
+          },
+        },
+      });
+      if (notification) {
+        notification.set("metadata", { ...notification.metadata, status });
+        await notification.save();
+      }
+      if (senderTransferNotification) {
+        senderTransferNotification.set("metadata", {
+          ...senderTransferNotification.metadata,
+          status,
+        });
+        await senderTransferNotification.save();
+      }
+      return { notification, senderTransferNotification };
     } catch (error) {
       console.error("Error fetching pending transfer notifications:", error);
       return null;
     }
-
   }
-  static async updatePendingTransferRequestNotificationStatus(transferid, status) {
+  static async updatePendingTransferRequestNotificationStatus(
+    transferid,
+    status,
+  ) {
     try {
       const notification = await Notification.findOne({
         where: {
@@ -717,52 +751,60 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
             id: transferid,
           },
         },
-       });
-       const senderNotification  = await Notification.findOne({
-         where: {
-           type: "SENDER_TRANSFER_REQUEST",
-           isRead: false,
-           metadata: {
-             id: transferid,
-           },
-         },
-       });
-       if(notification) {
-        notification.set('metadata', { ...notification.metadata, status });
+      });
+      const senderNotification = await Notification.findOne({
+        where: {
+          type: "SENDER_TRANSFER_REQUEST",
+          isRead: false,
+          metadata: {
+            id: transferid,
+          },
+        },
+      });
+      if (notification) {
+        notification.set("metadata", { ...notification.metadata, status });
         await notification.save();
-        
-       }
-       if(senderNotification) {
-         senderNotification.set('metadata', { ...senderNotification.metadata, status });
-         await senderNotification.save();
-         
-       }
-       return { notification, senderNotification };
+      }
+      if (senderNotification) {
+        senderNotification.set("metadata", {
+          ...senderNotification.metadata,
+          status,
+        });
+        await senderNotification.save();
+      }
+      return { notification, senderNotification };
     } catch (error) {
       console.error("Error fetching pending transfer notifications:", error);
       return null;
     }
-
   }
-  static async sendKycStatusNotification(accountId){
+  static async sendKycStatusNotification(accountId) {
     console.log("Account id", accountId);
-    
-    try{
-      const kycAccount = await AirwallexKycAccount.findOne({ where: { airwallexAccountId: accountId } });
-      if(!kycAccount){
+
+    try {
+      const kycAccount = await AirwallexKycAccount.findOne({
+        where: { airwallexAccountId: accountId },
+      });
+      if (!kycAccount) {
         console.error("KYC Account not found for id:", accountId);
         return;
       }
       const userId = kycAccount.userId;
       const user = await User.findByPk(userId);
-      if(!user){
+      if (!user) {
         console.error("User not found for id:", userId);
         return;
       }
       const language = user.language || "he";
       const status = kycAccount.status;
-      const messageTitle =  il8n.__({ phrase: "KYC_STATUS_UPDATE_TITLE", locale: language });
-      const messageBody = il8n.__({ phrase: "KYC_STATUS_UPDATE_BODY", locale: language }, { status });
+      const messageTitle = il8n.__({
+        phrase: "KYC_STATUS_UPDATE_TITLE",
+        locale: language,
+      });
+      const messageBody = il8n.__(
+        { phrase: "KYC_STATUS_UPDATE_BODY", locale: language },
+        { status },
+      );
       const notificationData = await Notification.create({
         userId,
         type: "KYC_STATUS_UPDATE",
@@ -770,25 +812,22 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         message: messageBody,
         metadata: { accountId, status },
       });
-      enqueueUserNotification(
-        {
-          userId,
-          title: messageTitle,
-          body: messageBody,
-          data: {
-            accountId: String(accountId),
-            action: "KYC_STATUS_UPDATE",
-            status,
-            notificationId: String(notificationData.id),
-          },
-        }
-      ).catch((err) => {
+      enqueueUserNotification({
+        userId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          accountId: String(accountId),
+          action: "KYC_STATUS_UPDATE",
+          status,
+          notificationId: String(notificationData.id),
+        },
+      }).catch((err) => {
         console.error("Error enqueuing user notification:", err);
       });
-    }catch(error){
+    } catch (error) {
       console.error("Error sending KYC status notification:", error);
     }
-
   }
   static async sendSplitNotification({ userId, status, amount, currency }) {
     try {
@@ -797,10 +836,16 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         console.error("User not found for id:", userId);
         return;
       }
-      
+
       const language = user.language || "he";
-      const messageTitle = il8n.__({ phrase: "FUND_SPLIT_UPDATE_TITLE", locale: language });
-      const messageBody = il8n.__({ phrase: `FUND_SPLIT_${status}_BODY`, locale: language }, { status, amount, currency });
+      const messageTitle = il8n.__({
+        phrase: "FUND_SPLIT_UPDATE_TITLE",
+        locale: language,
+      });
+      const messageBody = il8n.__(
+        { phrase: `FUND_SPLIT_${status}_BODY`, locale: language },
+        { status, amount, currency },
+      );
       const notificationData = await Notification.create({
         userId,
         type: "FUND_SPLIT_UPDATE",
@@ -808,24 +853,96 @@ static async walletTransferRejectionBySenderNotification(transferId, i18n, autoR
         message: messageBody,
         metadata: { status, amount, currency },
       });
-      enqueueUserNotification(
-        {
-          userId,
-          title: messageTitle,
-          body: messageBody,
-          data: {
-            action: "FUND_SPLIT_UPDATE",
-            status,
-            amount,
-            currency,
-            notificationId: String(notificationData.id),
-          },
-        }
-      ).catch((err) => {
+      enqueueUserNotification({
+        userId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          action: "FUND_SPLIT_UPDATE",
+          status,
+          amount,
+          currency,
+          notificationId: String(notificationData.id),
+        },
+      }).catch((err) => {
         console.error("Error enqueuing user notification:", err);
       });
     } catch (error) {
       console.error("Error sending fund split notification:", error);
+    }
+  }
+  //sending refund status update notification to the user
+  static async notifyRefundStatusUpdate({ userId, status, amount, currency }) {
+    try {
+      const user = await User.findByPk(userId);
+       if (!user) {
+        console.error("User not found for id:", userId);
+        return;
+       }
+
+      const language = user.language || "he";
+
+      const REFUND_NOTIFICATIONS = {
+        RECEIVED: {
+          title: "RECEIVED_REFUND_TITLE",
+          message: "RECEIVED_REFUND_BODY",
+        },
+        ACCEPTED: {
+          title: "ACCEPTED_REFUND_TITLE",
+          message: "ACCEPTED_REFUND_BODY",
+        },
+        SETTLED: {
+          title: "SETTLED_REFUND_TITLE",
+          message: "SETTLED_REFUND_BODY",
+        },
+        FAILED: {
+          title: "FAILED_REFUND_TITLE",
+          message: "FAILED_REFUND_BODY",
+        },
+        SUCCEEDED: {
+          title: "SUCCEEDED_REFUND_TITLE",
+          message: "SUCCEEDED_REFUND_BODY",
+        },
+      };
+
+      const refundNotification = REFUND_NOTIFICATIONS[status];
+      if (!refundNotification) {
+        console.error("Unsupported refund status for notification:", status);
+        return;
+      }
+
+      const formattedAmount = `${amount} ${currency}`;
+      const messageTitle = il8n.__({
+        phrase: refundNotification.title,
+        locale: language,
+      });
+      const messageBody = il8n.__(
+        { phrase: refundNotification.message, locale: language },
+        { amount: formattedAmount },
+      );
+      const notificationData = await Notification.create({
+        userId,
+        type: "REFUND_STATUS_UPDATE",
+        title: messageTitle,
+        message: messageBody,
+        metadata: { status, amount, currency },
+      });
+      enqueueUserNotification({
+        userId,
+        title: messageTitle,
+        body: messageBody,
+        data: {
+          action: "REFUND_STATUS_UPDATE",
+          status,
+          amount: String(amount),
+          currency,
+          notificationId: String(notificationData.id),
+        },
+      }).catch((err) => {
+        console.error("Error enqueuing user notification:", err);
+      });
+    } catch (error) {
+      console.error("Error sending refund status notification:", error);
     }
   }
 }

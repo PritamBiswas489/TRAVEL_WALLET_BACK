@@ -572,5 +572,15 @@
 	"FAILED_TO_CREATE_AFT_WALLET_TOPUP": " יצירת טעינת ארנק AFT נכשלה.",
 	"FUND_SPLIT_UPDATE_TITLE":"סטטוס הטעינה עודכן.",
 	"AFT_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "רשימת תשלומי AFT נמשכה בהצלחה.",
-	"RECHARGE_STILL_NOT_SETTLED": "הטעינה עדיין לא הושלמה."
+	"RECHARGE_STILL_NOT_SETTLED": "הטעינה עדיין לא הושלמה.",
+	"RECEIVED_REFUND_TITLE": "בקשת ההחזר התקבלה.",
+	"RECEIVED_REFUND_BODY": "בקשת ההחזר שלך בסך {{amount}} התקבלה. נעדכן אותך כשיהיה עדכון.",
+	"ACCEPTED_REFUND_TITLE": "ההחזר אושר",
+	"ACCEPTED_REFUND_BODY": "חדשות טובות! ההחזר שלך בסך {{amount}} אושר ונמצא בתהליך עיבוד.",
+	"SETTLED_REFUND_TITLE": "ההחזר הושלם",
+	"SETTLED_REFUND_BODY": "ההחזר שלך בסך {{amount}} עובד בהצלחה.",
+	"FAILED_REFUND_TITLE": "ההחזר נכשל",
+	"FAILED_REFUND_BODY": "לצערנו, לא ניתן היה לעבד את ההחזר שלך בסך {{amount}}. לקבלת עזרה, פנה לתמיכה.",
+	"SUCCEEDED_REFUND_TITLE": "ההחזר בוצע בהצלחה",
+	"SUCCEEDED_REFUND_BODY": "ההחזר שלך בסך {{amount}} בוצע בהצלחה. תודה על הסבלנות."
 }

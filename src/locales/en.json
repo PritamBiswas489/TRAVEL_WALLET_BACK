@@ -574,5 +574,15 @@
 	"LANGUAGE_UPDATED_SUCCESSFULLY": "Language updated successfully.",
 	"AFT_PAYMENT_LIST_FETCHED_SUCCESSFULLY": "AFT payment list fetched successfully",
 	"TESTINGVALUE": "This is a testing value. %s",
-	"RECHARGE_STILL_NOT_SETTLED": "Recharge is still not complete yet."
+	"RECHARGE_STILL_NOT_SETTLED": "Recharge is still not complete yet.",
+	"RECEIVED_REFUND_TITLE": "Refund request received.",
+	"RECEIVED_REFUND_BODY": "Your refund request for {{amount}} has been received. We'll notify you when there's an update.",
+	"ACCEPTED_REFUND_TITLE": "Refund Approved",
+	"ACCEPTED_REFUND_BODY": "Good news! Your refund of {{amount}} has been approved and is being processed.",
+	"SETTLED_REFUND_TITLE": "Refund Completed",
+	"SETTLED_REFUND_BODY": "Your refund of {{amount}} has been successfully processed.",
+	"FAILED_REFUND_TITLE": "Refund Failed",
+	"FAILED_REFUND_BODY": "Unfortunately, your refund of {{amount}} could not be processed. Please contact support for assistance.",
+	"SUCCEEDED_REFUND_TITLE": "Refund Successful",
+	"SUCCEEDED_REFUND_BODY": "Your refund of {{amount}} was successful. Thank you for your patience."
 }

@@ -4262,6 +4262,8 @@ export default class AirwallexPaymentService {
     let webhookDedupeKey = null;
     let fundSplitLockKey = null;
 
+    
+
     try {
       console.log("Event received:", payload.id);
       const timestamp = headers["x-timestamp"];
@@ -4319,7 +4321,16 @@ export default class AirwallexPaymentService {
         await redisClient.del(webhookDedupeKey);
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
-
+      try{
+        const activeOperationKey = "payment:" + dataObject.id;
+        const activeOprationCheck = await ActiveOperationService.isActive(getPaymentIntent.userId,OP_TYPE.PAYMENT, activeOperationKey);
+        if(!activeOprationCheck) {
+            await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
+        }
+      }catch (error) {
+        console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
+      }
+      
       const previousStatus = getPaymentIntent?.status || null;
       const incomingStatus = dataObject.status || null;
 
@@ -4487,9 +4498,15 @@ export default class AirwallexPaymentService {
         }
       }
 
+      if(recordPayload?.status === "CANCELLED") {
+        ActiveOperationService.end(Number.parseInt(dataObject?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + dataObject?.id);
+
+      }
+
       return callback(null, { data: payload });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      ActiveOperationService.end(Number.parseInt(payload?.data?.object?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + payload?.data?.object?.id);
       console.error(
         "❌ Error handling PaymentIntent webhook:",
         error?.message || error,
@@ -4808,6 +4825,7 @@ export default class AirwallexPaymentService {
             Sentry.captureException(error);
         }
       }
+     
 
       if (incomingStatus === "FAILED") {
         try {
@@ -4844,6 +4862,10 @@ export default class AirwallexPaymentService {
         );
       }
 
+       if(typeof incomingRank !== "undefined" && incomingRank === 3) {
+        ActiveOperationService.end(Number.parseInt(dataObject?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + dataObject?.source_id);
+      }
+
       return callback(null, { data: existingSplit });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
@@ -4851,6 +4873,7 @@ export default class AirwallexPaymentService {
         "❌ Error handling FundSplit webhook:",
         error?.message || error,
       );
+      ActiveOperationService.end(Number.parseInt(payload?.data?.object?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + payload?.data?.object?.source_id);
 
       // Roll back the dedupe key if this attempt failed partway through —
       // otherwise Airwallex's retry of the same event gets silently
@@ -4976,19 +4999,39 @@ export default class AirwallexPaymentService {
             },
           },
         );
+
+         try {
+          NotificationService.notifyRefundStatusUpdate({
+             userId,
+             amount: getRefundData.amount,
+             currency: getRefundData.currency,
+             status: incomingStatus,
+           });
+           enqueueUpdateReverseSplitRefundPaymentIntentRecord({
+             paymentId,
+             userId,
+           });
+           if (
+             typeof incomingRank !== "undefined" &&
+             parseInt(incomingRank) === 3
+           ) {
+             ActiveOperationService.end(
+               userId,
+               OP_TYPE.REFUND,
+               `payment:${paymentId}`,
+             );
+           }
+         } catch (error) {
+           console.error(
+             "❌ Failed to notify refund status update:",
+             error?.message || error,
+           );
+         }
+        
         
         // Enqueue a job to update the reverse split refund payment intent record in the background.
-        enqueueUpdateReverseSplitRefundPaymentIntentRecord({
-          paymentId,
-          userId,
-        });
-        if(typeof incomingRank !== "undefined" && parseInt(incomingRank) === 3){
-            ActiveOperationService.end(
-            userId,
-            OP_TYPE.REFUND,
-            `payment:${paymentId}`,
-          );
-        }
+       
+       
       } else {
         // No local refund record yet — could be a genuine race (webhook
         // arriving before our own refund-creation write lands) rather than
