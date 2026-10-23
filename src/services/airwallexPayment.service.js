@@ -5172,9 +5172,9 @@ export default class AirwallexPaymentService {
         const activeOperationKey = "payment:" + getPaymentIntent.airwallexIntentId;
         const activeOprationCheck = await ActiveOperationService.isActive(getPaymentIntent.userId,OP_TYPE.PAYMENT, activeOperationKey);
         if(!activeOprationCheck) {
-           // await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
+           await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
         }
-        return callback(null, { data: getPaymentIntent });
+        return callback(null, { data: getPaymentIntent.airwallexIntentId });
       }catch (error) {
         console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
       }
