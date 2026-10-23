@@ -589,5 +589,6 @@
 	"WAIT_FOR_ACTIVE_PAYMENT_OPERATION": "Please wait for active payment operations to complete.",
 	"WAIT_FOR_ACTIVE_REFUND_OPERATION": "Please wait for active refund operations to complete.",
 	"EXECUTE_REFUND": "Your account current balance is {{currentBalance}}.Please execute the refund before deleting your profile.After the refund is completed, you can proceed with deleting your profile.",
-	"DELETE_PROFILE": "Please confirm the deletion of your Account.After deletion, your account and all associated data will be permanently removed."
+	"DELETE_PROFILE": "Please confirm the deletion of your Account.After deletion, your account and all associated data will be permanently removed.",
+	"AIRWALLEX_ACCOUNT_NOT_ACTIVE": "KYC account is not active."
 }

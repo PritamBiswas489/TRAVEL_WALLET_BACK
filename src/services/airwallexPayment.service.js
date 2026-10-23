@@ -1501,6 +1501,9 @@ export default class AirwallexPaymentService {
       if (!kycAccount || !kycAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
+      if(kycAccount?.status !== "ACTIVE") {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_ACTIVE"));
+      }
 
       const response = await axios.get(
         `${process.env.AIRWALLEX_API_URL}/api/v1/balances/current`,
