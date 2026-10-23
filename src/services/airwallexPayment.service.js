@@ -4321,15 +4321,15 @@ export default class AirwallexPaymentService {
         await redisClient.del(webhookDedupeKey);
         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
       }
-      try{
-        const activeOperationKey = "payment:" + dataObject.id;
-        const activeOprationCheck = await ActiveOperationService.isActive(getPaymentIntent.userId,OP_TYPE.PAYMENT, activeOperationKey);
-        if(!activeOprationCheck) {
-            await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
-        }
-      }catch (error) {
-        console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
-      }
+      // try{
+      //   const activeOperationKey = "payment:" + dataObject.id;
+      //   const activeOprationCheck = await ActiveOperationService.isActive(getPaymentIntent.userId,OP_TYPE.PAYMENT, activeOperationKey);
+      //   if(!activeOprationCheck) {
+      //       await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
+      //   }
+      // }catch (error) {
+      //   console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
+      // }
       
       const previousStatus = getPaymentIntent?.status || null;
       const incomingStatus = dataObject.status || null;
@@ -5158,6 +5158,35 @@ export default class AirwallexPaymentService {
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
+  }
+  static async addPaymentActionOperation({ payload }, callback) {
+    try {
+       const {paymentIntentId} = payload;
+       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
+          where: { airwallexIntentId: paymentIntentId },
+       });
+       if(!getPaymentIntent) {
+         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+       }
+       try{
+        const activeOperationKey = "payment:" + getPaymentIntent.airwallexIntentId;
+        const activeOprationCheck = await ActiveOperationService.isActive(getPaymentIntent.userId,OP_TYPE.PAYMENT, activeOperationKey);
+        if(!activeOprationCheck) {
+           // await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
+        }
+        return callback(null, { data: getPaymentIntent });
+      }catch (error) {
+        console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
+      }
+    }catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "❌ Error adding Payment Action Operation:",
+        error?.message || error,
+      );
+      return callback(new Error("INTERNAL_SERVER_ERROR"));
+    }
+
   }
 
   static async offboardingAirewallexAccount(request, callback) {

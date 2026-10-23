@@ -241,6 +241,13 @@ async function getPaymentIntent() {
 
 async function handleWalletSuccess(label) {
     try {
+        fetch(`/api/front/add-payment-action-operation`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentIntentId: state.intent.id }),
+        }).catch((error) => {
+          console.error("Error adding payment action operation:", error);
+        });
         const verification = await fetch(`/api/front/retrieve-payment-intent/${state.intent.id}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -445,6 +452,15 @@ async function initializePayment() {
                         },
                     });
                 }
+
+                
+                fetch(`/api/front/add-payment-action-operation`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ paymentIntentId: state.intent.id }),
+                }).catch((error) => {
+                    console.error("Error adding payment action operation:", error);
+                });
 
                 const verification = await fetch(`/api/front/retrieve-payment-intent/${state.intent.id}`, {
                     method: "GET",

@@ -1914,6 +1914,44 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async addPaymentActionOperation(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    return new Promise((resolve) => {
+      AirwallexPaymentService.addPaymentActionOperation(
+        { payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_ADD_PAYMENT_ACTION_OPERATION",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "PAYMENT_ACTION_OPERATION_ADDED_SUCCESSFULLY",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+  }
   static async handleOffboardingWebhook(request) {
     const {
       payload,

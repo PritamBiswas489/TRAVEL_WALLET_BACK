@@ -871,6 +871,39 @@ router.get("/retrieve-payment-intent/:paymentIntentId", async (req, res) => {
   });
   res.return(response);
 });
+/**
+ * @swagger
+ * /api/front/add-payment-action-operation:
+ *   post:
+ *     summary: Add payment action operation
+ *     tags: [Front-airwallex-kyc-wallet routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Payment action operation payload
+ *             required:
+ *               - paymentIntentId
+ *             properties:
+ *               paymentIntentId:
+ *                 type: string
+ *                 description: Airwallex payment intent ID
+ *     responses:
+ *       200:
+ *         description: Payment action operation added successfully
+ */
+router.post("/add-payment-action-operation", async (req, res) => {
+  const response = await AirwallexPaymentController.addPaymentActionOperation({
+    payload: { ...req.params, ...req.query, ...req.body },
+    headers: req.headers,
+  });
+  res.return(response);
+});
 
 router.use("/login", loginRouter);
 router.use("/notification", notificationRouter);
