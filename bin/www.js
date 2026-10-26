@@ -1,115 +1,116 @@
-#!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
-import { createServer } from 'http';
-import chalk from 'chalk';
-const { PORT } = process.env;
-import app from '../src/app.js';
  
-/**
- * Normalize a port into a number, string, or false.
- */
+import { createServer } from "http";
+import chalk from "chalk";
+import { performance } from "node:perf_hooks";
 
-const normalizePort = (val) => {
-	const port = parseInt(val, 10);
+import app, { initializeApp } from "../src/app.js";
 
-	if (Number.isNaN(port)) {
-		// named pipe
-		return val;
-	}
+const startupStart = performance.now();
 
-	if (port >= 0) {
-		// port number
-		return port;
-	}
+const normalizePort = (value) => {
+    const port = Number.parseInt(value, 10);
 
-	return false;
+    if (Number.isNaN(port)) {
+        return value;
+    }
+
+    if (port >= 0) {
+        return port;
+    }
+
+    return false;
 };
 
-/**
- * Get port from environment and store in Express.
- */
+const port = normalizePort(process.env.PORT || "4000");
 
-const port = normalizePort(PORT || 4000);
-app.set('port', port);
-
-/**
- * Create HTTP server.
- */
+app.set("port", port);
 
 const server = createServer(app);
 
-/**
- * Event listener for HTTP server "error" event.
- */
-
 const onError = (error) => {
-	if (error.syscall !== 'listen') {
-		throw error;
-	}
+    if (error.syscall !== "listen") {
+        throw error;
+    }
 
-	const bind = typeof port === 'string' ? `Pipe ${port}` : `Port  ${port}`;
+    const bind =
+        typeof port === "string"
+            ? `Pipe ${port}`
+            : `Port ${port}`;
 
-	// handle specific listen errors with friendly messages
-	switch (error.code) {
-		case 'EACCES':
-			console.error(`${bind} requires elevated privileges`);
-			process.exit(1);
-			break;
-		case 'EADDRINUSE':
-			console.error(`${bind} is already in use`);
-			process.exit(1);
-			break;
-		default:
-			throw error;
-	}
+    switch (error.code) {
+        case "EACCES":
+            console.error(`${bind} requires elevated privileges`);
+            process.exit(1);
+            break;
+
+        case "EADDRINUSE":
+            console.error(`${bind} is already in use`);
+            process.exit(1);
+            break;
+
+        default:
+            throw error;
+    }
 };
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-const onListening = () => {
-	console.log(chalk.blueBright(`server listening on port ${port}`));
-};
+server.on("error", onError);
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+server.on("listening", () => {
+    console.log(
+        chalk.blueBright(`Server listening on port ${port}`)
+    );
 
-server.listen(port, async() => {
-	if (process.env.NODE_ENV === "development") {
-	console.log("Starting Airwallex Payment Intent Worker...");
-    const { startAirwallexPaymentIntentWorker } =
-      await import(
-        "../src/workers/airwallexPaymentIntent.worker.js"
-      );
+    console.log(
+        `Total startup time: ${(performance.now() - startupStart).toFixed(2)} ms`
+    );
+	(async () => {
+		if (process.env.NODE_ENV === "development") {
+		// await new Promise((resolve) => setTimeout(resolve, 30_000));
+		console.log("Starting workers...");
 
-    startAirwallexPaymentIntentWorker();
-    const { walletTransactionsUpdateWorker } =
-      await import(
-        "../src/workers/airWallexWalletUpdateWorker.js"
-      );
+		const { startAirwallexPaymentIntentWorker } = await import(
+			"../src/workers/airwallexPaymentIntent.worker.js"
+		);
+		startAirwallexPaymentIntentWorker();
 
-    walletTransactionsUpdateWorker();
+		const { walletTransactionsUpdateWorker } = await import(
+			"../src/workers/airWallexWalletUpdateWorker.js"
+		);
+		walletTransactionsUpdateWorker();
 
+		const { startAirWallexRefundWorker } = await import(
+			"../src/workers/airWallexRefundWorker.js"
+		);
+		startAirWallexRefundWorker();
 
-	const { startAirWallexRefundWorker } =
-      await import(
-        "../src/workers/airWallexRefundWorker.js"
-      );
-
-	  startAirWallexRefundWorker();
-
-	  const { startPushNotificationWorker } =
-      await import(
-        "../src/workers/pushNotification.worker.js"
-      );
-
-	  startPushNotificationWorker();
-
-  }
+		const { startPushNotificationWorker } = await import(
+			"../src/workers/pushNotification.worker.js"
+		);
+		startPushNotificationWorker();
+	}
+})(); 
 });
-server.on('error', onError);
-server.on('listening', onListening);
+
+async function startServer() {
+    try {
+        console.log("Starting application...");
+        console.log("Node.js version:", process.version);
+
+        const initStart = performance.now();
+
+        await initializeApp();
+
+        console.log(
+            `Application initialization completed in ${(performance.now() - initStart).toFixed(2)} ms`
+        );
+
+        server.listen(port, "127.0.0.1");
+    } catch (error) {
+        console.error("Failed to initialize application:", error);
+
+        process.exitCode = 1;
+    }
+}
+
+startServer();
+ 

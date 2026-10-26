@@ -11,10 +11,6 @@ const options = {
     },
     tags: [
       {
-        name: "Testing endpoints",
-        description: "Endpoints for testing purposes",
-      },
-      {
         name: "Redis testing routes",
         description: "Endpoints for Redis cache management",
       },
