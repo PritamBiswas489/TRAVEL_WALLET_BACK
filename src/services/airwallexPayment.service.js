@@ -5220,6 +5220,8 @@ export default class AirwallexPaymentService {
           },
         },
       );
+      //need curl command for offboarding request for debugging purposes
+      //console.log(`Curl command for offboarding request: curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${encodeURIComponent(airwallexAccountId)}/offboardings/create" -H "Authorization: Bearer ${accessToken}" -H "Content-Type: application/json" -d '{"comment":"${comment || "Account no longer needed"}","reason_code":"${reason_code || "OTHER"}"}'`);
       const offboardingRecord = await AirwallexCustomerOffboardingRecord.create({
         accountId:airwallexAccountId,
         apiId: response.data?.id || null,
@@ -5237,7 +5239,19 @@ export default class AirwallexPaymentService {
         "❌ Error offboarding Airwallex account:",
         error?.message || error,
       );
-      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      if(request?.payload?.airwallexAccountId){
+          AirwallexCustomerOffboardingRecord.create({
+            accountId: request?.payload?.airwallexAccountId || null,
+            apiId: null,
+            status: "FAILED",
+            comment: request?.payload?.comment || null,
+            customerName: request?.payload?.customerName || null,
+            customerPhone: request?.payload?.customerPhone || null,
+            customerEmail: request?.payload?.customerEmail || null,
+         });
+      }
+     
+      // process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(
         new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
       );
