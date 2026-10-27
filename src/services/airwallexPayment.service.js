@@ -402,6 +402,8 @@ export default class AirwallexPaymentService {
     callback,
   ) {
     try {
+      // console.log("Received payload for KYC document creation:", payload);
+
       const [validError, validationResult] =
         await airwallexKycValidator(payload);
       //.log("KYC validation result:", validationResult);
@@ -411,11 +413,11 @@ export default class AirwallexPaymentService {
       //console.log("Validated KYC data:", validationResult);
       //console.log("Received files for KYC submission:", files);
 
-      if (!files?.proofOfAddressImage?.path) {
-        return callback(new Error("PROOF_OF_ADDRESS_IMAGE_REQUIRED"));
-      }
+      // if (!files?.proofOfAddressImage?.path) {
+      //   return callback(new Error("PROOF_OF_ADDRESS_IMAGE_REQUIRED"));
+      // }
 
-      const poaImagePath = files.proofOfAddressImage.path;
+      // const poaImagePath = files.proofOfAddressImage.path;
 
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
@@ -528,18 +530,18 @@ export default class AirwallexPaymentService {
         }
       };
 
-      let poaFileId;
-      try {
-        poaFileId = await uploadFile(poaImagePath);
-      } catch (uploadErr) {
-        return callback(new Error(uploadErr.errMsg), {
-          airwallexError: uploadErr.airwallexError,
-        });
-      }
+      // let poaFileId;
+      // try {
+      //   poaFileId = await uploadFile(poaImagePath);
+      // } catch (uploadErr) {
+      //   return callback(new Error(uploadErr.errMsg), {
+      //     airwallexError: uploadErr.airwallexError,
+      //   });
+      // }
 
-      if (!poaFileId) {
-        return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
-      }
+      // if (!poaFileId) {
+      //   return callback(new Error("PROOF_OF_ADDRESS_IMAGE_UPLOAD_FAILED"));
+      // }
       //Upload Payload to Airwallex to update account with KYC details and submit for verification
       const updatePayload = {
         account_details: {
@@ -558,11 +560,11 @@ export default class AirwallexPaymentService {
               state: validationResult.state,
               suburb: validationResult.suburb,
             },
-            attachments: {
-              individual_documents: [
-                { file_id: poaFileId, tag: "PROOF_OF_ADDRESS" },
-              ],
-            },
+            // attachments: {
+            //   individual_documents: [
+            //     { file_id: poaFileId, tag: "PROOF_OF_ADDRESS" },
+            //   ],
+            // },
             account_usage: {
               card_usage: validationResult.cardUsage,
               collection_country_codes: validationResult.collectionCountryCode,
@@ -643,7 +645,7 @@ export default class AirwallexPaymentService {
             ...updateResponse.data,
             userInputData: {
               ...validationResult,
-              poaImagePath,
+              // poaImagePath,
             },
           },
           userId,

@@ -63,7 +63,7 @@ server.on("listening", () => {
     console.log(
         `Total startup time: ${(performance.now() - startupStart).toFixed(2)} ms`
     );
-	(async () => {
+	async function initializeWorkers() {
 		if (process.env.NODE_ENV === "development") {
 		// await new Promise((resolve) => setTimeout(resolve, 30_000));
 		console.log("Starting workers...");
@@ -88,7 +88,8 @@ server.on("listening", () => {
 		);
 		startPushNotificationWorker();
 	}
-})(); 
+} 
+    // initializeWorkers();
 });
 
 async function startServer() {

@@ -492,10 +492,6 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *               suburb:
  *                 type: string
  *                 example: "Tel Aviv"
- *               proofOfAddressImage:
- *                 type: string
- *                 format: binary
- *                 description: Proof of address document image
  *               cardUsage:
  *                 type: array
  *                 description: "Ways in which the account will use Airwallex borderless cards."
@@ -628,7 +624,8 @@ router.post('/airwallex-get-request-id-merchant-id', async (req, res) => {
  *       200:
  *         description: Success - KYC documents submitted successfully
  */
-router.post('/airwallex-create-kyc-account', kycUpload, async (req, res) => {
+router.post('/airwallex-create-kyc-account', kycUpload,
+    async (req, res) => {
   const files = req.files
     ? Object.fromEntries(Object.entries(req.files).map(([key, arr]) => [key, arr[0]]))
     : {};
