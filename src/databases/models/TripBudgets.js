@@ -52,8 +52,8 @@ export default function TripBudgets(sequelize, DataTypes) {
       indexes: [
         {
           unique: true,
-          fields: ["countryCode", "startDate", "endDate"],
-          name: "trip_budgets_country_date_range_unique",
+          fields: ["userId", "countryCode", "startDate", "endDate"],
+          name: "trip_budgets_user_country_date_range_unique",
         },
       ],
     }

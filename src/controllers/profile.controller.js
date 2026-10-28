@@ -1235,7 +1235,9 @@ export default class ProfileController {
       }
 
       const existingBudget = hasTripId
-        ? await TripBudgets.findByPk(normalizedTripId)
+        ? await TripBudgets.findOne({
+            where: { id: normalizedTripId, userId: user.id },
+          })
         : null;
       const duplicateBudget = await TripBudgets.findOne({
         where: {
@@ -1360,6 +1362,7 @@ export default class ProfileController {
     const {
       payload,
       headers: { i18n },
+      user,
     } = request;
 
     try {
@@ -1372,7 +1375,9 @@ export default class ProfileController {
         };
       }
 
-      const tripBudget = await TripBudgets.findByPk(tripId);
+      const tripBudget = await TripBudgets.findOne({
+        where: { id: tripId, userId: user.id },
+      });
       if (!tripBudget) {
         return {
           status: 404,

@@ -61,9 +61,9 @@ export async function up(queryInterface, Sequelize) {
     }
   );
   await queryInterface.addConstraint("trip_budgets", {
-    fields: ["countryCode", "startDate", "endDate"],
+    fields: ["userId", "countryCode", "startDate", "endDate"],
     type: "unique",
-    name: "trip_budgets_country_date_range_unique",
+    name: "trip_budgets_user_country_date_range_unique",
   });
 }
 
