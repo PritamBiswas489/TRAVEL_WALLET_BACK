@@ -1,13 +1,14 @@
 import "../config/environment.js";
 import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
-const { Setting, Op, User } = db;
+const { Setting, Op, User, TripCountries } = db;
 
 export default class SettingsService {
   static async getSettings() {
     try {
       const settings = await Setting.findAll();
-      return { SUCCESS: 1, data: settings };
+       const tripCountries = await  TripCountries.findAll();
+      return { SUCCESS: 1, data: { settings, tripCountries } };
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: 1 };
@@ -33,17 +34,29 @@ export default class SettingsService {
   }
   static async getSetting(key) {
     try {
-      const setting = await Setting.findOne({ where: { key: key } }); 
-        if (setting) {
-            return { SUCCESS: 1, data: setting };
-        } else {
-            return { ERROR: 1, message: "Setting not found" };
-        }
+      const setting = await Setting.findOne({ where: { key: key } });
+      if (setting) {
+        return { SUCCESS: 1, data: setting };
+      } else {
+        return { ERROR: 1, message: "Setting not found" };
+      }
     } catch (e) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: 1 };
     }
-
-}
-
+  }
+  static async createTripCountry(name, countryCode, currencies) {
+    try {
+      const tripCountry = await TripCountries.create({
+        name: name,
+        countryCode: countryCode,
+        currencies: currencies,
+      });
+      return { SUCCESS: 1, data: tripCountry };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return { ERROR: 1 };
+    }
+  }
+  
 }

@@ -358,9 +358,33 @@ const createBugPlaces = async () => {
 }
 
 
+async function seedTripCountries() {
+  await SettingsService.createTripCountry(
+    { en: "Thailand", he: "תאילנד" },
+    "TH",
+    [{ code: "THB", name: { en: "Thai Baht", he: "בהט תאילנדי" } }],
+  );
+  await SettingsService.createTripCountry(
+    { en: "Philippines", he: "פיליפינים" },
+    "PH",
+    [{ code: "PHP", name: { en: "Philippine Peso", he: "פזו פיליפיני" } }],
+  );
+  await SettingsService.createTripCountry(
+    { en: "Vietnam", he: "ויאטנם" },
+    "VN",
+    [{ code: "VND", name: { en: "Vietnamese Dong", he: "דונג וייטנאמי" } }],
+  );
+  await SettingsService.createTripCountry(
+    { en: "Cambodia", he: "קמבודיה" },
+    "KH",
+    [{ code: "KHR", name: { en: "Cambodian Riel", he: "ריאל קמבודי" } }, { code: "USD", name: { en: "US Dollar", he: "דולר אמריקאי" } }],
+  );
+}
 
 
-seedDefaultExpenses();
+
+seedTripCountries();
+// seedDefaultExpenses();
 // createBugPlaces();
 // createBugSeverity();
 // createSuggestionPriorityLevels();

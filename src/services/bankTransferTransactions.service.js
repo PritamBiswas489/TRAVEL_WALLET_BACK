@@ -34,7 +34,7 @@ export default class BankTransferTransactionsService {
 
       const payloadPayment = {
         sub: paymentId,
-        iss: "tpp/HEoRGloC4D",
+        iss: "tpp/MnPa7NPDkg",
         srv: "fast/user",
         flow: {
           id: "default",
