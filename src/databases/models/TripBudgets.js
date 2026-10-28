@@ -7,6 +7,16 @@ export default function TripBudgets(sequelize, DataTypes) {
         autoIncrement: true,
         primaryKey: true,
       },
+      userId: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       countryCode: {
         type: DataTypes.STRING(3),
         allowNull: false,

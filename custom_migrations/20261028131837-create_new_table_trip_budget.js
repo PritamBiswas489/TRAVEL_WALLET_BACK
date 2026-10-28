@@ -6,6 +6,16 @@ export async function up(queryInterface, Sequelize) {
         type: Sequelize.BIGINT,
         primaryKey: true,
         autoIncrement: true,
+       },
+       userId: {
+        type: Sequelize.BIGINT,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
       },
       countryCode: {
         type: Sequelize.STRING(3),

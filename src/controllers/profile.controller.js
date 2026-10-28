@@ -1174,6 +1174,7 @@ export default class ProfileController {
     const {
       payload,
       headers: { i18n },
+      user,
     } = request;
 
     try {
@@ -1239,6 +1240,7 @@ export default class ProfileController {
       const duplicateBudget = await TripBudgets.findOne({
         where: {
           countryCode: normalizedCountryCode,
+          userId: user.id,
           startDate,
           endDate,
           ...(existingBudget && {
@@ -1265,6 +1267,7 @@ export default class ProfileController {
         category_budgets,
         startDate,
         endDate,
+        userId: user.id,
       };
       const tripBudget = existingBudget
         ? await existingBudget.update(budgetData)
@@ -1299,6 +1302,7 @@ export default class ProfileController {
     const {
       payload,
       headers: { i18n },
+      user,
     } = request;
 
     try {
@@ -1319,6 +1323,7 @@ export default class ProfileController {
       const upcomingTrip = await TripBudgets.findOne({
         where: {
           countryCode,
+          userId: user.id,
           startDate: { [Op.gte]: today },
         },
         order: [
