@@ -7,16 +7,46 @@ import { updatepinValidator } from "../validators/updatepin.validator.js";
 import { verifyPinValidator } from "../validators/verifiy.validator.js";
 import * as Sentry from "@sentry/node";
 import UserService from "../services/user.service.js";
- 
+
 import NotificationService from "../services/notification.service.js";
 import WhitelistMobilesService from "../services/whitelistMobiles.service.js";
 import userSettingsService from "../services/userSettings.service.js";
 import ContactListService from "../services/contactList.service.js";
 import { enqueueUserNotification } from "../queues/pushNotification.queue.js";
 import UserAccRemoveService from "../services/userAccRemoveService.js";
-import ActiveOperationService, { OP_TYPE } from "../services/activeOperations.service.js";
+import ActiveOperationService, {
+  OP_TYPE,
+} from "../services/activeOperations.service.js";
 
-const { User, Op, UserKyc, UserWallet, UserFcm, UserCard, WalletPelePayment, WalletTransaction, ApiLogs, Transfer, TransferRequests, UserSettings, Notification  } = db;
+const {
+  User,
+  Op,
+  UserKyc,
+  UserWallet,
+  UserFcm,
+  UserCard,
+  WalletPelePayment,
+  WalletTransaction,
+  ApiLogs,
+  Transfer,
+  TransferRequests,
+  UserSettings,
+  Notification,
+  TripBudgets,
+} = db;
+
+const getTodayDate = () => {
+  const dateParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: process.env.TIMEZONE || "UTC",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const { year, month, day } = Object.fromEntries(
+    dateParts.map(({ type, value }) => [type, value]),
+  );
+  return `${year}-${month}-${day}`;
+};
 
 export default class ProfileController {
   /**
@@ -319,7 +349,11 @@ export default class ProfileController {
     } = request;
 
     try {
-      const res = await UserAccRemoveService.executeUserAccountRemoval(user.id, i18n, payload);
+      const res = await UserAccRemoveService.executeUserAccountRemoval(
+        user.id,
+        i18n,
+        payload,
+      );
       return {
         status: 200,
         data: res?.data || [],
@@ -1132,6 +1166,229 @@ export default class ProfileController {
           ),
           reason: err.message,
         },
+      };
+    }
+  }
+
+  static async setTripBudget(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    try {
+      const {
+        trip_id,
+        countryCode,
+        total_budget,
+        daily_budget,
+        currency,
+        category_budgets,
+        startDate,
+        endDate,
+      } = payload ?? {};
+      const isValidDate = (value) =>
+        typeof value === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+        !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) &&
+        new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+      const isValidAmount = (value) =>
+        (typeof value === "number" || typeof value === "string") &&
+        value !== "" &&
+        Number.isFinite(Number(value)) &&
+        Number(value) >= 0;
+      const hasTripId =
+        trip_id !== undefined && trip_id !== null && trip_id !== "";
+      const normalizedTripId = hasTripId ? Number(trip_id) : null;
+      const normalizedCountryCode =
+        typeof countryCode === "string" ? countryCode.trim().toUpperCase() : "";
+      const today = getTodayDate();
+
+      if (
+        (hasTripId &&
+          (!Number.isSafeInteger(normalizedTripId) || normalizedTripId <= 0)) ||
+        !/^[A-Z]{2,3}$/.test(normalizedCountryCode) ||
+        !isValidAmount(total_budget) ||
+        !isValidAmount(daily_budget) ||
+        Number(daily_budget) >= Number(total_budget) ||
+        typeof currency !== "string" ||
+        !/^[A-Z]{3}$/.test(currency) ||
+        !Array.isArray(category_budgets) ||
+        !category_budgets.every(
+          (category) =>
+            category &&
+            Number.isSafeInteger(Number(category.category_id)) &&
+            Number(category.category_id) > 0 &&
+            isValidAmount(category.amount),
+        ) ||
+        !isValidDate(startDate) ||
+        startDate < today ||
+        !isValidDate(endDate) ||
+        endDate < startDate
+      ) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("INVALID_TRIP_BUDGET_PAYLOAD") },
+        };
+      }
+
+      const existingBudget = hasTripId
+        ? await TripBudgets.findByPk(normalizedTripId)
+        : null;
+      const duplicateBudget = await TripBudgets.findOne({
+        where: {
+          countryCode: normalizedCountryCode,
+          startDate,
+          endDate,
+          ...(existingBudget && {
+            id: { [Op.ne]: existingBudget.id },
+          }),
+        },
+      });
+
+      if (duplicateBudget) {
+        return {
+          status: 409,
+          data: [],
+          error: {
+            message: i18n.__("DUPLICATE_TRIP_BUDGET"),
+          },
+        };
+      }
+
+      const budgetData = {
+        countryCode: normalizedCountryCode,
+        total_budget,
+        daily_budget,
+        currency,
+        category_budgets,
+        startDate,
+        endDate,
+      };
+      const tripBudget = existingBudget
+        ? await existingBudget.update(budgetData)
+        : await TripBudgets.create(budgetData);
+
+      return {
+        status: 200,
+        data: tripBudget,
+        message: "Trip budget saved successfully",
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      if (e.name === "SequelizeUniqueConstraintError") {
+        return {
+          status: 409,
+          data: [],
+          error: {
+            message: i18n.__("DUPLICATE_TRIP_BUDGET"),
+          },
+        };
+      }
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+
+  static async getUpcomingTrip(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    try {
+      const countryCode =
+        typeof payload?.countryCode === "string"
+          ? payload.countryCode.trim().toUpperCase()
+          : "";
+
+      if (!/^[A-Z]{2,3}$/.test(countryCode)) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("INVALID_COUNTRY_CODE") },
+        };
+      }
+
+      const today = getTodayDate();
+      const upcomingTrip = await TripBudgets.findOne({
+        where: {
+          countryCode,
+          startDate: { [Op.gte]: today },
+        },
+        order: [
+          ["startDate", "ASC"],
+          ["endDate", "ASC"],
+        ],
+      });
+
+      if (!upcomingTrip) {
+        return {
+          status: 200,
+          data: [],
+          message: i18n.__("NO_UPCOMING_TRIP_FOUND"),
+        };
+      }
+
+      return {
+        status: 200,
+        data: upcomingTrip,
+        message: i18n.__("UPCOMING_TRIP_RETRIEVED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+      };
+    }
+  }
+
+  static async removeTripBudget(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    try {
+      const tripId = Number(payload?.tripId);
+      if (!Number.isSafeInteger(tripId) || tripId <= 0) {
+        return {
+          status: 400,
+          data: [],
+          error: { message: i18n.__("INVALID_TRIP_BUDGET_ID") },
+        };
+      }
+
+      const tripBudget = await TripBudgets.findByPk(tripId);
+      if (!tripBudget) {
+        return {
+          status: 404,
+          data: [],
+          error: { message: i18n.__("TRIP_BUDGET_NOT_FOUND") },
+        };
+      }
+
+      await tripBudget.destroy();
+      return {
+        status: 200,
+        data: { id: tripBudget.id },
+        message: i18n.__("TRIP_BUDGET_REMOVED_SUCCESSFULLY"),
+        error: {},
+      };
+    } catch (e) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
+      return {
+        status: 500,
+        data: [],
+        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
       };
     }
   }

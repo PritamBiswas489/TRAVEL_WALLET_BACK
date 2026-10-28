@@ -861,6 +861,146 @@ router.post("/execute-user-account-removal", async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/profile/trip-budget/set:
+ *   post:
+ *     summary: Create or update a trip budget
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - countryCode
+ *               - total_budget
+ *               - daily_budget
+ *               - currency
+ *               - category_budgets
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               trip_id:
+ *                 type: integer
+ *                 default: 123
+ *               countryCode:
+ *                 type: string
+ *                 default: TH
+ *               total_budget:
+ *                 type: string
+ *                 default: "100000.00"
+ *               daily_budget:
+ *                 type: string
+ *                 default: "10000.00"
+ *               currency:
+ *                 type: string
+ *                 default: THB
+ *               category_budgets:
+ *                 type: array
+ *                 default:
+ *                   - category_id: 1
+ *                     amount: "20000.00"
+ *                   - category_id: 2
+ *                     amount: "25000.00"
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - category_id
+ *                     - amount
+ *                   properties:
+ *                     category_id:
+ *                       type: integer
+ *                       default: 1
+ *                     amount:
+ *                       type: string
+ *                       default: "20000.00"
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 default: "2026-11-01"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 default: "2026-11-10"
+ *     responses:
+ *       200:
+ *         description: Trip budget saved successfully
+ *       400:
+ *         description: Invalid trip budget payload
+ *       409:
+ *         description: A budget already exists for this country and date range
+ */
+router.post("/trip-budget/set", async (req, res) => {
+  const response = await ProfileController.setTripBudget({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/auth/profile/trip-budget/{countryCode}/upcoming-trip:
+ *   get:
+ *     summary: Get the next upcoming trip budget for a country
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: countryCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *           default: TH
+ *         description: Two- or three-letter country code
+ *     responses:
+ *       200:
+ *         description: Upcoming trip retrieved successfully
+ *       400:
+ *         description: Invalid country code
+ *       404:
+ *         description: No upcoming trip found for this country
+ */
+router.get("/trip-budget/:countryCode/upcoming-trip", async (req, res) => {
+   const response = await ProfileController.getUpcomingTrip({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/auth/profile/trip-budget/{tripId}/remove:
+ *   delete:
+ *     summary: Remove a trip budget
+ *     tags: [Auth-Profile routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: tripId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           default: 123
+ *         description: ID of the trip budget to remove
+ *     responses:
+ *       200:
+ *         description: Trip budget removed successfully
+ *       400:
+ *         description: Invalid trip budget ID
+ *       404:
+ *         description: Trip budget not found
+ */
+router.delete("/trip-budget/:tripId/remove", async (req, res) => {
+   const response = await ProfileController.removeTripBudget({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+   res.return(response);
+});
+
+
 
 
 export default router;
