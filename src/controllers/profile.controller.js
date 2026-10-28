@@ -1326,7 +1326,7 @@ export default class ProfileController {
         where: {
           countryCode,
           userId: user.id,
-          startDate: { [Op.gte]: today },
+          endDate: { [Op.gte]: today },
         },
         order: [
           ["startDate", "ASC"],

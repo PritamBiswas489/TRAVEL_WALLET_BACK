@@ -944,7 +944,7 @@ router.post("/trip-budget/set", async (req, res) => {
  * @swagger
  * /api/auth/profile/trip-budget/{countryCode}/upcoming-trip:
  *   get:
- *     summary: Get the next upcoming trip budget for a country
+ *     summary: Get the ongoing or next upcoming trip budget for a country
  *     tags: [Auth-Profile routes]
  *     security:
  *       - bearerAuth: []
@@ -959,11 +959,9 @@ router.post("/trip-budget/set", async (req, res) => {
  *         description: Two- or three-letter country code
  *     responses:
  *       200:
- *         description: Upcoming trip retrieved successfully
+ *         description: Ongoing or upcoming trip, or an empty list if none exists
  *       400:
  *         description: Invalid country code
- *       404:
- *         description: No upcoming trip found for this country
  */
 router.get("/trip-budget/:countryCode/upcoming-trip", async (req, res) => {
    const response = await ProfileController.getUpcomingTrip({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });

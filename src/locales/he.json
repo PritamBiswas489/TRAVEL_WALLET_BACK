@@ -592,8 +592,8 @@
 	"INVALID_TRIP_BUDGET_PAYLOAD": "נתוני תקציב הטיול אינם תקינים",
 	"DUPLICATE_TRIP_BUDGET": "כבר קיים תקציב טיול עבור מדינה זו וטווח תאריכים זה",
 	"INVALID_COUNTRY_CODE": "קוד המדינה אינו תקין",
-	"NO_UPCOMING_TRIP_FOUND": "לא נמצא טיול עתידי עבור מדינה זו",
-	"UPCOMING_TRIP_RETRIEVED_SUCCESSFULLY": "הטיול העתידי אוחזר בהצלחה",
+	"NO_UPCOMING_TRIP_FOUND": "לא נמצא טיול נוכחי או עתידי עבור מדינה זו",
+	"UPCOMING_TRIP_RETRIEVED_SUCCESSFULLY": "הטיול הנוכחי או העתידי אוחזר בהצלחה",
 	"INVALID_TRIP_BUDGET_ID": "מזהה תקציב הטיול אינו תקין",
 	"TRIP_BUDGET_NOT_FOUND": "תקציב הטיול לא נמצא",
 	"TRIP_BUDGET_REMOVED_SUCCESSFULLY": "תקציב הטיול הוסר בהצלחה"

@@ -594,8 +594,8 @@
 	"INVALID_TRIP_BUDGET_PAYLOAD": "Invalid trip budget payload",
 	"DUPLICATE_TRIP_BUDGET": "A trip budget already exists for this country and date range",
 	"INVALID_COUNTRY_CODE": "Invalid countryCode",
-	"NO_UPCOMING_TRIP_FOUND": "No upcoming trip found for this country",
-	"UPCOMING_TRIP_RETRIEVED_SUCCESSFULLY": "Upcoming trip retrieved successfully",
+	"NO_UPCOMING_TRIP_FOUND": "No ongoing or upcoming trip found for this country",
+	"UPCOMING_TRIP_RETRIEVED_SUCCESSFULLY": "Ongoing or upcoming trip retrieved successfully",
 	"INVALID_TRIP_BUDGET_ID": "Invalid trip budget ID",
 	"TRIP_BUDGET_NOT_FOUND": "Trip budget not found",
 	"TRIP_BUDGET_REMOVED_SUCCESSFULLY": "Trip budget removed successfully"
