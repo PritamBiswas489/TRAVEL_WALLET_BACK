@@ -458,7 +458,7 @@ export default class AirwallexPaymentService {
         const email = validationResult.email;
         const mobile = validationResult.mobile;
         const createAccountPayload = {
-          account_details: { legal_entity_type: "INDIVIDUAL" },
+          account_details: { legal_entity_type: "INDIVIDUAL" , individual_details  : { "residential_address": { "country_code": validationResult.country }  }},
           customer_agreements: {
             agreed_to_data_usage: true,
             agreed_to_terms_and_conditions: true,
@@ -488,6 +488,7 @@ export default class AirwallexPaymentService {
             },
           );
         } catch (error) {
+          console.error("Error creating Airwallex account:", error);
           const { errMsg, airwallexError } = extractAirwallexError(error);
           return callback(new Error(errMsg), { airwallexError });
         }
@@ -917,21 +918,19 @@ export default class AirwallexPaymentService {
     try {
       const accountId = payload?.account_id;
       const eventName = payload?.name;
-      let newStatus = null;
-      if (eventName === "account.submitted") {
-        newStatus = "SUBMITTED";
-      } else if (eventName === "account.action_required") {
-        newStatus = "ACTION_REQUIRED";
-      } else if (eventName === "account.active") {
-        newStatus = "ACTIVE";
-      } else if (eventName === "account.suspended") {
-        newStatus = "SUSPENDED";
-      }
-      if (!newStatus) {
-        console.warn("airwallexKycWebhook: unhandled event name:", eventName);
-        return callback(null, { data: payload });
-      }
 
+      const eventStatusMap = {
+        "account.connected": "CREATED",
+        "account.submitted": "SUBMITTED",
+        "account.action_required": "ACTION_REQUIRED",
+        "account.active": "ACTIVE",
+        "account.suspended": "SUSPENDED",
+        "account.dormant": "DORMANT",
+        "account.closed": "CLOSED",
+      };
+      const newStatus =
+        eventStatusMap[eventName] || payload?.data?.connected_account_status;
+      
       if (!accountId) {
         return callback(null, { data: payload });
       }
@@ -952,6 +951,15 @@ export default class AirwallexPaymentService {
       const existingWebhookData = Array.isArray(kycAccount.webhookData)
         ? kycAccount.webhookData
         : [];
+
+      // Idempotency: skip already processed events
+      if (
+        payload?.id &&
+        existingWebhookData.some((evt) => evt?.id === payload.id)
+      ) {
+        console.log(`airwallexKycWebhook: duplicate event ${payload.id} ignored`);
+        return callback(null, { data: payload });
+      }
 
       // Update AirwallexKycAccount status only
       await AirwallexKycAccount.update(
@@ -1591,7 +1599,6 @@ export default class AirwallexPaymentService {
               "Content-Type": "application/json",
               Authorization: `Bearer ${accessToken}`,
               "x-on-behalf-of": fromAccountId,
-              "x-api-version": "2024-09-27",
             },
           },
         );
@@ -2493,7 +2500,6 @@ export default class AirwallexPaymentService {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
             "x-on-behalf-of": childAccountId,
-            "x-api-version": "2024-09-27",
           },
         },
       );
@@ -2693,7 +2699,6 @@ export default class AirwallexPaymentService {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
-            "x-api-version": "2024-09-27",
           },
         },
       );

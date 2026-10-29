@@ -520,6 +520,7 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       req.headers.i18n = i18n;
     }
     const payload = { ...req.params, ...req.query, ...req.body };
+
     console.log("Received Airwallex main global webhook:", payload?.name);
     const kycEventNames = [
       "account.connected",
@@ -527,6 +528,8 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "account.action_required",
       "account.active",
       "account.suspended",
+      "account.dormant",
+      "account.closed",
     ];
     const depositEventNames = [
       "deposit.rejected",
@@ -540,6 +543,11 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "transfer.pending",
       "transfer.suspended",
       "transfer.failed",
+      "connected_account_transfer.new",
+      "connected_account_transfer.pending",
+      "connected_account_transfer.settled",
+      "connected_account_transfer.suspended",
+      "connected_account_transfer.failed"
     ];
     const chargesWebhookEventNames = [
       "charge.new",
@@ -586,13 +594,14 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
     const paymentIntentWebhookEventNames = [
       "payment_intent.cancelled",
       "payment_intent.created",
-      "payment_intent.requires_payment_method",
-      "payment_intent.updated",
-      "payment_intent.requires_customer_action",
-      "payment_intent.requires_capture",
       "payment_intent.pending",
-      "payment_intent.pending_review",
+      "payment_intent.requires_capture",
+      "payment_intent.requires_customer_action",
+      "payment_intent.requires_payment_method",
       "payment_intent.succeeded",
+      "payment_intent.updated",
+      "payment_intent.pending_review",
+      "payment_intent.payment_failed",
     ];
 
     //fund split events
