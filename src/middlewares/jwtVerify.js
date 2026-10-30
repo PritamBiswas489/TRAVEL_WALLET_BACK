@@ -64,7 +64,7 @@ export default async (req, res, next) => {
       );
       if (!checkDeviceIdExistance && checkdeviceid) {
         return res.send({
-          status: 403,
+          status: 422,
           data: [],
           error: { message: i18n.__("DEVICE_ID_MISMATCH") },
         });
@@ -122,7 +122,7 @@ export default async (req, res, next) => {
         );
         if (!checkDeviceIdExistance && checkdeviceid) {
           return res.send({
-            status: 403,
+            status: 422,
             data: [],
             error: { message: i18n.__("DEVICE_ID_MISMATCH") },
           });
