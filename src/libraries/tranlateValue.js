@@ -33,3 +33,8 @@ export const translateValue = (i18n, message, fallbackKey, ...args) => {
   }
   return i18n.__(key, ...args);
 };
+export const createMissingKeysFile = () => {
+  if (fs.existsSync(MISSING_FILE)) {
+    fs.writeFileSync(MISSING_FILE, JSON.stringify({}, null, 2));
+  }
+};
