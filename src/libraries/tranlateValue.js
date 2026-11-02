@@ -11,11 +11,12 @@ export const translateValue = (i18n, message, fallbackKey, ...args) => {
   const key = message || fallbackKey;
   const catalog = i18n.getCatalog?.() || {};
 
-  if (!Object.prototype.hasOwnProperty.call(catalog, key)) {
-    try {
-      const existing = fs.existsSync(MISSING_FILE)
+   const existing = fs.existsSync(MISSING_FILE)
         ? JSON.parse(fs.readFileSync(MISSING_FILE, "utf8"))
         : {};
+
+  if (!Object.prototype.hasOwnProperty.call(catalog, key)) {
+    try {
       if (!(key in existing)) {
         existing[key] = key;
         fs.writeFileSync(MISSING_FILE, JSON.stringify(existing, null, 2));
@@ -23,6 +24,12 @@ export const translateValue = (i18n, message, fallbackKey, ...args) => {
     } catch (e) {
       console.error("Failed to record missing i18n key", e);
     }
+  }
+  if(Object.prototype.hasOwnProperty.call(catalog, key)){
+     if(key in existing) {
+        delete existing[key];
+        fs.writeFileSync(MISSING_FILE, JSON.stringify(existing, null, 2));
+     }
   }
   return i18n.__(key, ...args);
 };

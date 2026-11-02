@@ -596,7 +596,25 @@
 	"UPCOMING_TRIP_RETRIEVED_SUCCESSFULLY": "הטיול הנוכחי או העתידי אוחזר בהצלחה",
 	"INVALID_TRIP_BUDGET_ID": "מזהה תקציב הטיול אינו תקין",
 	"TRIP_BUDGET_NOT_FOUND": "תקציב הטיול לא נמצא",
-	"TRIP_BUDGET_REMOVED_SUCCESSFULLY": "תקציב הטיול הוסר בהצלחה"
+	"TRIP_BUDGET_REMOVED_SUCCESSFULLY": "תקציב הטיול הוסר בהצלחה",
+	"AFT_REFUND_LIST_FETCHED_SUCCESSFULLY": "רשימת ההחזרים של AFT אוחזרה בהצלחה",
+    "PAYMENT_INTENT_NOT_FOUND": "כוונת התשלום לא נמצאה",
+    "FUND_SPLIT_NOT_FOUND_FOR_PAYMENT": "פיצול הכספים עבור התשלום לא נמצא",
+    "KYC_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של KYC עובד בהצלחה",
+    "LIVENESS_PROACTIVE_FLOW_STARTED_SUCCESSFULLY": "תהליך בדיקת החיות היזומה הופעל בהצלחה",
+    "LIVENESS_PROACTIVE_HOSTED_FLOW_STATUS_FETCHED_SUCCESSFULLY": "סטטוס תהליך בדיקת החיות היזומה המתארח אוחזר בהצלחה",
+    "OFFBOARDING_WEBHOOK_HANDLED_SUCCESSFULLY": "Webhook סיום ההתקשרות טופל בהצלחה",
+    "INVALID_EMAIL": "כתובת הדוא״ל אינה תקינה",
+    "ACCOUNT_STATUS_UPDATED_SUCCESSFULLY": "סטטוס החשבון עודכן בהצלחה",
+    "USER_DEFAULT_CARD_NOT_FOUND": "כרטיס ברירת המחדל של המשתמש לא נמצא",
+    "AFT_WALLET_TOPUP_CREATED_SUCCESSFULLY": "טעינת ארנק AFT נוצרה בהצלחה",
+    "PAYMENT_INTENT_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של כוונת התשלום עובד בהצלחה",
+    "PAYMENT_INTENT_RETRIEVED_SUCCESSFULLY": "כוונת התשלום אוחזרה בהצלחה",
+    "PAYMENT_ATTEMPT_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של ניסיון התשלום עובד בהצלחה",
+    "PAYMENT_ACTION_OPERATION_ADDED_SUCCESSFULLY": "פעולת תשלום נוספה בהצלחה",
+    "FUND_SPLIT_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של פיצול הכספים עובד בהצלחה",
+    "USER_BALANCE_FULL_REFUND_PROCESSED_SUCCESSFULLY": "החזר מלא ליתרת המשתמש בוצע בהצלחה",
+    "PAYMENT_INTENT_RETURN_WEBHOOK_HANDLED_SUCCESSFULLY": "Webhook החזרת כוונת התשלום טופל בהצלחה"
 	
 
 }
