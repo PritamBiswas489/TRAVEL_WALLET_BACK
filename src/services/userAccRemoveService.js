@@ -147,12 +147,12 @@ export default class UserAccRemoveService {
         AirwallexPaymentService.getAccountBalance(
           { userId, i18n: null },
           (error, response) => {
-            if (error) return reject(error);
+           if (error) return resolve({});
             resolve(response?.data || {});
           },
         );
       });
-      const currentBalance = Number(accountBalance?.ILS);
+      const currentBalance = accountBalance?.ILS ? Number(accountBalance?.ILS) : 0;
       if (currentBalance > 0) {
         return {
           status: 200,
