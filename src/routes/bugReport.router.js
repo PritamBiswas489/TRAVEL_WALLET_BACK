@@ -1,8 +1,33 @@
 import "../config/environment.js";
 import express from "express";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
+import { randomUUID } from "crypto";
 import BugController from "../controllers/bugReport.controller.js";
 
 const router = express.Router();
+const bugReportUploadPath = "uploads/bugReports";
+
+if (!fs.existsSync(bugReportUploadPath)) {
+    fs.mkdirSync(bugReportUploadPath, { recursive: true });
+}
+
+const bugReportUpload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => cb(null, bugReportUploadPath),
+        filename: (req, file, cb) => cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+    }),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif"];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+            cb(null, true);
+            return;
+        }
+        cb(new Error("Only image files are allowed"));
+    },
+});
 
 
 
@@ -60,7 +85,7 @@ router.get("/get-bug-severity", async (req, res, next) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -84,6 +109,12 @@ router.get("/get-bug-severity", async (req, res, next) => {
  *                 type: string
  *                 description: Device information where bug occurred
  *                 example: "iPhone 12, iOS 15.4, Safari 15.0"
+ *               attachment:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Image attachments (up to 10 files, 10 MB each)
  *     responses:
  *       200:
  *         description: Bug report submitted successfully
@@ -92,8 +123,13 @@ router.get("/get-bug-severity", async (req, res, next) => {
  *       500:
  *         description: Internal server error
  */
-router.post("/submit-bug-report", async (req, res, next) => {
-    const response = await BugController.submitBugReport({ headers: req.headers, user: req.user, payload: req.body });
+router.post("/submit-bug-report", bugReportUpload.array("attachment", 10), async (req, res, next) => {
+    const response = await BugController.submitBugReport({
+        headers: req.headers,
+        user: req.user,
+        payload: req.body,
+        files: req.files,
+    });
     res.return(response);
 });
 

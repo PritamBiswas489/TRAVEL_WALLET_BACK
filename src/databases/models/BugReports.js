@@ -32,7 +32,7 @@ export default function BugReports(sequelize, DataTypes) {
         allowNull: true,
       },
       attachment: {
-        type: DataTypes.STRING,
+        type: DataTypes.JSONB,
         allowNull: true,
       },
       status: {

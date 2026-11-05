@@ -32,6 +32,16 @@ export default function Feedbacks(sequelize, DataTypes) {
         type: DataTypes.BIGINT,
         allowNull: false,
       },
+      tags: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: null,
+      },
+      tkt_id: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
       tableName: "feedbacks",

@@ -143,26 +143,30 @@ export default class UserAccRemoveService {
         };
       }
 
-      const accountBalance = await new Promise((resolve, reject) => {
-        AirwallexPaymentService.getAccountBalance(
-          { userId, i18n: null },
-          (error, response) => {
-           if (error) return resolve({});
-            resolve(response?.data || {});
-          },
-        );
-      });
-      const currentBalance = accountBalance?.ILS ? Number(accountBalance?.ILS) : 0;
-      if (currentBalance > 0) {
-        return {
-          status: 200,
-          data: {
-            action: "executeRefund",
-            currentBalance,
-            message: i18n.__("EXECUTE_REFUND", { currentBalance }),
-          },
-        };
+      if (kycAccount?.airwallexAccountId) {
+          const accountBalance = await new Promise((resolve, reject) => {
+            AirwallexPaymentService.getAccountBalance(
+              { userId, i18n: null },
+              (error, response) => {
+              if (error) return resolve({});
+                resolve(response?.data || {});
+              },
+            );
+          });
+          const currentBalance = accountBalance?.ILS ? Number(accountBalance?.ILS) : 0;
+          if (currentBalance > 0) {
+            return {
+              status: 200,
+              data: {
+                action: "executeRefund",
+                currentBalance,
+                message: i18n.__("EXECUTE_REFUND", { currentBalance }),
+              },
+            };
+          }
       }
+
+      
       return deleteProfileResponse();
     } catch (error) {
       console.error(error);

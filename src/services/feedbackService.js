@@ -37,6 +37,9 @@ export default class FeedbackService {
     try {
       console.log("Feedbacks model:", Feedbacks);
       const feedback = await Feedbacks.create(payload);
+      const createdDate = feedback.createdAt.toISOString().slice(0, 10).replace(/-/g, "");
+      const referenceNumber = `TM-${createdDate}-${String(feedback.id).padStart(4, "0")}`;
+      await feedback.update({ tkt_id: referenceNumber });
       return { data: feedback };
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);

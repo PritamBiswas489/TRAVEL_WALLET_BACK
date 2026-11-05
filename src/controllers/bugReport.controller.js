@@ -71,12 +71,16 @@ export default class BugReportController {
   static async submitBugReport(request) {
     const {
       payload,
+      files,
       headers: { i18n, deviceName },
       user,
     } = request;
     try {
       console.log("deviceName -", deviceName);
       payload.deviceInformation = deviceName || "Unknown Device";
+      if (files?.length) {
+        payload.attachment = files.map((file) => file.filename);
+      }
       const result = await BugReportService.submitBugReport(user.id, payload);
       if (result.ERROR) {
         return {

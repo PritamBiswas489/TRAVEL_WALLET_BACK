@@ -74,6 +74,12 @@ router.get("/get-feedback-categories", async (req, res, next) => {
  *                 format: email
  *                 example: "user@example.com"
  *                 description: User's email address
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["support", "bug"]
+ *                 description: Optional feedback tags
  *     responses:
  *       200:
  *         description: Feedback submitted successfully
