@@ -386,9 +386,16 @@ export default class AirwallexPaymentService {
       const existing = await AirwallexKycAccount.findOne({
         where: { airwallexAccountId: mappedData.airwallexAccountId },
       });
+      //update UseKyc status 
+
 
       if (existing) {
         await existing.update(mappedData);
+        // Update UserKyc status
+        await UserKyc.update(
+          { status: getUserKycStatus(mappedData.status) },
+          { where: { userId } }
+        );
         return existing;
       } else {
         return await AirwallexKycAccount.create(mappedData);
