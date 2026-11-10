@@ -2432,37 +2432,44 @@ export default class AirwallexPaymentService {
             },
           ],
         });
-      const formattedRows = rows
-        ? rows.map(  async (row) => {
-            const item = row.toJSON();
-            item.transferDetails = null;
-            item.transactionStatus =
-              item.additionalDetails?.jsonData?.data?.status || null;
+      const items = (rows || []).map((row) => row.toJSON());
+      const transferUUIDs = new Set();
+      const transferRequestUUIDs = new Set();
+      for (const item of items) {
+        const data = item.additionalDetails?.jsonData?.data;
+        if (!data?.request_id) continue;
+        if (data.reference === "Travelmoney-transfer") {
+          transferUUIDs.add(data.request_id);
+        } else if (data.reference === "Travelmoney-transfer-request") {
+          transferRequestUUIDs.add(data.request_id);
+        }
+      }
+      const [transfers, transferRequests] = await Promise.all([
+        TransferService.getTransfersByRequestUUIds([...transferUUIDs]),
+        TransferRequestService.getTransfersByRequestUUIds([
+          ...transferRequestUUIDs,
+        ]),
+      ]);
+      const transferMap = new Map(transfers.map((t) => [t.uuid, t]));
+      const transferRequestMap = new Map(
+        transferRequests.map((t) => [t.uuid, t]),
+      );
 
-
-            if(item?.additionalDetails?.jsonData?.data?.reference === 'Travelmoney-transfer'){
-              const transferUUID =
-                item.additionalDetails?.jsonData?.data?.request_id || null; 
-                if(transferUUID){
-                  const transferDetails = await TransferService.getTransferByRequestUUId(transferUUID);
-                  item.transferDetails = transferDetails;
-                }
-            }  
-            
-            if(item?.additionalDetails?.jsonData?.data?.reference === 'Travelmoney-transfer-request'){
-              const transferUUID =
-                item.additionalDetails?.jsonData?.data?.request_id || null; 
-                if(transferUUID){
-                  const transferDetails = await TransferRequestService.getTransferByRequestUUId(transferUUID);
-                  item.transferDetails = transferDetails;
-                }
-            }  
-            return item;
-          })
-        : [];
+      const formattedRows = items.map((item) => {
+        const data = item.additionalDetails?.jsonData?.data;
+        item.transactionStatus = data?.status || null;
+        item.transferDetails = null;
+        if (data?.reference === "Travelmoney-transfer") {
+          item.transferDetails = transferMap.get(data.request_id) || null;
+        } else if (data?.reference === "Travelmoney-transfer-request") {
+          item.transferDetails =
+            transferRequestMap.get(data.request_id) || null;
+        }
+        return item;
+      });
 
       return callback(null, {
-        data: { total: count, transactions: await Promise.all(formattedRows) },
+        data: { total: count, transactions: formattedRows },
       });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
