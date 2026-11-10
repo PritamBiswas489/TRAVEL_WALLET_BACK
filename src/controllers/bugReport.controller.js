@@ -2,6 +2,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import "../config/environment.js";
 import BugReportService from "../services/bugReportService.js";
+import { translateValue } from "../libraries/tranlateValue.js";
 
 export default class BugReportController {
   static async getBugSeverityLevels(request) {
@@ -75,6 +76,7 @@ export default class BugReportController {
       headers: { i18n, deviceName },
       user,
     } = request;
+    
     try {
       console.log("deviceName -", deviceName);
       payload.deviceInformation = deviceName || "Unknown Device";
@@ -86,13 +88,16 @@ export default class BugReportController {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: {
+            message: translateValue(i18n, result.message, "CATCH_ERROR"),
+            reason: result.message,
+          },
         };
       }
       return {
         status: 200,
         data: result.data,
-        message: i18n.__("BUG_REPORT_SUBMITTED_SUCCESSFULLY"),
+        message: translateValue(i18n, "BUG_REPORT_SUBMITTED_SUCCESSFULLY", "CATCH_ERROR"),
         error: {},
       };
     } catch (e) {
@@ -100,32 +105,37 @@ export default class BugReportController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: {
+          message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"),
+          reason: e.message,
+        },
       };
     }
   }
   static async getMyBugReports(request) {
     const {
       payload,
-      headers: { i18n , deviceName},
+      headers: { i18n, deviceName },
       user,
     } = request;
     const userId = user ? user.id : null;
-   
+
     try {
       const result = await BugReportService.getMyBugReports(userId, payload);
       if (result.ERROR) {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: {
+            message: translateValue(i18n, result.message, "CATCH_ERROR"),
+            reason: result.message,
+          },
         };
       }
       return {
         status: 200,
         data: result.data,
-        message: i18n.__("BUG_REPORTS_FETCHED_SUCCESSFULLY"),
+        message: translateValue(i18n, "BUG_REPORTS_FETCHED_SUCCESSFULLY", "CATCH_ERROR"),
         error: {},
       };
     } catch (e) {
@@ -133,8 +143,10 @@ export default class BugReportController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: {
+          message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"),
+          reason: e.message,
+        },
       };
     }
   }
@@ -152,13 +164,16 @@ export default class BugReportController {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: {
+            message: translateValue(i18n, result.message, "CATCH_ERROR"),
+            reason: result.message,
+          },
         };
       }
       return {
         status: 200,
         data: result.data,
-        message: i18n.__("BUG_REPORTS_FETCHED_SUCCESSFULLY"),
+        message: translateValue(i18n, "BUG_REPORTS_FETCHED_SUCCESSFULLY", "CATCH_ERROR"),
         error: {},
       };
     } catch (e) {
@@ -166,10 +181,11 @@ export default class BugReportController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: {
+          message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"),
+          reason: e.message,
+        },
       };
     }
   }
- 
 }

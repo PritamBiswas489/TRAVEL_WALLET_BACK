@@ -61,6 +61,23 @@ export default class BugReportService {
 
   static async submitBugReport(userId, bugReportData) {
     try {
+      //severityId and placeId validation with data existence check
+      if (!bugReportData.severityId) {
+        throw new Error("INVALID_SEVERITY_ID");
+      }
+      const severityExists = await BugSeverity.findByPk(bugReportData.severityId);
+      if (!severityExists) {
+        throw new Error("INVALID_SEVERITY_ID");
+      }
+
+      if (!bugReportData.placeId) {
+        throw new Error("INVALID_PLACE_ID");
+      }
+      const placeExists = await BugPlace.findByPk(bugReportData.placeId);
+      if (!placeExists) {
+        throw new Error("INVALID_PLACE_ID");
+      }
+
       bugReportData.userId = userId;
       const report = await BugReports.create(bugReportData);
       return { data: report };

@@ -630,5 +630,9 @@
 	"BALANCE_UPDATE_WEBHOOK_HANDLED_SUCCESSFULLY": "Balance update webhook handled successfully",
 	"REFUND_PROCESS_SUCCESSFULLY_INITIATED": "Refund process successfully initiated",
 	"CARDHOLDER_WEBHOOK_PROCESSED_SUCCESSFULLY": "Cardholder webhook processed successfully",
-	"DEBIT_CARD_WEBHOOK_PROCESSED_SUCCESSFULLY": "Debit card webhook processed successfully"
+	"DEBIT_CARD_WEBHOOK_PROCESSED_SUCCESSFULLY": "Debit card webhook processed successfully",
+	"INVALID_TYPE_ID": "Invalid type ID",
+	"INVALID_LEVEL_ID": "Invalid level ID",
+	"INVALID_PLACE_ID": "Invalid place ID",
+	"INVALID_SEVERITY_ID": "Invalid severity ID"
 }

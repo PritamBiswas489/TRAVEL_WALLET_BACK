@@ -627,7 +627,11 @@
 	"BALANCE_UPDATE_WEBHOOK_HANDLED_SUCCESSFULLY": "Webhook עדכון היתרה טופל בהצלחה",
 	"REFUND_PROCESS_SUCCESSFULLY_INITIATED": "תהליך ההחזר התחיל בהצלחה",
 	"CARDHOLDER_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של בעל הכרטיס עובד בהצלחה",
-	"DEBIT_CARD_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של כרטיס החיוב עובד בהצלחה"
+	"DEBIT_CARD_WEBHOOK_PROCESSED_SUCCESSFULLY": "Webhook של כרטיס החיוב עובד בהצלחה",
+	"INVALID_TYPE_ID": "מזהה סוג לא תקין",
+	"INVALID_LEVEL_ID": "מזהה רמה לא תקין",
+	"INVALID_PLACE_ID": "מזהה מקום לא תקין",
+	"INVALID_SEVERITY_ID": "מזהה חומרה לא תקין"
 	
 
 }

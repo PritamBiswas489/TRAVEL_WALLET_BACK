@@ -67,6 +67,21 @@ export default class SuggestionService {
   }
   static async submitSuggestion(payload, userId) {
     console.log("Submitting suggestion with payload:", payload);
+   
+    if (!payload.typeId) {
+      throw new Error("INVALID_TYPE_ID");
+    }
+    if (!payload.levelId) {
+      throw new Error("INVALID_LEVEL_ID");
+    }
+    const typeExists = await SuggestionType.findByPk(payload.typeId);
+    if (!typeExists) {
+      throw new Error("INVALID_TYPE_ID");
+    }
+    const levelExists = await SuggestionPriorityLevel.findByPk(payload.levelId);
+    if (!levelExists) {
+      throw new Error("INVALID_LEVEL_ID");
+    }
     try {
       const suggestionPayload = {
         ...payload,

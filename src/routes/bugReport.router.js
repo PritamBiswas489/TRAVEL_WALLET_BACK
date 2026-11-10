@@ -109,6 +109,10 @@ router.get("/get-bug-severity", async (req, res, next) => {
  *                 type: string
  *                 description: Device information where bug occurred
  *                 example: "iPhone 12, iOS 15.4, Safari 15.0"
+ *               isBlocking:
+ *                 type: boolean
+ *                 description: Indicates if the bug is blocking
+ *                 example: true
  *               attachment:
  *                 type: array
  *                 items:

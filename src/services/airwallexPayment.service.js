@@ -5328,4 +5328,54 @@ export default class AirwallexPaymentService {
       );
     }
   }
+  static async testAirwallexDepositViaBankTransfer({ payload, userId }, callback) {
+    try {
+      const { amount } = payload;
+      if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+        return callback(new Error("INVALID_AMOUNT"));
+      }
+      if (!userId) {
+        return callback(new Error("USER_NOT_FOUND"));
+      }
+      const apiUrl = process.env.AIRWALLEX_API_URL;
+     
+      const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+      if (!kycAccount?.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+      const accessToken = await this.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+      //add console curl command for debugging
+      console.log(`curl -X POST "${apiUrl.replace(/\/+$/, "")}/api/v1/simulation/pa/shopper_actions/transfer" -H "Authorization: Bearer ${accessToken}" -H "Content-Type: application/json" -H "x-on-behalf-of: ${kycAccount.airwallexAccountId}" -d '{"account_number":"E1D5C0E9CB","amount":"${amount}","reference":"D5NCUC"}'`);
+
+      return callback(null, { data: { message: "DEBUG_CURL_COMMAND_LOGGED" } });
+      const response = await axios.post(
+        `${apiUrl.replace(/\/+$/, "")}/api/v1/simulation/pa/shopper_actions/transfer`,
+        {
+          account_number: "E1D5C0E9CB",
+          amount: String(amount),
+          reference: "D5NCUC",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "x-on-behalf-of": kycAccount.airwallexAccountId,
+          },
+        },
+      );
+      return callback(null, { data: response.data });
+    } catch (error) {
+      console.error(
+        "❌ Error testing Airwallex deposit via bank transfer:",
+        error?.message || error,
+      );
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      return callback(
+        new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
+      );
+    }
+  }
 }

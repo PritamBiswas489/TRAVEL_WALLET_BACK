@@ -1632,6 +1632,43 @@ router.post("/user-balance-full-refund", async (req, res) => {
 
 
 
+/**
+ * @swagger
+ * /api/auth/deposit/test/airwallex-deposit-via-bank-transfer:
+ *   post:
+ *     summary: Test an Airwallex deposit via bank transfer
+ *     description: Sandbox-only simulation using the authenticated user's connected account and the example account number and reference.
+ *     tags:
+ *       - Auth-airwallex-kyc-wallet routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: Deposit amount
+ *                 minimum: 0
+ *                 exclusiveMinimum: true
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: Test deposit processed
+ */
+router.post("/test/airwallex-deposit-via-bank-transfer", async (req, res) => {
+  const response = await AirwallexPaymentController.testAirwallexDepositViaBankTransfer({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+  res.return(response);
+});
+
+
+
 
 
 

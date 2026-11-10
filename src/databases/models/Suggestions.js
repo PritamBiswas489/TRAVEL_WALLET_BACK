@@ -27,7 +27,7 @@ export default function Suggestions(sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-       email: {
+      email: {
         type: DataTypes.STRING,
         allowNull: true,
       },
@@ -36,11 +36,26 @@ export default function Suggestions(sequelize, DataTypes) {
         allowNull: true,
         defaultValue: "new",
       },
+      tktId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+        field: "tkt_id",
+      },
     },
     {
       tableName: "suggestions",
       timestamps: true,
-    }
+      hooks: {
+        async afterCreate(suggestion, options) {
+          const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+          await suggestion.update(
+            { tktId: `RPT-${date}-${String(suggestion.id).padStart(4, "0")}` },
+            { transaction: options.transaction, hooks: false, silent: true },
+          );
+        },
+      },
+    },
   );
 
   return Suggestions;

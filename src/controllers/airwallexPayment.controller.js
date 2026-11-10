@@ -2030,4 +2030,42 @@ export default class AirwallexPaymentController {
       );
     });
   }
+  static async testAirwallexDepositViaBankTransfer(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    return new Promise((resolve) => {
+      AirwallexPaymentService.testAirwallexDepositViaBankTransfer(
+        { payload, userId: user?.id },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_TEST_AIRWALLEX_DEPOSIT_VIA_BANK_TRANSFER",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response.data,
+            message: translateValue(
+              i18n,
+              "AIRWALLEX_DEPOSIT_VIA_BANK_TRANSFER_TEST_SUCCESSFUL",
+            ),
+            error: null,
+          });
+        },
+      );
+    });
+  }
 }

@@ -2,6 +2,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import "../config/environment.js";
 import SuggestionService from "../services/suggestionService.js";
+import { translateValue } from "../libraries/tranlateValue.js";
 export default class SuggestionController {
   static async getSuggestionTypes(request) {
     const {
@@ -77,7 +78,7 @@ export default class SuggestionController {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: { message: translateValue(i18n, result.message, 'CATCH_ERROR'), reason: result.message },
         };
       }
       return {
@@ -91,8 +92,7 @@ export default class SuggestionController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, e.message, 'CATCH_ERROR'), reason: e.message },
       };
     }
   }
