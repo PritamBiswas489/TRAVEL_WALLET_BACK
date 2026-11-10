@@ -2427,7 +2427,7 @@ export default class AirwallexPaymentService {
       const formattedRows = rows
         ? rows.map(  async (row) => {
             const item = row.toJSON();
-            // item.transferDetails = null;
+            item.transferDetails = null;
             item.transactionStatus =
               item.additionalDetails?.jsonData?.data?.status || null;
 
@@ -2436,8 +2436,8 @@ export default class AirwallexPaymentService {
               const transferUUID =
                 item.additionalDetails?.jsonData?.data?.request_id || null; 
                 if(transferUUID){
-                  // const transferDetails = await TransferService.getTransferByRequestUUId(transferUUID);
-                  // item.transferDetails = transferDetails;
+                  const transferDetails = await TransferService.getTransferByRequestUUId(transferUUID);
+                  item.transferDetails = transferDetails;
                 }
 
             }  
