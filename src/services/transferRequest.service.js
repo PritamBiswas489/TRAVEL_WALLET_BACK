@@ -391,6 +391,7 @@ static async rejectTransferRequestBySender(  { transferRequestId, userId,   i18n
           where: {
             uuid: requestId,
           },
+          attributes: { exclude: ["createdAt", "updatedAt", "airWallexSubmitData", "airWallexWebhookData"] },
           include: [
             {
               model: User,

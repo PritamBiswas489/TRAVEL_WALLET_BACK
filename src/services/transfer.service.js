@@ -551,6 +551,7 @@ export default class TransferService {
         where: {
           uuid: requestId,
         },
+        attributes: { exclude: ["createdAt", "updatedAt", "airWallexSubmitData", "airWallexWebhookData"] },
         include: [
           {
             model: User,
