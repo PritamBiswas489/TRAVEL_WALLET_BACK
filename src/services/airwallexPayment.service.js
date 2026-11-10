@@ -2427,7 +2427,7 @@ export default class AirwallexPaymentService {
       const formattedRows = rows
         ? rows.map(async (row) => {
             const item = row.toJSON();
-            item.transferDetails = null;
+            // item.transferDetails = null;
             item.transactionStatus =
               item.additionalDetails?.jsonData?.data?.status || null;
 
