@@ -545,6 +545,31 @@ export default class TransferService {
       return handleCallback(error, null, callback);
     }
   }
+  static async getTransferByRequestUUId(requestId) {
+    try {
+      const transfer = await Transfer.findOne({
+        where: {
+          uuid: requestId,
+        },
+        include: [
+          {
+            model: User,
+            as: "sender",
+            attributes: ["name", "phoneNumber"],
+          },
+          {
+            model: User,
+            as: "receiver",
+            attributes: ["name", "phoneNumber"],
+          },
+        ],
+      });
+      return transfer;
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      throw new Error("FAILED_TO_GET_TRANSFER_BY_REQUEST_ID");
+    }
+  }
   static async getExpiredTransfers() {
     try {
       const expiredTransfers = await Transfer.findAll({

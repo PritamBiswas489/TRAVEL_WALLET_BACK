@@ -20,6 +20,7 @@ import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 
 import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
+import TransferService from "./transfer.service.js";
 import {
   enqueueFundSplit,
   enqueueRefund,
@@ -2424,10 +2425,22 @@ export default class AirwallexPaymentService {
           ],
         });
       const formattedRows = rows
-        ? rows.map((row) => {
+        ? rows.map(async (row) => {
             const item = row.toJSON();
+            item.transferDetails = null;
             item.transactionStatus =
               item.additionalDetails?.jsonData?.data?.status || null;
+
+
+            if(item?.additionalDetails?.appTransactionType === 'TRANSFER'){
+              const transferUUID =
+                item.additionalDetails?.jsonData?.data?.request_id || null; 
+                if(transferUUID){
+                  const transferDetails = await TransferService.getTransferByRequestUUId(transferUUID);
+                  item.transferDetails = transferDetails;
+                }
+
+            }  
             return item;
           })
         : [];
