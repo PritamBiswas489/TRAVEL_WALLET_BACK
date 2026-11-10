@@ -2,6 +2,7 @@ import db from "../databases/models/index.js";
 import * as Sentry from "@sentry/node";
 import "../config/environment.js";
 import FeedbackService from "../services/feedbackService.js";
+import { translateValue } from "../libraries/tranlateValue.js";
 export default class FeedbackController {
   /// Get Feedback Category
   static async getFeedbackCategory(request) {
@@ -50,13 +51,13 @@ export default class FeedbackController {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: { message: translateValue(i18n, "INVALID_CATEGORY_ID", "INVALID_CATEGORY_ID"), reason: result.message },
         };
       }
       return {
         status: 200,
         data: result.data,
-        message: i18n.__("FEEDBACK_SUBMITTED_SUCCESSFULLY"),
+        message: translateValue(i18n, "FEEDBACK_SUBMITTED_SUCCESSFULLY", "FEEDBACK_SUBMITTED_SUCCESSFULLY"),
         error: {},
       };
     } catch (e) {
@@ -64,8 +65,8 @@ export default class FeedbackController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+       
+        error: { message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -82,13 +83,13 @@ export default class FeedbackController {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: { message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"), reason: result.message },
         };
       }
       return {
         status: 200,
         data: result.data,
-        message: i18n.__("FEEDBACKS_FETCHED_SUCCESSFULLY"),
+        message: translateValue(i18n, "FEEDBACKS_FETCHED_SUCCESSFULLY", "FEEDBACKS_FETCHED_SUCCESSFULLY"),
         error: {},
       };
     } catch (e) {
@@ -96,8 +97,7 @@ export default class FeedbackController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"), reason: e.message },
       };
     }
   }
@@ -115,13 +115,13 @@ export default class FeedbackController {
         return {
           status: 500,
           data: [],
-          error: { message: i18n.__("CATCH_ERROR"), reason: result.message },
+          error: { message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"), reason: result.message },
         };
       }
       return {
         status: 200,
         data: result.data,
-        message: i18n.__("FEEDBACKS_FETCHED_SUCCESSFULLY"),
+        message: translateValue(i18n, "FEEDBACKS_FETCHED_SUCCESSFULLY", "FEEDBACKS_FETCHED_SUCCESSFULLY"),
         error: {},
       };
     } catch (e) {
@@ -129,8 +129,7 @@ export default class FeedbackController {
       return {
         status: 500,
         data: [],
-        message: i18n.__("CATCH_ERROR"),
-        error: { message: i18n.__("CATCH_ERROR"), reason: e.message },
+        error: { message: translateValue(i18n, "CATCH_ERROR", "CATCH_ERROR"), reason: e.message },
       };
     }
   }
