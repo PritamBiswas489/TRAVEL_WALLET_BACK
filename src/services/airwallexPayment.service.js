@@ -2425,7 +2425,7 @@ export default class AirwallexPaymentService {
           ],
         });
       const formattedRows = rows
-        ? rows.map(  (row) => {
+        ? rows.map(  async (row) => {
             const item = row.toJSON();
             // item.transferDetails = null;
             item.transactionStatus =
@@ -2446,7 +2446,7 @@ export default class AirwallexPaymentService {
         : [];
 
       return callback(null, {
-        data: { total: count, transactions: formattedRows },
+        data: { total: count, transactions: await Promise.all(formattedRows) },
       });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
