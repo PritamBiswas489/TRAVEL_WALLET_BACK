@@ -634,5 +634,6 @@
 	"INVALID_TYPE_ID": "Invalid type ID",
 	"INVALID_LEVEL_ID": "Invalid level ID",
 	"INVALID_PLACE_ID": "Invalid place ID",
-	"INVALID_SEVERITY_ID": "Invalid severity ID"
+	"INVALID_SEVERITY_ID": "Invalid severity ID",
+	"INVALID_CATEGORY_ID": "Invalid category ID"
 }

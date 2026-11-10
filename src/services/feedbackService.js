@@ -36,6 +36,14 @@ export default class FeedbackService {
   static async submitFeedback(payload) {
     try {
       console.log("Feedbacks model:", Feedbacks);
+      //categoryId need validation data exists in FeedbackCategory table
+      if(!payload.categoryId) {
+        throw new Error("INVALID_CATEGORY_ID");
+      }
+      const category = await FeedbackCategory.findByPk(payload.categoryId);
+      if (!category) {
+        throw new Error("INVALID_CATEGORY_ID");
+      }
       const feedback = await Feedbacks.create(payload);
       const createdDate = feedback.createdAt.toISOString().slice(0, 10).replace(/-/g, "");
       const referenceNumber = `TM-${createdDate}-${String(feedback.id).padStart(4, "0")}`;

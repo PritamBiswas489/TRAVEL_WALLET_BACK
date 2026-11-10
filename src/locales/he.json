@@ -631,7 +631,8 @@
 	"INVALID_TYPE_ID": "מזהה סוג לא תקין",
 	"INVALID_LEVEL_ID": "מזהה רמה לא תקין",
 	"INVALID_PLACE_ID": "מזהה מקום לא תקין",
-	"INVALID_SEVERITY_ID": "מזהה חומרה לא תקין"
+	"INVALID_SEVERITY_ID": "מזהה חומרה לא תקין",
+	"INVALID_CATEGORY_ID": "מזהה קטגוריה לא תקין"
 	
 
 }
