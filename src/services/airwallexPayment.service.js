@@ -55,7 +55,7 @@ const {
   AirwallexPaymentSplitReverse,
   AirwallexPaymentRefundErrorLogs,
   AirwallexCustomerOffboardingRecord,
-  AirwallexPaymentAttemptRecords
+  AirwallexPaymentAttemptRecords,
 } = db;
 
 const REFRESH_TIMEOUT = 5000; // 5 seconds
@@ -386,15 +386,14 @@ export default class AirwallexPaymentService {
       const existing = await AirwallexKycAccount.findOne({
         where: { airwallexAccountId: mappedData.airwallexAccountId },
       });
-      //update UseKyc status 
-
+      //update UseKyc status
 
       if (existing) {
         await existing.update(mappedData);
         // Update UserKyc status
         await UserKyc.update(
           { status: getUserKycStatus(mappedData.status) },
-          { where: { userId } }
+          { where: { userId } },
         );
         return existing;
       } else {
@@ -467,7 +466,12 @@ export default class AirwallexPaymentService {
         const email = validationResult.email;
         const mobile = validationResult.mobile;
         const createAccountPayload = {
-          account_details: { legal_entity_type: "INDIVIDUAL" , individual_details  : { "residential_address": { "country_code": validationResult.country }  }},
+          account_details: {
+            legal_entity_type: "INDIVIDUAL",
+            individual_details: {
+              residential_address: { country_code: validationResult.country },
+            },
+          },
           customer_agreements: {
             agreed_to_data_usage: true,
             agreed_to_terms_and_conditions: true,
@@ -939,7 +943,7 @@ export default class AirwallexPaymentService {
       };
       const newStatus =
         eventStatusMap[eventName] || payload?.data?.connected_account_status;
-      
+
       if (!accountId) {
         return callback(null, { data: payload });
       }
@@ -966,7 +970,9 @@ export default class AirwallexPaymentService {
         payload?.id &&
         existingWebhookData.some((evt) => evt?.id === payload.id)
       ) {
-        console.log(`airwallexKycWebhook: duplicate event ${payload.id} ignored`);
+        console.log(
+          `airwallexKycWebhook: duplicate event ${payload.id} ignored`,
+        );
         return callback(null, { data: payload });
       }
 
@@ -1520,7 +1526,7 @@ export default class AirwallexPaymentService {
       if (!kycAccount || !kycAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
-      if(kycAccount?.status !== "ACTIVE") {
+      if (kycAccount?.status !== "ACTIVE") {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_ACTIVE"));
       }
 
@@ -4217,8 +4223,8 @@ export default class AirwallexPaymentService {
           {
             model: AirwallexPaymentAttemptRecords,
             as: "attemptRecords",
-            attributes: { exclude: ["webhookData"] }
-          }
+            attributes: { exclude: ["webhookData"] },
+          },
         ],
         limit,
         offset,
@@ -4308,8 +4314,6 @@ export default class AirwallexPaymentService {
     let webhookDedupeKey = null;
     let fundSplitLockKey = null;
 
-    
-
     try {
       console.log("Event received:", payload.id);
       const timestamp = headers["x-timestamp"];
@@ -4376,7 +4380,7 @@ export default class AirwallexPaymentService {
       // }catch (error) {
       //   console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
       // }
-      
+
       const previousStatus = getPaymentIntent?.status || null;
       const incomingStatus = dataObject.status || null;
 
@@ -4544,15 +4548,22 @@ export default class AirwallexPaymentService {
         }
       }
 
-      if(recordPayload?.status === "CANCELLED") {
-        ActiveOperationService.end(Number.parseInt(dataObject?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + dataObject?.id);
-
+      if (recordPayload?.status === "CANCELLED") {
+        ActiveOperationService.end(
+          Number.parseInt(dataObject?.metadata?.user_id, 10),
+          OP_TYPE.PAYMENT,
+          "payment:" + dataObject?.id,
+        );
       }
 
       return callback(null, { data: payload });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
-      ActiveOperationService.end(Number.parseInt(payload?.data?.object?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + payload?.data?.object?.id);
+      ActiveOperationService.end(
+        Number.parseInt(payload?.data?.object?.metadata?.user_id, 10),
+        OP_TYPE.PAYMENT,
+        "payment:" + payload?.data?.object?.id,
+      );
       console.error(
         "❌ Error handling PaymentIntent webhook:",
         error?.message || error,
@@ -4586,9 +4597,7 @@ export default class AirwallexPaymentService {
 
       if (!verifyAirwallexSignature(rawBody, timestamp, signature, secret)) {
         console.error("PaymentAttempt webhook signature verification failed");
-        return callback(
-          new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"),
-        );
+        return callback(new Error("WEBHOOK_SIGNATURE_VERIFICATION_FAILED"));
       }
 
       const dataObject = payload?.data?.object;
@@ -4638,7 +4647,8 @@ export default class AirwallexPaymentService {
           payload?.name?.replace("payment_attempt.", "").toUpperCase(),
         authorizationCode: dataObject.authorization_code,
         paymentConsentId: dataObject.payment_consent_id,
-        providerOriginalResponseCode: dataObject.provider_original_response_code,
+        providerOriginalResponseCode:
+          dataObject.provider_original_response_code,
         providerTransactionId: dataObject.provider_transaction_id,
         settleVia: dataObject.settle_via,
         authenticationData: dataObject.authentication_data,
@@ -4652,7 +4662,9 @@ export default class AirwallexPaymentService {
         attemptId: dataObject.id,
         paymentIntentId,
         ...Object.fromEntries(
-          Object.entries(attemptFields).filter(([, value]) => value !== undefined),
+          Object.entries(attemptFields).filter(
+            ([, value]) => value !== undefined,
+          ),
         ),
       };
       const attemptRecord = await sequelize.transaction(async (transaction) => {
@@ -4871,7 +4883,6 @@ export default class AirwallexPaymentService {
             Sentry.captureException(error);
         }
       }
-     
 
       if (incomingStatus === "FAILED") {
         try {
@@ -4908,8 +4919,12 @@ export default class AirwallexPaymentService {
         );
       }
 
-       if(typeof incomingRank !== "undefined" && incomingRank === 3) {
-        ActiveOperationService.end(Number.parseInt(dataObject?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + dataObject?.source_id);
+      if (typeof incomingRank !== "undefined" && incomingRank === 3) {
+        ActiveOperationService.end(
+          Number.parseInt(dataObject?.metadata?.user_id, 10),
+          OP_TYPE.PAYMENT,
+          "payment:" + dataObject?.source_id,
+        );
       }
 
       return callback(null, { data: existingSplit });
@@ -4919,7 +4934,11 @@ export default class AirwallexPaymentService {
         "❌ Error handling FundSplit webhook:",
         error?.message || error,
       );
-      ActiveOperationService.end(Number.parseInt(payload?.data?.object?.metadata?.user_id, 10), OP_TYPE.PAYMENT, "payment:" + payload?.data?.object?.source_id);
+      ActiveOperationService.end(
+        Number.parseInt(payload?.data?.object?.metadata?.user_id, 10),
+        OP_TYPE.PAYMENT,
+        "payment:" + payload?.data?.object?.source_id,
+      );
 
       // Roll back the dedupe key if this attempt failed partway through —
       // otherwise Airwallex's retry of the same event gets silently
@@ -4999,7 +5018,7 @@ export default class AirwallexPaymentService {
           ACCEPTED: 2,
           SETTLED: 3,
           FAILED: 3,
-          SUCCEEDED: 3
+          SUCCEEDED: 3,
         };
 
         const previousRank = previousStatus
@@ -5046,38 +5065,35 @@ export default class AirwallexPaymentService {
           },
         );
 
-         try {
+        try {
           NotificationService.notifyRefundStatusUpdate({
-             userId,
-             amount: getRefundData.amount,
-             currency: getRefundData.currency,
-             status: incomingStatus,
-           });
-           enqueueUpdateReverseSplitRefundPaymentIntentRecord({
-             paymentId,
-             userId,
-           });
-           if (
-             typeof incomingRank !== "undefined" &&
-             parseInt(incomingRank) === 3
-           ) {
-             ActiveOperationService.end(
-               userId,
-               OP_TYPE.REFUND,
-               `payment:${paymentId}`,
-             );
-           }
-         } catch (error) {
-           console.error(
-             "❌ Failed to notify refund status update:",
-             error?.message || error,
-           );
-         }
-        
-        
+            userId,
+            amount: getRefundData.amount,
+            currency: getRefundData.currency,
+            status: incomingStatus,
+          });
+          enqueueUpdateReverseSplitRefundPaymentIntentRecord({
+            paymentId,
+            userId,
+          });
+          if (
+            typeof incomingRank !== "undefined" &&
+            parseInt(incomingRank) === 3
+          ) {
+            ActiveOperationService.end(
+              userId,
+              OP_TYPE.REFUND,
+              `payment:${paymentId}`,
+            );
+          }
+        } catch (error) {
+          console.error(
+            "❌ Failed to notify refund status update:",
+            error?.message || error,
+          );
+        }
+
         // Enqueue a job to update the reverse split refund payment intent record in the background.
-       
-       
       } else {
         // No local refund record yet — could be a genuine race (webhook
         // arriving before our own refund-creation write lands) rather than
@@ -5207,24 +5223,36 @@ export default class AirwallexPaymentService {
   }
   static async addPaymentActionOperation({ payload }, callback) {
     try {
-       const {paymentIntentId} = payload;
-       const getPaymentIntent = await AirwallexPaymentIntent.findOne({
-          where: { airwallexIntentId: paymentIntentId },
-       });
-       if(!getPaymentIntent) {
-         return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
-       }
-       try{
-        const activeOperationKey = "payment:" + getPaymentIntent.airwallexIntentId;
-        const activeOprationCheck = await ActiveOperationService.isActive(getPaymentIntent.userId,OP_TYPE.PAYMENT, activeOperationKey);
-        if(!activeOprationCheck) {
-           await ActiveOperationService.start(getPaymentIntent.userId, OP_TYPE.PAYMENT, activeOperationKey);
+      const { paymentIntentId } = payload;
+      const getPaymentIntent = await AirwallexPaymentIntent.findOne({
+        where: { airwallexIntentId: paymentIntentId },
+      });
+      if (!getPaymentIntent) {
+        return callback(new Error("PAYMENT_INTENT_NOT_FOUND"));
+      }
+      try {
+        const activeOperationKey =
+          "payment:" + getPaymentIntent.airwallexIntentId;
+        const activeOprationCheck = await ActiveOperationService.isActive(
+          getPaymentIntent.userId,
+          OP_TYPE.PAYMENT,
+          activeOperationKey,
+        );
+        if (!activeOprationCheck) {
+          await ActiveOperationService.start(
+            getPaymentIntent.userId,
+            OP_TYPE.PAYMENT,
+            activeOperationKey,
+          );
         }
         return callback(null, { data: getPaymentIntent.airwallexIntentId });
-      }catch (error) {
-        console.error(`Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`, error);
+      } catch (error) {
+        console.error(
+          `Error handling active operation for payment intent ${getPaymentIntent.airwallexIntentId}:`,
+          error,
+        );
       }
-    }catch (error) {
+    } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
         "❌ Error adding Payment Action Operation:",
@@ -5232,17 +5260,25 @@ export default class AirwallexPaymentService {
       );
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
-
   }
 
   static async offboardingAirewallexAccount(request, callback) {
     try {
-      const { airwallexAccountId, comment, reason_code, customerName, customerPhone, customerEmail } = request?.payload || {};
+      const {
+        airwallexAccountId,
+        comment,
+        reason_code,
+        customerName,
+        customerPhone,
+        customerEmail,
+      } = request?.payload || {};
       if (!airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_ID_REQUIRED"));
       }
 
-      console.log(`Offboarding Airwallex account with id ${airwallexAccountId}`);
+      console.log(
+        `Offboarding Airwallex account with id ${airwallexAccountId}`,
+      );
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
@@ -5263,16 +5299,17 @@ export default class AirwallexPaymentService {
       );
       //need curl command for offboarding request for debugging purposes
       //console.log(`Curl command for offboarding request: curl -X POST "${process.env.AIRWALLEX_API_URL}/api/v1/accounts/${encodeURIComponent(airwallexAccountId)}/offboardings/create" -H "Authorization: Bearer ${accessToken}" -H "Content-Type: application/json" -d '{"comment":"${comment || "Account no longer needed"}","reason_code":"${reason_code || "OTHER"}"}'`);
-      const offboardingRecord = await AirwallexCustomerOffboardingRecord.create({
-        accountId:airwallexAccountId,
-        apiId: response.data?.id || null,
-        status: response.data?.status || null,
-        comment: comment || null,
-        customerName: customerName || null,
-        customerPhone: customerPhone || null,
-        customerEmail: customerEmail || null,
-      });
-      
+      const offboardingRecord = await AirwallexCustomerOffboardingRecord.create(
+        {
+          accountId: airwallexAccountId,
+          apiId: response.data?.id || null,
+          status: response.data?.status || null,
+          comment: comment || null,
+          customerName: customerName || null,
+          customerPhone: customerPhone || null,
+          customerEmail: customerEmail || null,
+        },
+      );
 
       return callback(null, { data: response.data, offboardingRecord });
     } catch (error) {
@@ -5280,18 +5317,18 @@ export default class AirwallexPaymentService {
         "❌ Error offboarding Airwallex account:",
         error?.message || error,
       );
-      if(request?.payload?.airwallexAccountId){
-          AirwallexCustomerOffboardingRecord.create({
-            accountId: request?.payload?.airwallexAccountId || null,
-            apiId: null,
-            status: "FAILED",
-            comment: request?.payload?.comment || null,
-            customerName: request?.payload?.customerName || null,
-            customerPhone: request?.payload?.customerPhone || null,
-            customerEmail: request?.payload?.customerEmail || null,
-         });
+      if (request?.payload?.airwallexAccountId) {
+        AirwallexCustomerOffboardingRecord.create({
+          accountId: request?.payload?.airwallexAccountId || null,
+          apiId: null,
+          status: "FAILED",
+          comment: request?.payload?.comment || null,
+          customerName: request?.payload?.customerName || null,
+          customerPhone: request?.payload?.customerPhone || null,
+          customerEmail: request?.payload?.customerEmail || null,
+        });
       }
-     
+
       // process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       return callback(
         new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
@@ -5307,7 +5344,9 @@ export default class AirwallexPaymentService {
         return callback(new Error("PAYLOAD_REQUIRED"));
       }
 
-      console.log(`Handling offboarding webhook with payload: ${JSON.stringify(payload)}`);
+      console.log(
+        `Handling offboarding webhook with payload: ${JSON.stringify(payload)}`,
+      );
 
       const apiId = payload?.data?.id;
       const status = payload?.data?.status;
@@ -5328,9 +5367,10 @@ export default class AirwallexPaymentService {
         return callback(null, { data: payload });
       }
 
-      const offboardingRecord = await AirwallexCustomerOffboardingRecord.findOne({
-        where: { apiId },
-      });
+      const offboardingRecord =
+        await AirwallexCustomerOffboardingRecord.findOne({
+          where: { apiId },
+        });
       if (!offboardingRecord) {
         await redisClient.del(webhookDedupeKey);
         webhookDedupeKey = null;
@@ -5342,7 +5382,6 @@ export default class AirwallexPaymentService {
       }
 
       return callback(null, { data: payload, offboardingRecord });
-
     } catch (error) {
       if (webhookDedupeKey) {
         try {
@@ -5364,18 +5403,27 @@ export default class AirwallexPaymentService {
       );
     }
   }
-  static async testAirwallexDepositViaBankTransfer({ payload, userId }, callback) {
+  static async testAirwallexDepositViaBankTransfer(
+    { payload, userId },
+    callback,
+  ) {
     try {
       const { amount } = payload;
-      if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
+      if (
+        typeof amount !== "number" ||
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
         return callback(new Error("INVALID_AMOUNT"));
       }
       if (!userId) {
         return callback(new Error("USER_NOT_FOUND"));
       }
       const apiUrl = process.env.AIRWALLEX_API_URL;
-     
-      const kycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+
+      const kycAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
       if (!kycAccount?.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -5384,7 +5432,9 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
       //add console curl command for debugging
-      console.log(`curl -X POST "${apiUrl.replace(/\/+$/, "")}/api/v1/simulation/pa/shopper_actions/transfer" -H "Authorization: Bearer ${accessToken}" -H "Content-Type: application/json" -H "x-on-behalf-of: ${kycAccount.airwallexAccountId}" -d '{"account_number":"E1D5C0E9CB","amount":"${amount}","reference":"D5NCUC"}'`);
+      console.log(
+        `curl -X POST "${apiUrl.replace(/\/+$/, "")}/api/v1/simulation/pa/shopper_actions/transfer" -H "Authorization: Bearer ${accessToken}" -H "Content-Type: application/json" -H "x-on-behalf-of: ${kycAccount.airwallexAccountId}" -d '{"account_number":"E1D5C0E9CB","amount":"${amount}","reference":"D5NCUC"}'`,
+      );
 
       return callback(null, { data: { message: "DEBUG_CURL_COMMAND_LOGGED" } });
       const response = await axios.post(
