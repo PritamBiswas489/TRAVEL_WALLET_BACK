@@ -385,6 +385,32 @@ static async rejectTransferRequestBySender(  { transferRequestId, userId,   i18n
     }
   }
 
+  static async getTransferByRequestUUId(requestId) {
+      try {
+        const transfer = await TransferRequests.findOne({
+          where: {
+            uuid: requestId,
+          },
+          include: [
+            {
+              model: User,
+              as: "sender",
+              attributes: ["name", "phoneNumber"],
+            },
+            {
+              model: User,
+              as: "receiver",
+              attributes: ["name", "phoneNumber"],
+            },
+          ],
+        });
+        return transfer;
+      } catch (error) {
+        process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+        throw new Error("FAILED_TO_GET_TRANSFER_BY_REQUEST_ID");
+      }
+    }
+
   static async getTransferRequestHistory(
     { userId, page = 1, limit = 10, filter = {} },
     callback

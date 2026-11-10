@@ -21,6 +21,7 @@ import AirWallexVirtualCardSerivice from "./airWallexVirtualCard.service.js";
 import redisClient from "../config/redis.config.js";
 import SettingsService from "./settings.service.js";
 import TransferService from "./transfer.service.js";
+import TransferRequestService from "./transferRequest.service.js";
 import {
   enqueueFundSplit,
   enqueueRefund,
@@ -2432,14 +2433,22 @@ export default class AirwallexPaymentService {
               item.additionalDetails?.jsonData?.data?.status || null;
 
 
-            if(item?.additionalDetails?.appTransactionType === 'TRANSFER'){
+            if(item?.additionalDetails?.jsonData?.data?.reference === 'Travelmoney-transfer'){
               const transferUUID =
                 item.additionalDetails?.jsonData?.data?.request_id || null; 
                 if(transferUUID){
                   const transferDetails = await TransferService.getTransferByRequestUUId(transferUUID);
                   item.transferDetails = transferDetails;
                 }
-
+            }  
+            
+            if(item?.additionalDetails?.jsonData?.data?.reference === 'Travelmoney-transfer-request'){
+              const transferUUID =
+                item.additionalDetails?.jsonData?.data?.request_id || null; 
+                if(transferUUID){
+                  const transferDetails = await TransferRequestService.getTransferByRequestUUId(transferUUID);
+                  item.transferDetails = transferDetails;
+                }
             }  
             return item;
           })
