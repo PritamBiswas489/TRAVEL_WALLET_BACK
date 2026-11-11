@@ -24,6 +24,10 @@ const options = {
         description: "User profile management endpoints",
       },
       {
+        name: "Auth-Controlled-Profile routes",
+        description: "Controlled profile management endpoints",
+      },
+      {
         name: "Auth-KYC",
         description: "KYC management endpoints",
       },

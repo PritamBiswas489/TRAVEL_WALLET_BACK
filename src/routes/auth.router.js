@@ -20,6 +20,7 @@ import { default as bankTransferRouter } from './bankTransfer.router.js';
 import { default as thaiPaymentRouter } from './thaiPayment.router.js';
 import { default as virtualCardRouter } from './virtualCard.router.js';
 import { default as qrGenerateCodeRouter } from './qrGenerateCode.router.js';
+import { default as controlledProfileRouter } from './controlledProfile.router.js';
 
 
 
@@ -50,4 +51,5 @@ router.use('/bank-transfer', bankTransferRouter);
 router.use('/ipps', thaiPaymentRouter);
 router.use('/virtual-card', virtualCardRouter);
 router.use('/qr-generate-code', qrGenerateCodeRouter);
+router.use('/controlled-profiles', controlledProfileRouter);
 export default router;

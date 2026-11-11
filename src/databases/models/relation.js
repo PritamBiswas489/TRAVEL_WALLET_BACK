@@ -1,5 +1,5 @@
 const relation = (db) => {
-  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund, AirwallexPaymentSplitReverse, AirwallexPaymentAttemptRecords } = db;
+  const { User, UserCard, WalletPelePayment, WalletTransaction, WalletAirwallexPayments, UserWallet, ApiLogs, UserKyc, UserDevices, UserFcm, Transfer, Notification, TransferRequests, UserSettings, PisoPayTransactionInfos, ExpensesCategories, NinePayTransactionInfos, kessPayTransactionInfos, ThaiPayments, Feedbacks, FeedbackCategory, Suggestions, SuggestionType, SuggestionPriorityLevel, BugReports, BugPlace, BugSeverity, AirwallexKycAccount, AirwallexUserTransactionHistory, AirwallexUserTransactionAdditionalDetails, AirwallexQrCodeTransaction, AirwallexCardholder, AirwallexUserDebitCards, UserOwnGeneratedQrCodes, AirwallexPaymentIntent, AirwallexPaymentSplit, AirwallexPaymentIntentRefund, AirwallexPaymentSplitReverse, AirwallexPaymentAttemptRecords, ControlledProfiles } = db;
 
   //user saved cards
   User.hasMany(UserCard, { foreignKey: "userId", as : "cards" });
@@ -12,6 +12,9 @@ const relation = (db) => {
   //user wallets
   User.hasMany(UserWallet, { foreignKey: "userId", as: "wallets" });
   UserWallet.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+  User.hasMany(ControlledProfiles, { foreignKey: "userId", as: "controlledProfiles" });
+  ControlledProfiles.belongsTo(User, { foreignKey: "userId", as: "user" });
 
   User.hasMany(ApiLogs, { foreignKey: "userId", as: "apiLogs" });
   ApiLogs.belongsTo(User, { foreignKey: "userId", as: "user" });
