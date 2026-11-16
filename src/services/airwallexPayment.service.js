@@ -2954,12 +2954,10 @@ export default class AirwallexPaymentService {
       console.log("📥 Received card transactions webhook payload:", payload);
 
       const transactionPayload = payload?.data || payload || {};
-      const merchant = transactionPayload?.merchant || {};
-      const riskDetails = transactionPayload?.risk_details || {};
-
-      if (!transactionPayload?.transaction_id || !transactionPayload?.card_id) {
+     
+      if (!transactionPayload?.card_id) {
         console.warn(
-          "⚠️ Missing required transaction_id or card_id in card transactions webhook payload",
+          "⚠️ Missing required card_id in card transactions webhook payload",
         );
         return callback(null, { data: payload });
       }
@@ -2971,67 +2969,59 @@ export default class AirwallexPaymentService {
         });
         userId = kycAccount?.userId || null;
       }
+      if(!userId) {
+       return callback(new Error("USER_NOT_FOUND_FOR_ACCOUNT_ID"));
+      }
 
       const mappedData = {
         userId,
-        acquiringInstitutionIdentifier:
-          transactionPayload?.acquiring_institution_identifier || null,
-        authCode: transactionPayload?.auth_code || null,
-        billingAmount: transactionPayload?.billing_amount ?? null,
-        billingCurrency: transactionPayload?.billing_currency || null,
-        cardId: transactionPayload?.card_id,
-        cardNickname: transactionPayload?.card_nickname || null,
-        cardTransactionEventId:
-          transactionPayload?.card_transaction_event_id ||
-          transactionPayload?.event_id ||
-          transactionPayload?.id ||
-          null,
-        cardTransactionId: transactionPayload?.card_transaction_id || null,
-        cardTransactionLifecycleId:
-          transactionPayload?.card_transaction_lifecycle_id ||
-          transactionPayload?.lifecycle_id ||
-          null,
-        lifecycleId: transactionPayload?.lifecycle_id || null,
-        maskedCardNumber: transactionPayload?.masked_card_number || null,
-        merchantCategoryCode: merchant?.category_code || null,
-        merchantCity: merchant?.city || null,
-        merchantCountry: merchant?.country || null,
-        merchantIdentifier: merchant?.identifier || null,
-        merchantName: merchant?.name || null,
-        merchantCategory: merchant?.category || null,
-        merchantSubCategory:
-          merchant?.subcategory || merchant?.sub_category || null,
-        networkTransactionId:
-          transactionPayload?.network_transaction_id || null,
-        postedDate: transactionPayload?.posted_date || null,
-        retrievalRef: transactionPayload?.retrieval_ref || null,
-        riskActionsPerformed: riskDetails?.risk_actions_performed || null,
-        riskFactors: riskDetails?.risk_factors || null,
-        threeDSecureOutcome: riskDetails?.three_d_secure_outcome || null,
-        status: transactionPayload?.status || null,
-        transactionAmount: transactionPayload?.transaction_amount ?? null,
-        transactionCurrency: transactionPayload?.transaction_currency || null,
-        transactionDate: transactionPayload?.transaction_date || null,
-        transactionId: transactionPayload?.transaction_id,
-        transactionType: transactionPayload?.transaction_type || null,
-        rawPayload: payload,
+        webhookEventId: payload?.name,
+        airwallexAccountId: payload?.account_id,
+        cardTransactionId: payload?.data?.id,
+        cardId: payload?.data?.card_id,
+        billingAmounts: payload?.data?.billing_amounts,
+        transactionAmounts: payload?.data?.transaction_amounts,
+        maskedCardNumber: payload?.data?.masked_card_number,
+        merchant: payload?.data?.merchant,
+        status: payload?.data?.status,
+        fundDirection: payload?.data?.fund_direction,
+        lifecycleId: payload?.data?.lifecycle_id,
+        cardTransactionLifecycleId: payload?.data?.lifecycle_id,
+        feeDetails: payload?.data?.fee_details,
+        failureReason: payload?.data?.failure_reason,
+        digitalWalletToken: payload?.data?.digital_wallet_token,
+        expiryDate: payload?.data?.expiry_date,
+        created_at: payload?.data?.created_at,
+        updated_at: payload?.data?.updated_at,
+        
       };
 
       const existingRecord = await AirwallexCardTransactions.findOne({
-        where: { transactionId: transactionPayload.transaction_id },
+        where: { cardTransactionId: payload?.data?.id },
       });
 
       if (existingRecord) {
+        //check payload check event to avoid unnecessary updates checkedin rawPayload array
+
+        const isEventAlreadyProcessed = existingRecord.rawPayload?.some(
+          (item) => item?.name === payload?.name,
+        );
+        if (isEventAlreadyProcessed) {
+          console.log("Event already processed for card transaction:", payload?.data?.id);
+          return callback(null, { data: payload });
+        }
+        mappedData.rawPayload = [...existingRecord.rawPayload || [], payload];
         await existingRecord.update(mappedData);
         console.log(
           "📝 Updated Airwallex card transaction record:",
-          transactionPayload.transaction_id,
+          payload?.data?.id,
         );
       } else {
+        mappedData.rawPayload = [payload];
         await AirwallexCardTransactions.create(mappedData);
         console.log(
           "✅ Created Airwallex card transaction record:",
-          transactionPayload.transaction_id,
+          payload?.data?.id,
         );
       }
     } catch (error) {

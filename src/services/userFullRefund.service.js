@@ -73,7 +73,7 @@ export default class UserFullRefundService {
       });
       const currentBalance = Number(accountBalance?.ILS);
       if (!Number.isFinite(currentBalance) || currentBalance <= 0) {
-        throw new Error("INSUFFICIENT_BALANCE.");
+        return callback(new Error("INSUFFICIENT_BALANCE."));
       }
 
       const allocations = await sequelize.transaction(async (transaction) => {
@@ -89,7 +89,7 @@ export default class UserFullRefundService {
       });
 
       if (allocations.length === 0) {
-        throw new Error("NO_REFUNDABLE_PAYMENT_INTENTS.");
+        return callback(new Error("NO_REFUNDABLE_PAYMENT_INTENTS."));
       }
 
       const data = [];

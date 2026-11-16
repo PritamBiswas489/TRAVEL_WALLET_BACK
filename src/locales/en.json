@@ -523,6 +523,8 @@
 	"CREATE_TRANSACTION_SUCCESSFULLY": "Transaction created successfully.",
 	"GET_CARD_LIMIT_SUCCESSFULLY": "Card limit fetched successfully.",
 	"GET_CARD_TRANSACTION_LIST_SUCCESSFULLY": "Card transaction list fetched successfully.",
+	"GET_CARD_TRANSACTION_DETAILS_FAILED": "Failed to get card transaction details.",
+	"GET_CARD_TRANSACTION_DETAILS_SUCCESSFULLY": "Card transaction details fetched successfully.",
 	"DELETE_CARDHOLDER_FAILED": "Failed to delete cardholder.",
 	"GET_USER_CARD_TRANSACTION_LIST_FAILED": "Failed to get user card transaction list.",
 	"GET_USER_CARD_TRANSACTION_LIST_SUCCESSFULLY": "User card transaction list fetched successfully.",

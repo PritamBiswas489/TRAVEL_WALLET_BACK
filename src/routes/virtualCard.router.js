@@ -346,16 +346,16 @@ router.post('/update-card-limit', async (req, res, next) => {
  *           schema:
  *             type: object
  *             required:
- *               - card_number
+ *               - card_id
  *               - transaction_amount
  *               - transaction_currency
  *               - merchant_category_code
  *               - merchant_info
  *             properties:
- *               card_number:
+ *               card_id:
  *                 type: string
- *                 description: Card number used to simulate a transaction
- *                 example: 4466209407639646
+ *                 description: Card ID used to simulate a transaction
+ *                 example: '01a1e3fc-8fa6-7000-9a28-430a27d5a342'
  *               transaction_amount:
  *                 type: number
  *                 description: Transaction amount
@@ -412,6 +412,32 @@ router.post('/testing/create-transaction-for-the-provided-card', async (req, res
  */
 router.get('/card-transaction-list', async (req, res, next) => {
   const response = await VirtualCardController.getCardTransactionList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
+  res.return(response);
+});
+
+/**
+ * @swagger
+ * /api/auth/virtual-card/get-transaction-details/{transactionId}:
+ *   get:
+ *     summary: Get details for a specific card transaction
+ *     tags:
+ *       - Auth-airwallex-virtual-card routes
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: UUID of the transaction to retrieve details for
+ *     responses:
+ *       200:
+ *         description: Transaction details fetched successfully
+ */
+router.get('/get-transaction-details/:transactionId', async (req, res, next) => {
+  const response = await VirtualCardController.getCardTransactionDetails({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
 

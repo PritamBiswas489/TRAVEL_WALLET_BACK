@@ -521,7 +521,7 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
     }
     const payload = { ...req.params, ...req.query, ...req.body };
 
-    console.log("Received Airwallex main global webhook:", payload?.name);
+    console.log("$$$$$$$ Received Airwallex main global webhook: $$$$$$$", payload?.name);
     const kycEventNames = [
       "account.connected",
       "account.submitted",
@@ -577,8 +577,13 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "issuing.card.low_remaining_transaction_limit",
     ];
     const cardTransactionsWebhookEventNames = [
-      "issuing.transaction.succeeded",
-      "issuing.transaction.failed",
+      "issuing.card_transaction.authorized",
+      "issuing.card_transaction.verified",
+      "issuing.card_transaction.cleared",
+      "issuing.card_transaction.reversed",
+      "issuing.card_transaction.expired",
+      "issuing.card_transaction.declined",
+      "issuing.card_transaction.modified"
     ];
     const transactionDisputeWebhookEventNames = [
       "issuing.transaction_dispute.created",

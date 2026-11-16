@@ -4,134 +4,99 @@ export default function AirwallexCardTransactions(sequelize, DataTypes) {
 		{
 			id: {
 				type: DataTypes.BIGINT,
-				autoIncrement: true,
 				primaryKey: true,
 				allowNull: false,
-			},
-			acquiringInstitutionIdentifier: {
-				type: DataTypes.STRING,
-				allowNull: true,
+				autoIncrement: true,
 			},
 			userId: {
 				type: DataTypes.BIGINT,
 				allowNull: true,
 				field: "user_id",
+				references: {
+					model: "users",
+					key: "id",
+				},
+				onUpdate: "CASCADE",
+				onDelete: "SET NULL",
 			},
-			authCode: {
+			webhookEventId: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: "webhook_event_id",
+			},
+			airwallexAccountId: {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
-			billingAmount: {
-				type: DataTypes.DECIMAL(20, 8),
+			cardTransactionId: {
+				type: DataTypes.UUID,
 				allowNull: true,
-			},
-			billingCurrency: {
-				type: DataTypes.STRING,
-				allowNull: true,
+				field: "card_transaction_id",
 			},
 			cardId: {
 				type: DataTypes.UUID,
 				allowNull: false,
+				field: "card_id",
 			},
-			cardNickname: {
-				type: DataTypes.STRING,
+			billingAmounts: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+				field: "billing_amounts",
+			},
+			created_at: {
+				type: DataTypes.DATE,
 				allowNull: true,
 			},
-			cardTransactionEventId: {
-				type: DataTypes.STRING,
+			digitalWalletToken: {
+				type: DataTypes.JSONB,
 				allowNull: true,
-				unique: true,
+				field: "digital_wallet_token",
 			},
-			cardTransactionId: {
-				type: DataTypes.STRING,
+			expiryDate: {
+				type: DataTypes.DATEONLY,
 				allowNull: true,
+				field: "expiry_date",
 			},
-			cardTransactionLifecycleId: {
+			failureReason: {
 				type: DataTypes.STRING,
 				allowNull: true,
+				field: "failure_reason",
+			},
+			feeDetails: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+				field: "fee_details",
+			},
+			fundDirection: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: "fund_direction",
 			},
 			lifecycleId: {
 				type: DataTypes.STRING,
 				allowNull: true,
+				field: "lifecycle_id",
 			},
 			maskedCardNumber: {
 				type: DataTypes.STRING,
 				allowNull: true,
+				field: "masked_card_number",
 			},
-			merchantCategoryCode: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			merchantCity: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			merchantCountry: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			merchantIdentifier: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			merchantName: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			merchantCategory: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			merchantSubCategory: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			networkTransactionId: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			postedDate: {
-				type: DataTypes.DATE,
-				allowNull: true,
-			},
-			retrievalRef: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			riskActionsPerformed: {
+			merchant: {
 				type: DataTypes.JSONB,
-				allowNull: true,
-			},
-			riskFactors: {
-				type: DataTypes.JSONB,
-				allowNull: true,
-			},
-			threeDSecureOutcome: {
-				type: DataTypes.STRING,
 				allowNull: true,
 			},
 			status: {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
-			transactionAmount: {
-				type: DataTypes.DECIMAL(20, 8),
+			transactionAmounts: {
+				type: DataTypes.JSONB,
 				allowNull: true,
+				field: "transaction_amounts",
 			},
-			transactionCurrency: {
-				type: DataTypes.STRING,
-				allowNull: true,
-			},
-			transactionDate: {
+			updated_at: {
 				type: DataTypes.DATE,
-				allowNull: true,
-			},
-			transactionId: {
-				type: DataTypes.UUID,
-				allowNull: false,
-			},
-			transactionType: {
-				type: DataTypes.STRING,
 				allowNull: true,
 			},
 			rawPayload: {
@@ -144,25 +109,20 @@ export default function AirwallexCardTransactions(sequelize, DataTypes) {
 			timestamps: true,
 			indexes: [
 				{
-					name: "uniq_airwallex_card_transactions_cardTransactionEventId",
-					unique: true,
-					fields: ["cardTransactionEventId"],
-				},
-				{
-					name: "idx_airwallex_card_transactions_transactionId",
-					fields: ["transactionId"],
-				},
-				{
-					name: "idx_airwallex_card_transactions_cardId",
-					fields: ["cardId"],
-				},
-				{
 					name: "idx_airwallex_card_transactions_user_id",
 					fields: ["user_id"],
 				},
 				{
-					name: "idx_airwallex_card_transactions_status_transactionDate",
-					fields: ["status", "transactionDate"],
+					name: "idx_airwallex_card_transactions_card_id",
+					fields: ["card_id"],
+				},
+				{
+					name: "idx_airwallex_card_transactions_card_transaction_id",
+					fields: ["card_transaction_id"],
+				},
+				{
+					name: "idx_airwallex_card_transactions_webhook_event_id",
+					fields: ["webhook_event_id"],
 				},
 			],
 		},

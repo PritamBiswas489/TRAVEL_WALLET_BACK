@@ -5,33 +5,15 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import AirwallexPaymentService from "./airwallexPayment.service.js";
+
 
 const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards, AirwallexCardTransactions, AirwallexTransactionDispute } = db;
 
 export default class AirWallexVirtualCardSerivice {
     static async getAirWalletxToken() {
-        const apiKey = process.env.AIRWALLEX_API_KEY;
-        const clientId = process.env.AIRWALLEX_CLIENT_ID;
-        const apiUrl = process.env.AIRWALLEX_API_URL;
-        const accountId = process.env.AIRWALLEX_ACCOUNT_ID;
-
-        console.log("Requesting Airwallex access token with clientId:", clientId);
-        console.log("Using API Key:", apiKey);
-
-
-        const res = await axios.post(
-            `${apiUrl}/api/v1/authentication/login`,
-            {},
-            {
-                headers: {
-                    "x-client-id": clientId,
-                    "x-api-key": apiKey,
-                    "x-login-as": accountId,
-                },
-            },
-        );
-
-        return res?.data?.token || null;
+        return await AirwallexPaymentService.getAirWalletxToken();
+       
     }
     static async getApiCardholderDetails({ userId, payload }, callback) {
         try {
@@ -678,9 +660,9 @@ export default class AirWallexVirtualCardSerivice {
     static async testingCreateTransactionForTheProvidedCard({ userId, payload }, callback) {
         console.log('testingCreateTransactionForTheProvidedCard called with userId:', userId, 'and payload:', payload);
         try {
-            const { card_number, transaction_amount, transaction_currency, merchant_category_code, merchant_info } = payload;
+            const { card_id, transaction_amount, transaction_currency, merchant_category_code, merchant_info } = payload;
 
-            if (!card_number || transaction_amount === undefined || !transaction_currency || !merchant_category_code || !merchant_info) {
+            if (!card_id || transaction_amount === undefined || !transaction_currency || !merchant_category_code || !merchant_info) {
                 return callback(new Error('MISSING_REQUIRED_FIELDS'), null);
             }
 
@@ -694,11 +676,11 @@ export default class AirWallexVirtualCardSerivice {
             }
 
 
-            const apiBaseUrl = process.env.AIRWALLEX_API_URL || 'https://api-demo.airwallex.com';
+            const apiBaseUrl = process.env.AIRWALLEX_API_URL;
             const response = await axios.post(
                 `${apiBaseUrl}/api/v1/simulation/issuing/create`,
                 {
-                    card_number,
+                    card_id,
                     transaction_amount,
                     transaction_currency,
                     merchant_category_code,
@@ -709,6 +691,7 @@ export default class AirWallexVirtualCardSerivice {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`,
+                        'x-api-version': '2026-08-21',
                         'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
                     },
                 },
@@ -717,6 +700,7 @@ export default class AirWallexVirtualCardSerivice {
 
             return callback(null, response?.data || null);
         } catch (error) {
+            console.error('Error creating simulation transaction:', error?.response?.data || error?.message || error);
             process.env.SENTRY_ENABLED === 'true' && Sentry.captureException(error);
             const errorMessage = error?.response?.data?.message || error?.message || 'SIMULATION_TRANSACTION_FAILED';
             return callback(new Error(errorMessage), null);
@@ -735,7 +719,7 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
             }
             const apiUrl = process.env.AIRWALLEX_API_URL;
-            const response = await fetch(`${apiUrl}/api/v1/issuing/transactions?page_num=${page_num}&page_size=${page_size}`, {
+            const response = await fetch(`${apiUrl}/api/v1/issuing/card_transactions?page_num=${page_num}&page_size=${page_size}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
@@ -751,6 +735,40 @@ export default class AirWallexVirtualCardSerivice {
             return callback(null, transactionListData);
 
         }catch (error) {
+            process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+            return callback(error, null);
+        }
+    }
+    static async getCardTransactionDetails({ userId, payload }, callback) {
+        try {
+            const { transactionId } = payload;
+            if (!transactionId) {
+                return callback(new Error("TRANSACTION_ID_REQUIRED"), null);
+            }
+            const airwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            if (!airwallexKycAccount) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            }
+            const accessToken = await this.getAirWalletxToken();
+            if (!accessToken) {
+                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            }
+            const apiUrl = process.env.AIRWALLEX_API_URL;
+            const response = await fetch(`${apiUrl}/api/v1/issuing/card_transactions/${encodeURIComponent(transactionId)}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    'x-on-behalf-of': airwallexKycAccount.airwallexAccountId,
+                },
+            });
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                return callback(new Error(`Get card transaction details failed: ${errorResponse.message || response.statusText}`), null);
+            }
+            const transactionDetails = await response.json();
+            return callback(null, transactionDetails);
+        } catch (error) {
             process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
             return callback(error, null);
         }
