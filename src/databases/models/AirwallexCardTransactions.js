@@ -103,6 +103,52 @@ export default function AirwallexCardTransactions(sequelize, DataTypes) {
 				type: DataTypes.JSONB,
 				allowNull: true,
 			},
+			billingUsageAmt: {
+				type: DataTypes.DECIMAL(18, 2),
+				allowNull: true,
+				field: "billing_usage_amt",
+			},
+			billingWalletCur: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: "billing_wallet_cur",
+			},
+			billingChargePercentage: {
+				type: DataTypes.DECIMAL(5, 2),
+				allowNull: true,
+				field: "billing_charge_percentage",
+			},
+			billingChargedAmount: {
+				type: DataTypes.DECIMAL(18, 2),
+				allowNull: true,
+				field: "billing_charged_amount",
+			},
+			billingTotal: {
+				type: DataTypes.DECIMAL(18, 2),
+				allowNull: true,
+				field: "billing_total",
+			},
+			chargeStatus: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				field: "charge_status",
+			},
+			chargePaymentLogs: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+				field: "charge_payment_logs",
+			},
+			chargePaymentWebhooks: {
+				type: DataTypes.JSONB,
+				allowNull: true,
+				field: "charge_payment_webhooks",
+			},
+			chargeId: {
+				type: DataTypes.UUID,
+				allowNull: true,
+				field: "charge_id",
+			},
+
 		},
 		{
 			tableName: "airwallex_card_transactions",
@@ -124,6 +170,10 @@ export default function AirwallexCardTransactions(sequelize, DataTypes) {
 					name: "idx_airwallex_card_transactions_webhook_event_id",
 					fields: ["webhook_event_id"],
 				},
+				{
+					name: "idx_airwallex_card_transactions_charge_id",
+					fields: ["charge_id"],
+				}
 			],
 		},
 	);

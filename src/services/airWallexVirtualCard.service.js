@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
+import SettingsService from "./settings.service.js";
 
 
 const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards, AirwallexCardTransactions, AirwallexTransactionDispute } = db;
@@ -795,6 +796,8 @@ export default class AirWallexVirtualCardSerivice {
                         [db.Sequelize.Op.in]: payload.card_ids
                     }
                 },
+                attributes:{exclude:["rawPayload","chargePaymentLogs","chargePaymentWebhooks"]},
+                
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: (page - 1) * limit

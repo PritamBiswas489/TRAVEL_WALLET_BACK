@@ -87,9 +87,14 @@ server.on("listening", () => {
 			"../src/workers/pushNotification.worker.js"
 		);
 		startPushNotificationWorker();
+
+        const { startVirtualCardPaymentChargeWorker } = await import(
+            "../src/workers/virtualCardPaymentCharge.worker.js"
+        );
+        startVirtualCardPaymentChargeWorker();
 	}
 } 
-    // initializeWorkers();
+    initializeWorkers();
 });
 
 async function startServer() {

@@ -2,6 +2,7 @@ import { airwallexQueue } from "../queues/airwallexPaymentIntent.queue.js";
 import { airwallexUpdateTransactionQueue } from "../queues/airwallexTransactionUpdate.queue.js";
 import { airwallexRefundQueue } from "../queues/airwallexRefund.queue.js";
 import { pushNotificationQueue } from "./pushNotification.queue.js";
+import { airwallexVirtualCardChargeQueue } from "./virtualCardDebitCardCharge.queue.js";
 
 const ALL_STATES = ["waiting", "active", "delayed", "completed", "failed", "paused"];
 
@@ -10,6 +11,7 @@ const QUEUES = {
   "transaction-update": airwallexUpdateTransactionQueue,
   "refund": airwallexRefundQueue,
   "push-notification": pushNotificationQueue,
+  "virtual-card-debit-card-charge": airwallexVirtualCardChargeQueue,
 };
 
 // Usage:
@@ -20,7 +22,7 @@ const QUEUES = {
 const [queueArg, stateArg] = process.argv.slice(2);
 
 function printUsage() {
-  console.log("Usage: node listJobs.js [queue] [states]");
+  console.log("Usage: node lq.js [queue] [states]");
   console.log("Queues:", Object.keys(QUEUES).join(", "));
   console.log("States:", ALL_STATES.join(", "));
 }

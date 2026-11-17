@@ -34,6 +34,8 @@ import {
 } from "../queues/airwallexRefund.queue.js";
 import ActiveOperationService, { OP_TYPE } from "./activeOperations.service.js";
 
+import { enqueueApplyVirtualCardDebitCardChargeJob } from "../queues/virtualCardDebitCardCharge.queue.js";
+
 const {
   sequelize,
   Op,
@@ -2047,8 +2049,24 @@ export default class AirwallexPaymentService {
               }, REFRESH_TIMEOUT);
               return callback(null, { data: payload });
             }
+            
           }
         }
+         if (payload.data.reference === "VIRTUAL_CARD_CHARGE") {
+           const getCardTransaction = await AirwallexCardTransactions.findOne({
+             where: { chargeId: payload.data.request_id },
+           });
+           if (getCardTransaction) {
+              if (getCardTransaction.chargeStatus !== "SETTLED") {
+                getCardTransaction.chargeStatus = payload.data.status;
+                getCardTransaction.chargePaymentWebhooks = [
+                  payload.data,
+                  ...(getCardTransaction.chargePaymentWebhooks || []),
+                ];
+                await getCardTransaction.save();
+              }
+           }
+         }
       }
       return callback(null, { data: payload });
     } catch (error) {
@@ -2973,36 +2991,47 @@ export default class AirwallexPaymentService {
        return callback(new Error("USER_NOT_FOUND_FOR_ACCOUNT_ID"));
       }
 
+       const setting = await SettingsService.getSetting("virtual_debit_card_charge");
+       const virtualDebitCardCharge = parseFloat(setting?.data?.value || "0");
+
+       const billingChargedAmount = parseFloat(transactionPayload?.billing_amounts?.total_debited || 0) * (virtualDebitCardCharge / 100);
+
+       
       const mappedData = {
-        userId,
-        webhookEventId: payload?.name,
-        airwallexAccountId: payload?.account_id,
-        cardTransactionId: payload?.data?.id,
-        cardId: payload?.data?.card_id,
-        billingAmounts: payload?.data?.billing_amounts,
-        transactionAmounts: payload?.data?.transaction_amounts,
-        maskedCardNumber: payload?.data?.masked_card_number,
-        merchant: payload?.data?.merchant,
-        status: payload?.data?.status,
-        fundDirection: payload?.data?.fund_direction,
-        lifecycleId: payload?.data?.lifecycle_id,
-        cardTransactionLifecycleId: payload?.data?.lifecycle_id,
-        feeDetails: payload?.data?.fee_details,
-        failureReason: payload?.data?.failure_reason,
-        digitalWalletToken: payload?.data?.digital_wallet_token,
-        expiryDate: payload?.data?.expiry_date,
-        created_at: payload?.data?.created_at,
-        updated_at: payload?.data?.updated_at,
-        
+          userId,
+          webhookEventId: payload?.name,
+          airwallexAccountId: payload?.account_id,
+          cardTransactionId: payload?.data?.id,
+          cardId: payload?.data?.card_id,
+          billingAmounts: payload?.data?.billing_amounts,
+          transactionAmounts: payload?.data?.transaction_amounts,
+          maskedCardNumber: payload?.data?.masked_card_number,
+          merchant: payload?.data?.merchant,
+          status: payload?.data?.status,
+          fundDirection: payload?.data?.fund_direction,
+          lifecycleId: payload?.data?.lifecycle_id,
+          cardTransactionLifecycleId: payload?.data?.lifecycle_id,
+          feeDetails: payload?.data?.fee_details,
+          failureReason: payload?.data?.failure_reason,
+          digitalWalletToken: payload?.data?.digital_wallet_token,
+          expiryDate: payload?.data?.expiry_date,
+          created_at: payload?.data?.created_at,
+          updated_at: payload?.data?.updated_at,
+          billingUsageAmt: payload?.data?.billing_amounts?.total_debited,
+          billingWalletCur: payload?.data?.billing_amounts?.currency,
+          billingChargePercentage: virtualDebitCardCharge,
+          billingChargedAmount: billingChargedAmount,
+          billingTotal: payload?.data?.billing_amounts?.total_debited + billingChargedAmount,
       };
 
       const existingRecord = await AirwallexCardTransactions.findOne({
         where: { cardTransactionId: payload?.data?.id },
       });
 
+      let cardPaymentId = null;
       if (existingRecord) {
         //check payload check event to avoid unnecessary updates checkedin rawPayload array
-
+        cardPaymentId = existingRecord.id;
         const isEventAlreadyProcessed = existingRecord.rawPayload?.some(
           (item) => item?.name === payload?.name,
         );
@@ -3018,11 +3047,18 @@ export default class AirwallexPaymentService {
         );
       } else {
         mappedData.rawPayload = [payload];
-        await AirwallexCardTransactions.create(mappedData);
+        mappedData.chargeStatus = "PENDING";
+        
+        const createdData = await AirwallexCardTransactions.create(mappedData);
+        cardPaymentId = createdData.id;
         console.log(
           "✅ Created Airwallex card transaction record:",
           payload?.data?.id,
         );
+      }
+      if(payload?.data?.status ==="CLEARED"){
+        await enqueueApplyVirtualCardDebitCardChargeJob(
+          cardPaymentId);
       }
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
@@ -5196,12 +5232,29 @@ export default class AirwallexPaymentService {
 
       const responseBody = await response.json();
 
+      const customer_payment_methods = [];
+      if (responseBody?.customer_id) {
+
+        const repponsegetCustomerPaymentMethods = await fetch(
+          `${process.env.AIRWALLEX_API_URL}/api/v1/pa/payment_methods?customer_id=${responseBody.customer_id}&status=CREATED&type=card`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          },
+        ).then(res => res.json());
+        customer_payment_methods.push(...repponsegetCustomerPaymentMethods?.items || []);
+
+    }
+
       if (!response.ok) {
         throw new Error(
           `Airwallex PaymentIntent retrieval failed: ${JSON.stringify(responseBody)}`,
         );
       }
-      return callback(null, { data: responseBody });
+      return callback(null, { data: { ...responseBody, customer_payment_methods } });
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       console.error(
@@ -5393,6 +5446,85 @@ export default class AirwallexPaymentService {
       );
     }
   }
+
+  static async chargeUserForDebitVirtualCardPayment(payload, callback){
+       const { id } = payload;
+       const getCardTransaction = await AirwallexCardTransactions.findOne({
+          where: { id },
+        });
+        if(!getCardTransaction){
+            return callback(new Error("CARD_TRANSACTION_NOT_FOUND"));
+        }
+      try {
+        const billingChargedAmount = getCardTransaction.billingChargedAmount;
+        const billingWalletCur = getCardTransaction.billingWalletCur;
+        
+        const reference = "VIRTUAL_CARD_CHARGE";
+
+        const  userId = getCardTransaction.userId;
+
+        const getKyc = await AirwallexKycAccount.findOne({
+          where: { userId },
+        });
+        if(!getKyc){
+          getCardTransaction.chargePaymentLogs = [...getCardTransaction.chargePaymentLogs || [],{ERROR: "KYC_ACCOUNT_NOT_FOUND"}];
+          await getCardTransaction.save();
+          return callback(new Error("KYC_ACCOUNT_NOT_FOUND"));
+        }
+        const airwallexAccountId = getKyc.airwallexAccountId;
+        const accessToken = await this.getAirWalletxToken();
+        if (!accessToken) {
+          getCardTransaction.chargePaymentLogs = [...getCardTransaction.chargePaymentLogs || [],{ERROR: "AIRWALLEX_TOKEN_NOT_GENERATED"}];
+          await getCardTransaction.save();
+          return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+        }
+        if(getCardTransaction.chargeStatus !== "PENDING"){
+            return callback(null, { data: { message: "VIRTUAL_CARD_CHARGE_NOT_PENDING" } });
+        }
+        const chargeId  = uuidv4();
+        getCardTransaction.chargeId = chargeId;
+        await getCardTransaction.save();
+        
+         const postata = {
+            request_id: chargeId,
+            reference: reference,
+            amount: billingChargedAmount,
+            currency: billingWalletCur,
+            reason: "business_expenses",
+            source: airwallexAccountId,
+        };
+        const response = await axios.post(
+          `${process.env.AIRWALLEX_API_URL}/api/v1/charges/create`,
+          postata,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+        getCardTransaction.chargePaymentLogs = [...getCardTransaction.chargePaymentLogs || [], response?.data || {}];
+        await getCardTransaction.save();
+       return callback(null, {
+          data: {
+            message: "VIRTUAL_CARD_CHARGE_SUCCESS",
+            response: response?.data,   // not the whole Axios response
+          },
+        });
+      }catch (error) {
+        console.error(
+          "❌ Error charging user for debit virtual card payment:",
+          error?.message || error,
+        );
+        getCardTransaction.chargePaymentLogs = [...getCardTransaction.chargePaymentLogs || [],{ERROR: error?.response?.data?.message || error?.message ||  "error IN CHARGING VIRTUAL CARD"}];
+        await getCardTransaction.save();
+        return callback(
+          new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
+        );
+      }
+  }
+
+
   static async testAirwallexDepositViaBankTransfer(
     { payload, userId },
     callback,
