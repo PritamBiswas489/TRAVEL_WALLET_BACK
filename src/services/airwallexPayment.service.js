@@ -5172,8 +5172,18 @@ export default class AirwallexPaymentService {
   static async handleBalanceUpdateWebhook(payload, headers, callback) {
     try {
       if (payload?.account_id) {
+        let airWallexAccountId = payload?.account_id;
+        if
+        (airWallexAccountId === process.env.AIRWALLEX_ACCOUNT_ID) {
+           
+          airWallexAccountId = payload?.data?.source || null;
+        }
+        if(!airWallexAccountId) {
+          return callback(new Error("ACCOUNT_ID_NOT_FOUND"));
+        }
+        
         const kycAccount = await AirwallexKycAccount.findOne({
-          where: { airwallexAccountId: payload.account_id },
+          where: { airwallexAccountId: airWallexAccountId },
         });
         const userId = kycAccount?.userId || null;
 
