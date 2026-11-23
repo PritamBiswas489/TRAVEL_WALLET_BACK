@@ -36,6 +36,8 @@ import ActiveOperationService, { OP_TYPE } from "./activeOperations.service.js";
 
 import { enqueueApplyVirtualCardDebitCardChargeJob } from "../queues/virtualCardDebitCardCharge.queue.js";
 
+ 
+
 const {
   sequelize,
   Op,
@@ -992,6 +994,12 @@ export default class AirwallexPaymentService {
         { status: getUserKycStatus(newStatus) },
         { where: { userId, applicantId: accountId } },
       );
+      //when the new status is active, perform additional actions if needed
+      if(newStatus === "ACTIVE") {
+        console.log(`##### airwallexKycWebhook: new status is ACTIVE for userId=${userId}`);
+        AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder({userId, payload:{}}, (err, result) => {
+        });
+      }
       //========== send push notification to user =================//
       try {
         NotificationService.sendKycStatusNotification(accountId);
