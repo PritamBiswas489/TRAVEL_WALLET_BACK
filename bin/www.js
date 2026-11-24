@@ -94,7 +94,7 @@ server.on("listening", () => {
         startVirtualCardPaymentChargeWorker();
 	}
 } 
-    initializeWorkers();
+    // initializeWorkers();
 });
 
 async function startServer() {

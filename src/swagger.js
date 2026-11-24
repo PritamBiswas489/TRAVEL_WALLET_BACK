@@ -54,6 +54,10 @@ const options = {
         description: "Bank transfer deposit endpoints",
       },
       {
+        name: "Auth-airwallex-direct-bank-transfer routes",
+        description: "Airwallex direct bank transfer endpoints",
+      },
+      {
         name: "Auth-Wallet routes",
         description: "Wallet management endpoints",
       },

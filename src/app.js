@@ -270,6 +270,26 @@ app.get("/airwallex-payment", (req, res) => {
 });
 
 // --------------------------------------------------
+// Beneficiary forms
+// --------------------------------------------------
+
+app.get("/beneficiary-form", (req, res) => {
+  res.sendFile(
+    pathResolve(
+      pathJoin(currentDir, "../public/beneficiary-form-dynamic.html"),
+    ),
+  );
+});
+
+app.get("/beneficiary-form/local", (req, res) => {
+  res.redirect("/beneficiary-form?method=LOCAL");
+});
+
+app.get("/beneficiary-form/swift", (req, res) => {
+  res.redirect("/beneficiary-form?method=SWIFT");
+});
+
+// --------------------------------------------------
 // Sentry test endpoint
 // --------------------------------------------------
 

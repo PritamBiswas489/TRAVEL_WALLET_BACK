@@ -21,6 +21,7 @@ import { default as thaiPaymentRouter } from './thaiPayment.router.js';
 import { default as virtualCardRouter } from './virtualCard.router.js';
 import { default as qrGenerateCodeRouter } from './qrGenerateCode.router.js';
 import { default as controlledProfileRouter } from './controlledProfile.router.js';
+import { default as airwallexDirectBankTransferRouter } from './airwallexDirectBankTransfer.router.js';
 
 
 
@@ -52,4 +53,5 @@ router.use('/ipps', thaiPaymentRouter);
 router.use('/virtual-card', virtualCardRouter);
 router.use('/qr-generate-code', qrGenerateCodeRouter);
 router.use('/controlled-profiles', controlledProfileRouter);
+router.use('/airwallex-direct-bank-transfer', airwallexDirectBankTransferRouter);
 export default router;

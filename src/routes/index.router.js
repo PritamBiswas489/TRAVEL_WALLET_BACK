@@ -4,14 +4,14 @@ import { default as frontRouter } from './front.router.js';
 import { default as authRouter } from './auth.router.js';
 import { default as currencyRouter } from './currency.router.js';
 import { default as redisRouter } from './redis.router.js';
+import { default as formsRouter } from './forms.router.js';
 
 import { default as adminRouter } from './admin.router.js';
 
 
 
 
-
-
+router.use('/forms', formsRouter);
 router.use('/front', frontRouter);
 router.use('/redis', redisRouter);
 router.use('/auth', authRouter);
