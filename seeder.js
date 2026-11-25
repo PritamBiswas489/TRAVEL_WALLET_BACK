@@ -46,6 +46,14 @@ const VIRTUAL_DEBIT_CARD_CHARGE = 1.5;
 const TERMS_AND_CONDITIONS = "These are the terms and conditions.";
 const PRIVACY_POLICY = "This is the privacy policy.";
 
+const DIRECT_BANK_TRANSFER_FEES_PERCENTAGE = 1.5;
+const DIRECT_BANK_TRANSFER_FEES_FIXED = 3;
+const DIRECT_BANK_TRANSFER_FEES = {
+  percentage: DIRECT_BANK_TRANSFER_FEES_PERCENTAGE,
+  fixed: DIRECT_BANK_TRANSFER_FEES_FIXED,
+  type: "PERCENTAGE"
+};
+
 const expenseCategory = (name, title, hebrewTitle, color) => ({
   icon: "Ionicons",
   name,
@@ -240,6 +248,15 @@ const SEEDERS = {
       SettingsService.updateSettings(
         "virtual_debit_card_charge",
         VIRTUAL_DEBIT_CARD_CHARGE,
+      ),
+    ),
+  },
+  directBankTransferFees: {
+    description: "Direct bank transfer fees",
+    run: logged("direct bank transfer fees", () =>
+      SettingsService.updateSettings(
+        "direct_bank_transfer_fees",
+        JSON.stringify(DIRECT_BANK_TRANSFER_FEES),
       ),
     ),
   },

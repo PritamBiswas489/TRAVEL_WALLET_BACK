@@ -132,6 +132,10 @@ export default function AirwallexBeneficiaryList(sequelize, DataTypes) {
         {
           fields: ["userId"],
         },
+        {
+          name: "idx_airwallex_beneficiary_list_main_id",
+          fields: ["main_id"],
+        },
       ],
     }
   );

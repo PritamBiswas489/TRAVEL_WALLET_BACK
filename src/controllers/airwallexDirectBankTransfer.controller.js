@@ -1,5 +1,5 @@
 import "../config/environment.js";
-import AirwallexDirectBankTransferService from "../services/airwallexDirectBankTransfer.service.js";
+import AirwallexDirectBankTransferService, { TRANSFER_REASONS } from "../services/airwallexDirectBankTransfer.service.js";
 import { translateValue } from "../libraries/tranlateValue.js";
 
 export default class AirwallexDirectBankTransferController {
@@ -151,6 +151,342 @@ export default class AirwallexDirectBankTransferController {
             status: 200,
             data: response,
             message: "Beneficiaries fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async getBeneficiary(request) {
+    const {
+      id,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    if (!/^\d+$/.test(String(id))) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "INVALID_BENEFICIARY_ID", reason: "INVALID_BENEFICIARY_ID" },
+      };
+    }
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.getBeneficiary(
+        { userId: user.id, id },
+        (err, response) => {
+          if (err) {
+            const notFound = err.message === "BENEFICIARY_NOT_FOUND";
+            return resolve({
+              status: notFound ? 404 : 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_FETCH_BENEFICIARY",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Beneficiary fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async deleteBeneficiary(request) {
+    const {
+      id,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    if (!/^\d+$/.test(String(id))) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "INVALID_BENEFICIARY_ID", reason: "INVALID_BENEFICIARY_ID" },
+      };
+    }
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.deleteBeneficiary(
+        { userId: user.id, id },
+        (err, response) => {
+          if (err) {
+            const notFound = err.message === "BENEFICIARY_NOT_FOUND";
+            return resolve({
+              status: notFound ? 404 : 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_DELETE_BENEFICIARY",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Beneficiary deleted successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async updateBeneficiary(request) {
+    const {
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    if (!/^\d+$/.test(String(payload?.id))) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "INVALID_BENEFICIARY_ID", reason: "INVALID_BENEFICIARY_ID" },
+      };
+    }
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.updateBeneficiary(
+        { userId: user.id, id: payload.id, payload },
+        (err, response) => {
+          if (err) {
+            const notFound = err.message === "BENEFICIARY_NOT_FOUND";
+            return resolve({
+              status: notFound ? 404 : 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_UPDATE_BENEFICIARY",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Beneficiary updated successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async createTransfer(request) {
+    const {
+      id,
+      payload,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    if (!/^\d+$/.test(String(id))) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "INVALID_BENEFICIARY_ID", reason: "INVALID_BENEFICIARY_ID" },
+      };
+    }
+
+    if (!(Number(payload?.transfer_amount) > 0)) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "MISSING_REQUIRED_PARAMETERS", reason: "MISSING_REQUIRED_PARAMETERS" },
+      };
+    }
+
+    if (!TRANSFER_REASONS.includes(payload?.reason)) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "INVALID_TRANSFER_REASON", reason: "INVALID_TRANSFER_REASON" },
+      };
+    }
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.createTransfer(
+        { userId: user.id, id, payload },
+        (err, response) => {
+          if (err) {
+            const notFound = err.message === "BENEFICIARY_NOT_FOUND";
+            return resolve({
+              status: notFound ? 404 : 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_CREATE_TRANSFER",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Transfer created successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async handleDirectBankTransferWebhook(request) {
+    const {
+      payload,
+      headers: { i18n },
+    } = request;
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.handleDirectBankTransferWebhook(
+        { payload },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_HANDLE_DIRECT_BANK_TRANSFER_WEBHOOK",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Webhook received successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async getTransfers(request) {
+    const {
+      query,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    const page = Math.max(parseInt(query?.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(query?.limit, 10) || 10, 1), 100);
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.getTransfers(
+        { userId: user.id, page, limit },
+        (err, response) => {
+          if (err) {
+            return resolve({
+              status: 400,
+              data: null,
+              error: {
+                message: translateValue(i18n, err.message, "FAILED_TO_FETCH_TRANSFERS"),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Transfers fetched successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
+  static async updateTransferFromApi(request) {
+    const {
+      airWallexTransferId,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    if (!airWallexTransferId) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "MISSING_REQUIRED_PARAMETERS", reason: "MISSING_REQUIRED_PARAMETERS" },
+      };
+    }
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.updateTransferFromApi(
+        { userId: user.id, airWallexTransferId },
+        (err, response) => {
+          if (err) {
+            const notFound = err.message === "TRANSFER_NOT_FOUND";
+            return resolve({
+              status: notFound ? 404 : 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_UPDATE_TRANSFER",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Transfer updated successfully",
             error: null,
           });
         },

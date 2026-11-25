@@ -56,10 +56,42 @@ export async function getBeneficiariesByUser(userId, { page = 1, limit = 10 } = 
   }
 }
 
-export async function getBeneficiaryById(id) {
+export async function getBeneficiaryById(id, userId) {
   try {
-    return await AirwallexBeneficiaryList.findByPk(id);
+    return await AirwallexBeneficiaryList.findOne({ where: { id, userId } });
   } catch (error) {
     throw new Error(`Failed to fetch beneficiary: ${error.message}`);
+  }
+}
+export async function getBeneficiaryByMainId(mainId, userId) {
+  try {
+    return await AirwallexBeneficiaryList.findOne({ where: { mainId, userId } });
+  } catch (error) {
+    throw new Error(`Failed to fetch beneficiary by main ID: ${error.message}`);
+  }
+}
+
+export async function updateBeneficiaryRecord(beneficiary, payload) {
+  try {
+    return await beneficiary.update({
+      nickname: payload.nickname,
+      type: payload.beneficiary.type,
+      entityType: payload.beneficiary.entity_type,
+      accountName: payload.beneficiary.bank_details.account_name,
+      accountNumber: payload.beneficiary.bank_details.account_number,
+      accountCurrency: payload.beneficiary.bank_details.account_currency,
+      bankCountryCode: payload.beneficiary.bank_details.bank_country_code,
+      swiftCode: payload.beneficiary.bank_details.swift_code,
+      streetAddress: payload.beneficiary.address.street_address,
+      city: payload.beneficiary.address.city,
+      state: payload.beneficiary.address.state,
+      postcode: payload.beneficiary.address.postcode,
+      countryCode: payload.beneficiary.address.country_code,
+      dateOfBirth: payload.beneficiary.date_of_birth,
+      personalEmail: payload.beneficiary.additional_info.personal_email,
+      transferMethods: payload.transfer_methods,
+    });
+  } catch (error) {
+    throw new Error(`Failed to update beneficiary: ${error.message}`);
   }
 }

@@ -28,6 +28,7 @@ export default class SettingsService {
       }
       return { SUCCESS: 1 };
     } catch (e) {
+      console.error(e);
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(e);
       return { ERROR: 1 };
     }

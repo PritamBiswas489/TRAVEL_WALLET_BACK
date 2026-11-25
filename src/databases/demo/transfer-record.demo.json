@@ -1,0 +1,103 @@
+{
+  "insert": {
+    "description": "Airwallex transfer response passed to createTransferRecord(transfer, userId)",
+    "userId": 18,
+    "transfer": {
+      "amount_beneficiary_receives": 1,
+      "amount_payer_pays": 30.31,
+      "application_fee_options": [
+        {
+          "amount": "3",
+          "currency": "ILS",
+          "source_type": "TRANSFER",
+          "type": "FIXED"
+        }
+      ],
+      "application_fees": [
+        {
+          "amount": "3",
+          "currency": "ILS",
+          "source_type": "TRANSFER"
+        }
+      ],
+      "beneficiary": {
+        "additional_info": {
+          "personal_email": "john.walker@gmail.com"
+        },
+        "address": {
+          "city": "Hong Kong",
+          "country_code": "HK",
+          "postcode": "3000",
+          "state": "Hong Kong",
+          "street_address": "38 Chengtu Rd"
+        },
+        "bank_details": {
+          "account_currency": "USD",
+          "account_name": "John Walker",
+          "account_number": "786005728434",
+          "bank_country_code": "HK",
+          "bank_name": "Hang Seng Bank Limited",
+          "local_clearing_system": "RTGS",
+          "swift_code": "HASEHKHH"
+        },
+        "date_of_birth": "1976-08-26",
+        "entity_type": "PERSONAL",
+        "type": "BANK_ACCOUNT"
+      },
+      "beneficiary_id": "065b8b30-0f21-4fa5-ae53-9001d3384c3f",
+      "conversion": {
+        "currency_pair": "USDILS",
+        "rate": 3.414597
+      },
+      "created_at": "2026-11-25T13:12:52+0000",
+      "fee_amount": 26.9,
+      "fee_currency": "ILS",
+      "fee_paid_by": "PAYER",
+      "funding": {
+        "status": "FUNDED"
+      },
+      "id": "b648608e-e446-413c-927e-b63bfc09ac6a",
+      "payer": {
+        "address": {
+          "city": "Tel Aviv",
+          "country_code": "IL",
+          "postcode": "12345",
+          "state": "Tel Aviv District",
+          "street_address": "123 Main Street,"
+        },
+        "date_of_birth": "1990-01-01",
+        "entity_type": "PERSONAL",
+        "first_name": "John",
+        "last_name": "Doe"
+      },
+      "reason": "payment for tourism services entirely abroad",
+      "reference": "TC-000018-25-11-2026",
+      "remarks": "",
+      "request_id": "4771ea0e-b076-46e2-bc89-44baab1105f1",
+      "short_reference_id": "P261125-7BYJ4SL",
+      "source_amount": 3.41,
+      "source_currency": "ILS",
+      "status": "SCHEDULED",
+      "swift_charge_option": "SHARED",
+      "transfer_amount": 1,
+      "transfer_currency": "USD",
+      "transfer_date": "2026-11-25",
+      "transfer_method": "LOCAL",
+      "updated_at": "2026-11-25T13:12:52+0000"
+    }
+  },
+  "update": {
+    "description": "Later Airwallex transfer status change passed to updateTransferRecord(transfer, userId). Matched by transfer id.",
+    "userId": 18,
+    "transfer": {
+      "id": "b648608e-e446-413c-927e-b63bfc09ac6a",
+      "beneficiary_id": "065b8b30-0f21-4fa5-ae53-9001d3384c3f",
+      "request_id": "4771ea0e-b076-46e2-bc89-44baab1105f1",
+      "status": "PAID",
+      "funding": {
+        "status": "FUNDED"
+      },
+      "updated_at": "2026-11-26T09:00:00+0000"
+    }
+  }
+}

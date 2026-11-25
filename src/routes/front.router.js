@@ -19,6 +19,7 @@ import AirwallexPaymentController from "../controllers/airwallexPayment.controll
 import { countryCodes } from "../config/countries.js";
 import { fileURLToPath } from "url";
 import i18n from "../config/i18.config.js";
+import AirwallexDirectBankTransferController from "../controllers/airwallexDirectBankTransfer.controller.js";
 
 router.use(trackIpAddressDeviceId);
 
@@ -648,6 +649,23 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
       "payment_attempt.settled",
     ];
 
+    const directBankTransferWebhookEventNames = [
+      "payout.transfer.overdue",
+      "payout.transfer.processing",
+      "payout.transfer.sent",
+      "payout.transfer.paid",
+      "payout.transfer.failed",
+      "payout.transfer.cancellation_requested",
+      "payout.transfer.cancelled",
+      "payout.transfer.funding.requires_funding_confirmation",
+      "payout.transfer.funding.scheduled",
+      "payout.transfer.funding.processing",
+      "payout.transfer.funding.funded",
+      "payout.transfer.funding.failed",
+      "payout.transfer.funding.cancelled",
+      "payout.transfer.funding.reversed"
+    ];
+
     const balanceImpactingWebhooks = [
       // Direct Balance Events
       "balance.va.top_up", // Wallet balance increase via Virtual Account (Plus)
@@ -794,6 +812,14 @@ router.post("/airwallex-main-global-webhook", async (req, res, next) => {
         payload,
         headers: req.headers,
       });
+      return res.return(response);
+    }else if(directBankTransferWebhookEventNames.includes(payload?.name)) {
+      //direct bank transfer events
+      const response =
+        await AirwallexDirectBankTransferController.handleDirectBankTransferWebhook({
+          payload,
+          headers: req.headers,
+        });
       return res.return(response);
     }
 
