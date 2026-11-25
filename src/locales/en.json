@@ -457,6 +457,7 @@
 	"FAILED_TO_CREATE_TRANSFER": "Failed to create transfer.",
 	"FAILED_TO_UPDATE_TRANSFER": "Failed to update transfer.",
 	"FAILED_TO_FETCH_TRANSFERS": "Failed to fetch transfers.",
+	"FAILED_TO_CANCEL_TRANSFER": "Failed to cancel transfer.",
 	"INVALID_TRANSFER_REASON": "Invalid transfer reason.",
 	"FAILED_TO_HANDLE_DIRECT_BANK_TRANSFER_WEBHOOK": "Failed to handle direct bank transfer webhook.",
 	"TRANSFER_NOT_FOUND": "Transfer not found.",

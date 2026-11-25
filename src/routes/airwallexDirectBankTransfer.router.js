@@ -758,6 +758,38 @@ router.post("/update-transfer/:airWallexTransferId", async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/auth/airwallex-direct-bank-transfer/cancel-transfer/{airWallexTransferId}:
+ *   post:
+ *     summary: Cancel a transfer on Airwallex and update the local record
+ *     tags: [Auth-airwallex-direct-bank-transfer routes]
+ *     security:
+ *       - bearerAuth: []
+ *       - refreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: airWallexTransferId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Airwallex transfer ID
+ *         example: "b648608e-e446-413c-927e-b63bfc09ac6a"
+ *     responses:
+ *       200:
+ *         description: Transfer cancelled successfully
+ *       400:
+ *         description: Invalid input or Airwallex request failed
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Transfer not found for the authenticated user
+ */
+router.post("/cancel-transfer/:airWallexTransferId", async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.cancelTransfer({ airWallexTransferId: req.params.airWallexTransferId, user: req.user, headers: req.headers });
+    res.return(response);
+});
+
+/**
+ * @swagger
  * /api/auth/airwallex-direct-bank-transfer/transfers:
  *   get:
  *     summary: List transfers of the authenticated user

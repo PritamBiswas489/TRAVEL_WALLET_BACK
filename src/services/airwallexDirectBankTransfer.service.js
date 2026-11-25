@@ -644,6 +644,54 @@ export default class AirwallexDirectBankTransferService {
       );
     }
   }
+  // cancel a transfer on Airwallex and sync the local record status
+  static async cancelTransfer({ userId, airWallexTransferId }, callback) {
+    try {
+      const transferRecord = await getTransferByAirwallexId(airWallexTransferId);
+      if (!transferRecord || transferRecord.userId !== userId) {
+        return callback(new Error("TRANSFER_NOT_FOUND"));
+      }
+
+      const getData = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      if (!getData || !getData.airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      }
+
+      const accessToken = await AirwallexPaymentService.getAirWalletxToken();
+      if (!accessToken) {
+        return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
+      }
+
+      const apiUrl = process.env.AIRWALLEX_API_URL;
+      const response = await axios.post(
+        `${apiUrl}/api/v1/transfers/${airWallexTransferId}/cancel`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "x-on-behalf-of": getData.airwallexAccountId,
+          },
+        },
+      );
+      console.log("Cancel transfer response:", response.data);
+      if(response?.data !=='OK'){
+        return callback(new Error("FAILED_TO_CANCEL_TRANSFER"));
+      }
+      return callback(null, { status: 'OK', apiResponse: response.data });
+    } catch (error) {
+      process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
+      console.error(
+        "Error cancelling transfer:",
+        JSON.stringify(error.response?.data),
+      );
+      return callback(
+        new Error(error?.response?.data?.message || "INTERNAL_SERVER_ERROR"),
+      );
+    }
+  }
+
   static async createTransferFromApi(
     { userId, airWallexTransferId },
     callback,

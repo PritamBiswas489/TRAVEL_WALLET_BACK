@@ -445,6 +445,55 @@ export default class AirwallexDirectBankTransferController {
     });
   }
 
+  static async cancelTransfer(request) {
+    const {
+      airWallexTransferId,
+      headers: { i18n },
+      user,
+    } = request;
+
+    if (!user?.id) {
+      return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
+    }
+
+    if (!airWallexTransferId) {
+      return {
+        status: 400,
+        data: null,
+        error: { message: "MISSING_REQUIRED_PARAMETERS", reason: "MISSING_REQUIRED_PARAMETERS" },
+      };
+    }
+
+    return new Promise((resolve) => {
+      AirwallexDirectBankTransferService.cancelTransfer(
+        { userId: user.id, airWallexTransferId },
+        (err, response) => {
+          if (err) {
+            const notFound = err.message === "TRANSFER_NOT_FOUND";
+            return resolve({
+              status: notFound ? 404 : 400,
+              data: null,
+              error: {
+                message: translateValue(
+                  i18n,
+                  err.message,
+                  "FAILED_TO_CANCEL_TRANSFER",
+                ),
+                reason: err.message,
+              },
+            });
+          }
+          return resolve({
+            status: 200,
+            data: response,
+            message: "Transfer cancelled successfully",
+            error: null,
+          });
+        },
+      );
+    });
+  }
+
   static async updateTransferFromApi(request) {
     const {
       airWallexTransferId,

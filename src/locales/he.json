@@ -457,6 +457,7 @@
 	"FAILED_TO_CREATE_TRANSFER": "יצירת ההעברה נכשלה.",
 	"FAILED_TO_UPDATE_TRANSFER": "עדכון ההעברה נכשל.",
 	"FAILED_TO_FETCH_TRANSFERS": "שליפת ההעברות נכשלה.",
+	"FAILED_TO_CANCEL_TRANSFER": "ביטול ההעברה נכשל.",
 	"INVALID_TRANSFER_REASON": "סיבת ההעברה אינה תקינה.",
 	"FAILED_TO_HANDLE_DIRECT_BANK_TRANSFER_WEBHOOK": "טיפול בוובהוק של העברה בנקאית נכשל.",
 	"TRANSFER_NOT_FOUND": "ההעברה לא נמצאה.",
