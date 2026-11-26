@@ -31,7 +31,7 @@ export const enqueueUpdateTransactions = async ({   userId, updateFunction  }) =
         jobId: `update-wallet-transactions-${userId}-${Date.now()}`,
         attempts: 3,
         backoff: { type: "exponential", delay: 15000 },
-        removeOnComplete: 1000,
+        removeOnComplete: 5,
         removeOnFail: false,
         },
   );

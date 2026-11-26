@@ -17,9 +17,10 @@ import DecodeQrCodeService from "../services/decodeQrCode.service.js";
 import BankTransferPaymentController from "../controllers/bankTransferPayment.controller.js";
 import AirwallexPaymentController from "../controllers/airwallexPayment.controller.js";
 import { countryCodes } from "../config/countries.js";
+import { verifyAirwallexSignature } from "../libraries/utility.js";
+import { registeredWebhookEventNames } from "../config/webhookEvents.js";
+import { enqueueAirwallexGlobalWebhook } from "../queues/airwallexGlobalWebhook.queue.js";
 import { fileURLToPath } from "url";
-import i18n from "../config/i18.config.js";
-import AirwallexDirectBankTransferController from "../controllers/airwallexDirectBankTransfer.controller.js";
 
 router.use(trackIpAddressDeviceId);
 
@@ -516,320 +517,29 @@ router.post("/airwallex-payment-webhook", async (req, res, next) => {
  */
 router.post("/airwallex-main-global-webhook", async (req, res, next) => {
   try {
-     if(!req?.headers?.i18n) {
-      i18n.setLocale("en")
-      req.headers.i18n = i18n;
-    }
     const payload = { ...req.params, ...req.query, ...req.body };
-
     console.log("$$$$$$$ Received Airwallex main global webhook: $$$$$$$", payload?.name);
-    const kycEventNames = [
-      "account.connected",
-      "account.submitted",
-      "account.action_required",
-      "account.active",
-      "account.suspended",
-      "account.dormant",
-      "account.closed",
-    ];
-    const depositEventNames = [
-      "deposit.rejected",
-      "deposit.settled",
-      "deposit.reversed",
-      "deposit.pending",
-    ];
-    const transferEventNames = [
-      "transfer.new",
-      "transfer.settled",
-      "transfer.pending",
-      "transfer.suspended",
-      "transfer.failed",
-      "connected_account_transfer.new",
-      "connected_account_transfer.pending",
-      "connected_account_transfer.settled",
-      "connected_account_transfer.suspended",
-      "connected_account_transfer.failed"
-    ];
-    const chargesWebhookEventNames = [
-      "charge.new",
-      "charge.pending",
-      "charge.settled",
-      "charge.suspended",
-      "charge.failed",
-    ];
-    const cardholderWebhookEventNames = [
-      "issuing.cardholder.pending",
-      "issuing.cardholder.incomplete",
-      "issuing.cardholder.ready",
-      "issuing.cardholder.disabled",
-      "issuing.cardholder.deleted",
-    ];
-    const debitCardWebhookEventNames = [
-      "issuing.card.modified",
-      "issuing.card.pending",
-      "issuing.card.failed",
-      "issuing.card.inactive",
-      "issuing.card.active",
-      "issuing.card.lost",
-      "issuing.card.stolen",
-      "issuing.card.closed",
-      "issuing.card.blocked",
-      "issuing.card.expired",
-      "issuing.card.low_remaining_transaction_limit",
-    ];
-    const cardTransactionsWebhookEventNames = [
-      "issuing.card_transaction.authorized",
-      "issuing.card_transaction.verified",
-      "issuing.card_transaction.cleared",
-      "issuing.card_transaction.reversed",
-      "issuing.card_transaction.expired",
-      "issuing.card_transaction.declined",
-      "issuing.card_transaction.modified"
-    ];
-    const transactionDisputeWebhookEventNames = [
-      "issuing.transaction_dispute.created",
-      "issuing.transaction_dispute.submitted",
-      "issuing.transaction_dispute.accepted",
-      "issuing.transaction_dispute.rejected",
-      "issuing.transaction_dispute.modified",
-      "issuing.transaction_dispute.expired",
-      "issuing.transaction_dispute.canceled",
-      "issuing.transaction_dispute.won",
-      "issuing.transaction_dispute.lost",
-    ];
-    const paymentIntentWebhookEventNames = [
-      "payment_intent.cancelled",
-      "payment_intent.created",
-      "payment_intent.pending",
-      "payment_intent.requires_capture",
-      "payment_intent.requires_customer_action",
-      "payment_intent.requires_payment_method",
-      "payment_intent.succeeded",
-      "payment_intent.updated",
-      "payment_intent.pending_review",
-      "payment_intent.payment_failed",
-    ];
 
-    //fund split events
-    const fundSplitWebhookEventNames = [
-      "funds_split.created",
-      "funds_split.failed",
-      "funds_split.released",
-      "funds_split.settled",
-    ];
-
-    const paymentIntentReturnWebhookEventNames = [
-      "refund.received",
-      "refund.accepted",
-      "refund.settled",
-      "refund.failed",
-      "refund.succeeded"
-    ];
-
-    const offboardingWebhookEventNames = [
-      "account.offboarding.pending",
-      "account.offboarding.completed",
-      "account.offboarding.cancelled",
-    ];
-
-    const paymentAttemptWebhookEventNames = [
-      "payment_attempt.authentication_failed",
-      "payment_attempt.authentication_redirected",
-      "payment_attempt.authorization_failed",
-      "payment_attempt.authorized",
-      "payment_attempt.cancelled",
-      "payment_attempt.capture_failed",
-      "payment_attempt.capture_requested",
-      "payment_attempt.expired",
-      "payment_attempt.failed_to_process",
-      "payment_attempt.paid",
-      "payment_attempt.pending_authorization",
-      "payment_attempt.received",
-      "payment_attempt.risk_declined",
-      "payment_attempt.settled",
-    ];
-
-    const directBankTransferWebhookEventNames = [
-      "payout.transfer.overdue",
-      "payout.transfer.processing",
-      "payout.transfer.sent",
-      "payout.transfer.paid",
-      "payout.transfer.failed",
-      "payout.transfer.cancellation_requested",
-      "payout.transfer.cancelled",
-      "payout.transfer.funding.requires_funding_confirmation",
-      "payout.transfer.funding.scheduled",
-      "payout.transfer.funding.processing",
-      "payout.transfer.funding.funded",
-      "payout.transfer.funding.failed",
-      "payout.transfer.funding.cancelled",
-      "payout.transfer.funding.reversed"
-    ];
-
-    const balanceImpactingWebhooks = [
-      // Direct Balance Events
-      "balance.va.top_up", // Wallet balance increase via Virtual Account (Plus)
-      "balance.ga.top_up", // Wallet balance increase via Global Account (Plus)
-      "balance.adjustment", // Balance change due to adjustment (Plus / Minus)
-
-      // Customer Balance Transactions (Bank Transfer Payments)
-      "customer_balance_transaction.bank_transfer.received", // Bank transfer received (Plus pending)
-      "customer_balance_transaction.bank_transfer.succeeded", // Bank transfer accepted onto balance (Plus)
-      "customer_balance_transaction.bank_transfer.failed", // Bank transfer rejected (informational)
-      "customer_balance_transaction.applied_to_payment", // Funds applied to payment (Minus)
-      "customer_balance_transaction.bank_transfer_reversal.succeeded", // Reversal succeeded, funds returned (Minus)
-      "customer_balance_transaction.bank_transfer_reversal.failed", // Reversal failed (informational)
-
-      // Direct Debit Payouts
-      "direct_debit.settled", // Debited from Wallet balance (Minus)
-      "direct_debit.returned", // Credited back to Wallet balance (Plus)
-
-      // Connected Accounts: Transfers & Charges
-      "connected_account_transfer.settled", // Funds settled in target wallet - Latest API (Plus)
-      "charge.settled", // Funds settled in target wallet (Plus)
-
-      // Wallet Transfers (Beta / Older API)
-      "wallet_transfer.settled", // Received by beneficiary wallet (Plus)
-      "wallet_transfer.failed", // Transfer failed, funds returned (Plus)
-
-      // Payout Transfer Funding (Latest API)
-      "payout.transfer.funding.funded", // Transfer successfully funded (Minus)
-      "payout.transfer.funding.reversed", // Funding reversed, deducted from Wallet (Minus)
-      "payout.transfer.funding.failed", // Funding failed (informational)
-
-      // Batch Transfer Funding
-      "payout.batch_transfers.funding.funded", // Batch transfer funded (Minus)
-      "payout.batch_transfers.funding.reversed", // Batch funding reversed (Minus)
-      "payout.batch_transfers.funding.failed", // Batch funding failed (informational)
-
-      // Transfer Funding (Older API versions 2024-01-31 to 2024-08-07)
-      "payment.funding.funded", // Transfer successfully funded (Minus)
-      "payment.funding.reversed", // Deducted from Wallet balance after recall (Minus)
-      "payment.funding.failed", // Funding failed (informational)
-      "payment.cancelled", // Funds returned to Wallet (Plus)
-    ];
-   
-    if (balanceImpactingWebhooks.includes(payload?.name)) {
-      //balance update events
-      try {
-        await AirwallexPaymentController.handleBalanceUpdateWebhook({
-          payload,
-          headers: req.headers,
-        });
-      } catch (error) {
-        console.error("Error handling balance update webhook:", error);
-      }
+    const rawBody = JSON.stringify(payload).toString("utf8");
+    if (
+      !verifyAirwallexSignature(
+        rawBody,
+        req.headers["x-timestamp"],
+        req.headers["x-signature"],
+        process.env.AIRWALLEX_GLOBAL_WEBHOOK_SECRET,
+      )
+    ) {
+      return res.status(401).json({ message: "Webhook signature verification failed" });
     }
 
-    if (kycEventNames.includes(payload?.name)) {
-      const response = await AirwallexPaymentController.airwallexKycWebhook({
-        payload,
-        headers: req.headers,
-      });
-      return res.return(response);
-    } else if (depositEventNames.includes(payload?.name)) {
-      const response = await AirwallexPaymentController.handleDepositWebhook({
-        payload,
-        headers: req.headers,
-      });
-      return res.return(response);
-    } else if (transferEventNames.includes(payload?.name)) {
-      const response =
-        await AirwallexPaymentController.airwallexConnectedTransferWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (chargesWebhookEventNames.includes(payload?.name)) {
-      const response =
-        await AirwallexPaymentController.handleAirwallexChargesWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (cardholderWebhookEventNames.includes(payload?.name)) {
-      const response = await AirwallexPaymentController.handleCardHolderWebhook(
-        { payload, headers: req.headers },
-      );
-      return res.return(response);
-    } else if (debitCardWebhookEventNames.includes(payload?.name)) {
-      //debit card events
-      const response = await AirwallexPaymentController.handleDebitCardWebhook({
-        payload,
-        headers: req.headers,
-      });
-      return res.return(response);
-    } else if (cardTransactionsWebhookEventNames.includes(payload?.name)) {
-      //card transactions events
-      const response =
-        await AirwallexPaymentController.handleCardTransactionsWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (transactionDisputeWebhookEventNames.includes(payload?.name)) {
-      //transaction dispute events
-      const response =
-        await AirwallexPaymentController.handleTransactionDisputeWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (paymentIntentWebhookEventNames.includes(payload?.name)) {
-      //payment intent events
-      const response =
-        await AirwallexPaymentController.handlePaymentIntentWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (paymentAttemptWebhookEventNames.includes(payload?.name)) {
-      //payment attempt events
-      const response =
-        await AirwallexPaymentController.handlePaymentAttemptWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (fundSplitWebhookEventNames.includes(payload?.name)) {
-      //fund split events
-      const response = await AirwallexPaymentController.handleFundSplitWebhook({
-        payload,
-        headers: req.headers,
-      });
-      return res.return(response);
-    } else if (paymentIntentReturnWebhookEventNames.includes(payload?.name)) {
-      //payment intent return events
-      const response =
-        await AirwallexPaymentController.handlePaymentIntentReturnWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
-    } else if (offboardingWebhookEventNames.includes(payload?.name)) {
-      //offboarding events
-      const response = await AirwallexPaymentController.handleOffboardingWebhook({
-        payload,
-        headers: req.headers,
-      });
-      return res.return(response);
-    }else if(directBankTransferWebhookEventNames.includes(payload?.name)) {
-      //direct bank transfer events
-      const response =
-        await AirwallexDirectBankTransferController.handleDirectBankTransferWebhook({
-          payload,
-          headers: req.headers,
-        });
-      return res.return(response);
+    if (!registeredWebhookEventNames.has(payload?.name)) {
+      return res
+        .status(200)
+        .json({ message: "Webhook received successfully but event not matched" });
     }
 
-    console.log(
-      "XXXXXX Received Airwallex main global webhook but event not matched Event name:",
-      payload?.name,
-    );
-    return res
-      .status(200)
-      .json({ message: "Webhook received successfully but event not matched" });
+    await enqueueAirwallexGlobalWebhook({ payload, headers: req.headers });
+    return res.status(200).json({ message: "Webhook received successfully" });
   } catch (error) {
     console.error("Error handling Airwallex main global webhook:", error);
     if (res.headersSent) {

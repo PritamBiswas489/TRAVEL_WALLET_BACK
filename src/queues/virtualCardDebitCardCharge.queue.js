@@ -26,7 +26,7 @@ export async function enqueueApplyVirtualCardDebitCardChargeJob(virtualCardPayme
           jobId: `apply-virtual-card-debit-card-charge-${virtualCardPaymentid}`,
           attempts: 3,
           backoff: { type: "exponential", delay: 10000 }, // 10s, 20s, 40s, 80s, 160s
-          removeOnComplete: 1000,
+          removeOnComplete: 5,
           removeOnFail: false, // keep failed jobs visible for manual review / requeue
         },
       );

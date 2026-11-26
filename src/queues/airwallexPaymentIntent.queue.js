@@ -34,7 +34,7 @@ export async function enqueueFundSplit({ intentId, userId, paymentId }) {
       jobId: `fund-split-${paymentId}`,
       attempts: 5,
       backoff: { type: "exponential", delay: 10000 }, // 10s, 20s, 40s, 80s, 160s
-      removeOnComplete: 1000,
+      removeOnComplete: 5,
       removeOnFail: false, // keep failed jobs visible for manual review / requeue
     },
   );
@@ -52,7 +52,7 @@ export async function enqueueRefund({ intentId, userId, paymentId, reason }) {
       jobId: `refund-${paymentId}`,
       attempts: 3,
       backoff: { type: "exponential", delay: 15000 },
-      removeOnComplete: 1000,
+      removeOnComplete: 5,
       removeOnFail: false,
     },
   );

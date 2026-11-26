@@ -113,5 +113,5 @@ export function startPushNotificationWorker() {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
-  console.log(`[push] worker listening on queue "${PUSH_NOTIFICATION_QUEUE}"`);
+  console.log(`👷 [push] worker listening on queue "${PUSH_NOTIFICATION_QUEUE}"`);
 }

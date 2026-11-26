@@ -91,10 +91,16 @@ server.on("listening", () => {
         const { startVirtualCardPaymentChargeWorker } = await import(
             "../src/workers/virtualCardPaymentCharge.worker.js"
         );
-        startVirtualCardPaymentChargeWorker();
+
+         startVirtualCardPaymentChargeWorker();
+
+        const { startAirwallexGlobalWebhookWorker } = await import(
+            "../src/workers/airwallexGlobalWebhook.worker.js"
+        );
+        startAirwallexGlobalWebhookWorker();
 	}
 } 
-    // initializeWorkers();
+    initializeWorkers();
 });
 
 async function startServer() {

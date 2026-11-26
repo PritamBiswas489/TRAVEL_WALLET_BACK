@@ -3,6 +3,7 @@ import { airwallexUpdateTransactionQueue } from "../queues/airwallexTransactionU
 import { airwallexRefundQueue } from "../queues/airwallexRefund.queue.js";
 import { pushNotificationQueue } from "./pushNotification.queue.js";
 import { airwallexVirtualCardChargeQueue } from "./virtualCardDebitCardCharge.queue.js";
+import { airwallexGlobalWebhookQueue } from "./airwallexGlobalWebhook.queue.js";
 
 const ALL_STATES = ["waiting", "active", "delayed", "completed", "failed", "paused"];
 
@@ -12,6 +13,7 @@ const QUEUES = {
   "refund": airwallexRefundQueue,
   "push-notification": pushNotificationQueue,
   "virtual-card-debit-card-charge": airwallexVirtualCardChargeQueue,
+  "global-webhook": airwallexGlobalWebhookQueue,
 };
 
 // Usage:
@@ -39,7 +41,7 @@ async function listQueueJobs(label, queue, states) {
 
     console.log(`\n🔹 ${state.toUpperCase()} (${jobs.length})`);
     for (const job of jobs) {
-      console.log({
+      console.dir({
         id: job.id,
         name: job.name,
         data: job.data,
@@ -48,7 +50,10 @@ async function listQueueJobs(label, queue, states) {
         timestamp: new Date(job.timestamp).toISOString(),
         processedOn: job.processedOn ? new Date(job.processedOn).toISOString() : null,
         finishedOn: job.finishedOn ? new Date(job.finishedOn).toISOString() : null,
-      });
+      }, {
+  depth: null,
+  colors: true,
+});
     }
   }
 }

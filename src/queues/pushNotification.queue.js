@@ -16,7 +16,7 @@ export const pushNotificationQueue = new Queue(PUSH_NOTIFICATION_QUEUE, {
   defaultJobOptions: {
     attempts: 3, // retry transient FCM/network failures
     backoff: { type: "exponential", delay: 2000 },
-    removeOnComplete: { count: 1000 },
+    removeOnComplete: { count: 5 },
     removeOnFail: { count: 5000 },
   },
 });

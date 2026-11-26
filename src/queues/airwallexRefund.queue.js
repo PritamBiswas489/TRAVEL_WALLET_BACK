@@ -57,7 +57,7 @@ export const enqueueRefundProcess = async ({ reverseSplitDetails, userId }) => {
             jobId: `refund-reverse-by-split-id-${id}-paymentid-${paymentId}`,
             attempts: 3,
             backoff: { type: "exponential", delay: 15000 },
-            removeOnComplete: 1000,
+            removeOnComplete: 5,
             removeOnFail: false,
         }
     );
@@ -74,7 +74,7 @@ export const enqueueUpdateReverseSplitRefundPaymentIntentRecord = async ({ payme
             jobId: `update-reverse-split-refund-payment-intent-record-${paymentId}-time-${Date.now()}`,
             attempts: 3,
             backoff: { type: "exponential", delay: 15000 },
-            removeOnComplete: 1000,
+            removeOnComplete: 5,
             removeOnFail: false,
         }
     );
@@ -87,7 +87,7 @@ export const enqueueDeleteAccountRefund = async ({ userId , amount, paymentId })
             jobId: `delete-account-refund-${userId}-time-${Date.now()}`,
             attempts: 3,
             backoff: { type: "exponential", delay: 15000 },
-            removeOnComplete: 1000,
+            removeOnComplete: 5,
             removeOnFail: false,
         }
     );
