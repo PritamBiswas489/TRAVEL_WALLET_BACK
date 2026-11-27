@@ -2,7 +2,7 @@ import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import UserService from "./user.service.js";
-const { Op, User, TransferRequests, WalletTransaction, UserWallet } = db;
+const { Op, User, TransferRequests, WalletTransaction, UserWallet, AirwallexKycAccount } = db;
 import { handleCallback } from "../libraries/utility.js";
 import NotificationService from "./notification.service.js";
 import moment from "moment";
@@ -16,31 +16,11 @@ export default class TransferRequestService {
   ) {
     const tran = await db.sequelize.transaction();
     try {
-      const senderUserDetails = await UserService.getUserDetails(senderUserId);
-      const receiverUserDetails = await UserService.getUserDetails(receiverId);
 
       if (senderUserId === receiverId) {
         await tran.rollback();
         return handleCallback(
           new Error("CANT_SEND_REQUEST_TO_SELF"),
-          null,
-          callback
-        );
-      }
-
-      if (!receiverUserDetails) {
-        await tran.rollback();
-        return handleCallback(
-          new Error("NO_USER_FOUND_SELECTED_MOBILE_NUMBER"),
-          null,
-          callback
-        );
-      }
-
-      if (receiverUserDetails?.kyc?.status !== "Approved") {
-        await tran.rollback();
-        return handleCallback(
-          new Error("CANT_SEND_REQUEST_BECAUSE_OF_UNAPPROVED_KYC"),
           null,
           callback
         );
@@ -119,15 +99,17 @@ export default class TransferRequestService {
   }
 
 static async acceptRejectTransferRequest(
-  { transferRequestId, userId, status, i18n, autoRejected, deviceLocation },
+ payload,
   callback
 ) {
   console.log(
     "Accept/Reject Transfer Request",
-    transferRequestId,
-    userId,
-    status
+    payload.transferRequestId,
+    payload.userId,
+    payload.status
   );
+
+   const  { transferRequestId, userId, status, i18n, autoRejected, deviceLocation } = payload;
   const tran = await db.sequelize.transaction();
 
   try {
@@ -201,7 +183,7 @@ static async acceptRejectTransferRequest(
 
        const airwallexBalance = await new Promise((resolve, reject) => {
               AirwallexPaymentService.getAccountBalance(
-                { userId: idWhoWillSendMoney, i18n },
+                { userId: idWhoWillSendMoney, i18n, payload },
                 (err, result) => {
                   if (err) return reject(err);
                   resolve(result?.data);

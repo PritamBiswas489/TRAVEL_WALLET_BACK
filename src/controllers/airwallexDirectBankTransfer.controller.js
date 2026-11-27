@@ -209,7 +209,7 @@ export default class AirwallexDirectBankTransferController {
 
   static async deleteBeneficiary(request) {
     const {
-      id,
+      payload,
       headers: { i18n },
       user,
     } = request;
@@ -218,7 +218,7 @@ export default class AirwallexDirectBankTransferController {
       return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
     }
 
-    if (!/^\d+$/.test(String(id))) {
+    if (!/^\d+$/.test(String(payload?.id))) {
       return {
         status: 400,
         data: null,
@@ -228,7 +228,7 @@ export default class AirwallexDirectBankTransferController {
 
     return new Promise((resolve) => {
       AirwallexDirectBankTransferService.deleteBeneficiary(
-        { userId: user.id, id },
+        { userId: user.id, payload },
         (err, response) => {
           if (err) {
             const notFound = err.message === "BENEFICIARY_NOT_FOUND";
@@ -447,7 +447,7 @@ export default class AirwallexDirectBankTransferController {
 
   static async cancelTransfer(request) {
     const {
-      airWallexTransferId,
+      payload,
       headers: { i18n },
       user,
     } = request;
@@ -456,7 +456,7 @@ export default class AirwallexDirectBankTransferController {
       return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
     }
 
-    if (!airWallexTransferId) {
+    if (!payload?.airWallexTransferId) {
       return {
         status: 400,
         data: null,
@@ -466,7 +466,7 @@ export default class AirwallexDirectBankTransferController {
 
     return new Promise((resolve) => {
       AirwallexDirectBankTransferService.cancelTransfer(
-        { userId: user.id, airWallexTransferId },
+        { userId: user.id, payload },
         (err, response) => {
           if (err) {
             const notFound = err.message === "TRANSFER_NOT_FOUND";
@@ -496,7 +496,7 @@ export default class AirwallexDirectBankTransferController {
 
   static async updateTransferFromApi(request) {
     const {
-      airWallexTransferId,
+      payload,
       headers: { i18n },
       user,
     } = request;
@@ -505,7 +505,7 @@ export default class AirwallexDirectBankTransferController {
       return { status: 401, data: null, error: { message: "UNAUTHORIZED" } };
     }
 
-    if (!airWallexTransferId) {
+    if (!payload?.airWallexTransferId) {
       return {
         status: 400,
         data: null,
@@ -515,7 +515,7 @@ export default class AirwallexDirectBankTransferController {
 
     return new Promise((resolve) => {
       AirwallexDirectBankTransferService.updateTransferFromApi(
-        { userId: user.id, airWallexTransferId },
+        { userId: user.id, payload },
         (err, response) => {
           if (err) {
             const notFound = err.message === "TRANSFER_NOT_FOUND";

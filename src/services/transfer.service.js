@@ -3,7 +3,7 @@ import db from "../databases/models/index.js";
 import "../config/environment.js";
 import * as Sentry from "@sentry/node";
 import UserService from "./user.service.js";
-const { Op, User, Transfer, WalletTransaction, UserWallet } = db;
+const { Op, User, Transfer, WalletTransaction, UserWallet, AirwallexKycAccount } = db;
 import { handleCallback } from "../libraries/utility.js";
 import NotificationService from "./notification.service.js";
 import ContactListService from "./contactList.service.js";
@@ -48,13 +48,13 @@ export default class TransferService {
       const userDetails = await UserService.getUserDetails(user.id);
       const sendUserDetails = await UserService.getUserDetails(userId);
       const senderPhoneNumber = sendUserDetails?.phoneNumber;
-
-      if (userDetails?.kyc?.status !== "Approved") {
-        return callback(
-          new Error("CANT_SEND_MONEY_BECAUSE_OF_UNAPPROVED_KYC"),
-          null,
-        );
+      const getKycAccount = await AirwallexKycAccount.findOne({
+        where: { userId },
+      });
+      if (!getKycAccount || !getKycAccount?.airwallexAccountId || !getKycAccount?.status || getKycAccount?.status !== "ACTIVE") {
+        return callback(new Error("RECEIVER_ACTIVE_KYC_NOT_FOUND"), null);
       }
+       
       //=== Restriction checking will be here ====//
       const getSettingValue = (settings, key, fallback) =>
         settings?.find((setting) => setting.key === key)?.value || fallback;
@@ -168,7 +168,13 @@ export default class TransferService {
     }
   }
   static async executeTransfer(
-    {
+    payload,
+    callback,
+  ) {
+    const tran = await db.sequelize.transaction();
+    try {
+      
+      const {
       senderUserId,
       receiverId,
       currency,
@@ -176,38 +182,16 @@ export default class TransferService {
       message,
       i18n,
       deviceLocation,
-    },
-    callback,
-  ) {
-    const tran = await db.sequelize.transaction();
-    try {
-      const senderUserDetails = await UserService.getUserDetails(senderUserId);
-      const receiverUserDetails = await UserService.getUserDetails(receiverId);
-
+    } = payload;
       if (senderUserId === receiverId) {
         await tran.rollback();
         return callback(new Error("CANT_SEND_MONEY_TO_SELF"), null);
       }
 
-      if (!receiverUserDetails) {
-        await tran.rollback();
-        return callback(
-          new Error("NO_USER_FOUND_SELECTED_MOBILE_NUMBER"),
-          null,
-        );
-      }
-
-      if (receiverUserDetails?.kyc?.status !== "Approved") {
-        await tran.rollback();
-        return callback(
-          new Error("CANT_SEND_MONEY_BECAUSE_OF_UNAPPROVED_KYC"),
-          null,
-        );
-      }
-
+       
       const airwallexBalance = await new Promise((resolve, reject) => {
         AirwallexPaymentService.getAccountBalance(
-          { userId: senderUserId, i18n },
+          { userId: senderUserId, i18n , payload},
           (err, result) => {
             if (err) return reject(err);
             resolve(result?.data);

@@ -59,18 +59,19 @@ export default class UserFullRefundService {
     return allocations;
   }
 
-  static async userBalanceFullRefund(userId, callback) {
+  static async userBalanceFullRefund(userId, payload, callback) {
     let result;
     try {
       const accountBalance = await new Promise((resolve, reject) => {
         AirwallexPaymentService.getAccountBalance(
-          { userId, i18n: null },
+          { userId, i18n: null, payload },
           (error, response) => {
             if (error) return reject(error);
             resolve(response?.data || {});
           },
         );
       });
+     
       const currentBalance = Number(accountBalance?.ILS);
       if (!Number.isFinite(currentBalance) || currentBalance <= 0) {
         return callback(new Error("INSUFFICIENT_BALANCE."));

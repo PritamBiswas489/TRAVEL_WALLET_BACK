@@ -111,19 +111,18 @@ export default class TransferRequestController {
       user,
       payload,
     } = request;
-
-    const transferRequestId = payload.transferRequestId;
+    
     const status = payload.isAccepted === true ? "accepted" : "rejected";
 
     return new Promise((resolve) => {
       TransferRequestService.acceptRejectTransferRequest(
         {
           userId: user.id,
-          transferRequestId,
           status,
           i18n,
           autoRejected: true,
           deviceLocation,
+          ...payload,
         },
         (err, response) => {
           if (err) {

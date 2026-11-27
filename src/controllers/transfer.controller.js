@@ -58,14 +58,11 @@ export default class TransferController {
 
     console.log("Device Location:", deviceLocation);
 
-    const receiverId = payload.receiverId;
-    const currency = payload.currency;
-    const amount = payload.amount;
-    const message = payload?.message || "";
+     
 
     return new Promise((resolve) => {
       TransferService.executeTransfer(
-        { senderUserId: user.id, receiverId, currency, amount, message, i18n, deviceLocation },
+        { senderUserId: user.id, ...payload, i18n, deviceLocation },
         (err, response) => {
           if (err) {
             return resolve({

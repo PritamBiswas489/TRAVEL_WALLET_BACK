@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { default as depositController } from '../controllers/deposit.controller.js';
 import { default as AirwallexPaymentController } from '../controllers/airwallexPayment.controller.js';
+import {needKycAccount,  needActiveKycAccount } from '../middlewares/activeKycChecking.js';
 
 const KYC_UPLOAD_PATH = 'uploads/airWallexKyc';
 if (!fs.existsSync(KYC_UPLOAD_PATH)) {
@@ -668,7 +669,7 @@ router.post('/airwallex-create-kyc-account', kycUpload,
  *       200:
  *         description: Success - Liveness proactive flow started
  */
-router.post('/liveness-proactive/start',async (req,res)=>{
+router.post('/liveness-proactive/start',needKycAccount, async (req,res)=>{
    const response = await AirwallexPaymentController.livenessProactiveStart({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 })
@@ -722,7 +723,7 @@ router.post('/liveness-proactive/start',async (req,res)=>{
  *       200:
  *         description: Success - Hosted flow status retrieved
  */
-router.get('/liveness-proactive/hostedFlow-status',async (req,res)=>{
+router.get('/liveness-proactive/hostedFlow-status',needKycAccount, async (req,res)=>{
   const response = await AirwallexPaymentController.livenessProactiveHostedFlowStatus({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -742,7 +743,7 @@ router.get('/liveness-proactive/hostedFlow-status',async (req,res)=>{
  *       200:
  *         description: Success - KYC documents submitted
  */
-router.post('/airwallex-submit-kyc-documents', async (req, res) => {
+router.post('/airwallex-submit-kyc-documents', needKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.airwallexSubmitKycDocuments({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -784,7 +785,7 @@ router.post('/airwallex-submit-kyc-documents', async (req, res) => {
  *       200:
  *         description: Success - Account status updated
  */
-router.post('/sandbox/update-account-status/:accountId', async (req, res) => {
+router.post('/sandbox/update-account-status/:accountId', needKycAccount, async (req, res) => {
   const { accountId } = req.params;
   const response = await AirwallexPaymentController.testModeUpdateAccountStatus({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
@@ -811,7 +812,7 @@ router.get('/retrieve-rfi', async (req, res) => {
  *       200:
  *         description: Success - Airwallex customer account details updated
  */
-router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
+router.post('/get-and-update-airwallex-customer-account', needKycAccount, async (req, res) => {
    const response = await AirwallexPaymentController.getAndUpdateAirWallexCustomerAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
    res.return(response);
 });
@@ -833,8 +834,8 @@ router.post('/get-and-update-airwallex-customer-account', async (req, res) => {
  *       200:
  *         description: Success - Airwallex KYC details retrieved
  */
-router.get('/get-airwallex-kyc-details', async (req, res) => {
-  const response = await AirwallexPaymentController.getAirWallexKycDetails({ headers: req.headers, user: req.user });
+router.get('/get-airwallex-kyc-details', needKycAccount, async (req, res) => {
+  const response = await AirwallexPaymentController.getAirWallexKycDetails({ headers: req.headers, user: req.user, payload: { ...req.params, ...req.query, ...req.body } });
   res.return(response);
 });
 
@@ -853,8 +854,8 @@ router.get('/get-airwallex-kyc-details', async (req, res) => {
  *       200:
  *         description: Success - Global accounts retrieved
  */
-router.get('/airwallex-get-global-accounts', async (req, res) => {
-  const response = await AirwallexPaymentController.getGlobalAccounts({ headers: req.headers, user: req.user });
+router.get('/airwallex-get-global-accounts', needActiveKycAccount, async (req, res) => {
+  const response = await AirwallexPaymentController.getGlobalAccounts({ headers: req.headers, user: req.user,payload: { ...req.params, ...req.query, ...req.body } });
   res.return(response);
 });
 
@@ -919,7 +920,7 @@ router.get('/airwallex-get-global-accounts', async (req, res) => {
  *       200:
  *         description: Success - Deposit added successfully
  */
-router.post('/sandbox/add-deposit/:globalAccountId', async (req, res) => {
+router.post('/sandbox/add-deposit/:globalAccountId', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.sandboxAddDeposit({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -952,7 +953,7 @@ router.post('/sandbox/add-deposit/:globalAccountId', async (req, res) => {
  *       200:
  *         description: Success - AFT wallet topup created
  */
-router.post('/create-aft-wallet-topup',async (req, res) => {
+router.post('/create-aft-wallet-topup', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.createAftWalletTopup({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -984,7 +985,7 @@ router.post('/create-aft-wallet-topup',async (req, res) => {
  *       200:
  *         description: Success - Payment intent details retrieved
  */
-router.get("/get-airwallex-payment-intent-details", async (req, res) => {
+router.get("/get-airwallex-payment-intent-details", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getPaymentIntentDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1017,7 +1018,7 @@ router.get("/get-airwallex-payment-intent-details", async (req, res) => {
  *       200:
  *         description: Success - Funds split with connected account
  */
-router.post('/fund-split-with-connected-account', async (req, res) => {
+router.post('/fund-split-with-connected-account', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.fundSplitWithConnectedAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1050,7 +1051,7 @@ router.post('/fund-split-with-connected-account', async (req, res) => {
  *         description: Success - Payment intent refunded
  */
 
-router.post("/refund-payment-intent", async (req, res) => {
+router.post("/refund-payment-intent", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.refundPaymentIntent({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1083,7 +1084,7 @@ router.post("/refund-payment-intent", async (req, res) => {
  *       200:
  *         description: Success - Split amount reversed by split ID
 */
-router.post("/reverse-split-amount-by-split-id", async (req, res) => {
+router.post("/reverse-split-amount-by-split-id", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.reverseSplitAmountBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1125,7 +1126,7 @@ router.post("/reverse-split-amount-by-split-id", async (req, res) => {
  *       200:
  *         description: Success - Main payment refund process handled
  */
-router.post("/main-payment-refund-process-handle", async (req, res) => {
+router.post("/main-payment-refund-process-handle", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.mainPaymentRefundProcessHandle({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1154,7 +1155,7 @@ router.post("/main-payment-refund-process-handle", async (req, res) => {
  *       200:
  *         description: Success - Main payment reverse split status retrieved by split ID
  */
-router.get("/get-main-payment-reverse-split-status-by-split-id", async (req, res) => {
+router.get("/get-main-payment-reverse-split-status-by-split-id", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getMainPaymentReverseSplitStatusBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1181,7 +1182,7 @@ router.get("/get-main-payment-reverse-split-status-by-split-id", async (req, res
  *       200:
  *         description: Success - Reversal of split amount retrieved by split ID
 */
-router.get("/get-reverse-split-amount-by-split-id", async (req, res) => {
+router.get("/get-reverse-split-amount-by-split-id", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getReverseSplitAmountBySplitId({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1215,7 +1216,7 @@ router.get("/get-reverse-split-amount-by-split-id", async (req, res) => {
  *       200:
  *         description: Success - AFT payment list retrieved
  */
-router.get("/aft-payment-list", async (req, res) => {
+router.get("/aft-payment-list", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getAftPaymentList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1255,7 +1256,7 @@ router.get("/aft-payment-list", async (req, res) => {
  *       200:
  *         description: Success - AFT refund list retrieved
  */
-router.get("/aft-refund-list", async (req, res) => {
+router.get("/aft-refund-list", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getAftRefundList({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1274,7 +1275,7 @@ router.get("/aft-refund-list", async (req, res) => {
  *       200:
  *         description: Success - Account balance retrieved
  */
-router.get('/account-balance', async (req, res) => {
+router.get('/account-balance', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getAccountBalance({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1327,7 +1328,7 @@ router.get('/account-balance', async (req, res) => {
  *       200:
  *         description: Success - Transaction history retrieved
  */
-router.get('/airwallex-transaction-history', async (req, res) => {
+router.get('/airwallex-transaction-history', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getTransactionHistory({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1374,7 +1375,7 @@ router.get('/airwallex-transaction-history', async (req, res) => {
  *       200:
  *         description: Success - Wallet transaction history retrieved
  */
-router.get('/wallet-transaction-history', async (req, res) => {
+router.get('/wallet-transaction-history', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getWalletTransactionHistory({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1402,7 +1403,7 @@ router.get('/wallet-transaction-history', async (req, res) => {
  *       200:
  *         description: Success - Transfer details retrieved
  */
-router.get('/get-airwallex-transfer-by-id/:transferId', async (req, res) => {
+router.get('/get-airwallex-transfer-by-id/:transferId', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getAirwallexTransferById({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1437,7 +1438,7 @@ router.get('/get-airwallex-transfer-by-id/:transferId', async (req, res) => {
  *       200:
  *         description: Success - Transfer created
  */
-router.post('/testing/airwallex-transfer-amount-connected-account-to-platform-account', async (req, res) => {
+router.post('/testing/airwallex-transfer-amount-connected-account-to-platform-account', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.testModeTransferBetweenConnectedAccounts({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
     
@@ -1477,7 +1478,7 @@ router.post('/testing/airwallex-transfer-amount-connected-account-to-platform-ac
  *       200:
  *         description: Success - QR payment transferred to platform wallet
  */
-router.post('/airwallex-qr-payment-transfer-to-platform-wallet',async (req, res) => {
+router.post('/airwallex-qr-payment-transfer-to-platform-wallet', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.airwallexQrPaymentTransferToPlatformWallet({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1510,7 +1511,7 @@ router.post('/airwallex-qr-payment-transfer-to-platform-wallet',async (req, res)
  *       200:
  *         description: Success - QR payment refunded to connected account
  */
-router.post('/airwallex-qr-payment-refund-from-platform-wallet-to-connected-account', async (req, res) => {
+router.post('/airwallex-qr-payment-refund-from-platform-wallet-to-connected-account', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.airwallexQrPaymentRefundFromPlatformWalletToConnectedAccount({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1537,7 +1538,7 @@ router.post('/airwallex-qr-payment-refund-from-platform-wallet-to-connected-acco
  *       200:
  *         description: Success - QR payment details retrieved
  */
-router.get('/airwallex-qr-payment-details', async (req, res) => {
+router.get('/airwallex-qr-payment-details', needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.getAirwallexQrPaymentDetails({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1558,7 +1559,7 @@ router.get('/airwallex-qr-payment-details', async (req, res) => {
  *       200:
  *         description: Success - User transaction history table updated
  */
-router.post("/update-user-transaction-history-table", async (req, res) => {
+router.post("/update-user-transaction-history-table", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.updateUserTransactionHistoryTable({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1595,7 +1596,7 @@ router.post("/update-user-transaction-history-table", async (req, res) => {
  *       200:
  *         description: Payment intent refund and reverse split records updated
  */
-router.post("/update-payment-intent-refund-and-reverse-split-record", async (req, res) => {
+router.post("/update-payment-intent-refund-and-reverse-split-record", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.updatePaymentIntentRefundAndReverseSplitRecord({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
@@ -1625,47 +1626,47 @@ router.post("/update-payment-intent-refund-and-reverse-split-record", async (req
  *       200:
  *         description: Full refund allocation processed
  */
-router.post("/user-balance-full-refund", async (req, res) => {
+router.post("/user-balance-full-refund", needActiveKycAccount, async (req, res) => {
   const response = await AirwallexPaymentController.userBalanceFullRefund({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
   res.return(response);
 });
 
 
 
-/**
- * @swagger
- * /api/auth/deposit/test/airwallex-deposit-via-bank-transfer:
- *   post:
- *     summary: Test an Airwallex deposit via bank transfer
- *     description: Sandbox-only simulation using the authenticated user's connected account and the example account number and reference.
- *     tags:
- *       - Auth-airwallex-kyc-wallet routes
- *     security:
- *       - bearerAuth: []
- *       - refreshToken: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - amount
- *             properties:
- *               amount:
- *                 type: number
- *                 description: Deposit amount
- *                 minimum: 0
- *                 exclusiveMinimum: true
- *                 example: 100
- *     responses:
- *       200:
- *         description: Test deposit processed
- */
-router.post("/test/airwallex-deposit-via-bank-transfer", async (req, res) => {
-  const response = await AirwallexPaymentController.testAirwallexDepositViaBankTransfer({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
-  res.return(response);
-});
+// /**
+//  * @swagger
+//  * /api/auth/deposit/test/airwallex-deposit-via-bank-transfer:
+//  *   post:
+//  *     summary: Test an Airwallex deposit via bank transfer
+//  *     description: Sandbox-only simulation using the authenticated user's connected account and the example account number and reference.
+//  *     tags:
+//  *       - Auth-airwallex-kyc-wallet routes
+//  *     security:
+//  *       - bearerAuth: []
+//  *       - refreshToken: []
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             required:
+//  *               - amount
+//  *             properties:
+//  *               amount:
+//  *                 type: number
+//  *                 description: Deposit amount
+//  *                 minimum: 0
+//  *                 exclusiveMinimum: true
+//  *                 example: 100
+//  *     responses:
+//  *       200:
+//  *         description: Test deposit processed
+//  */
+// router.post("/test/airwallex-deposit-via-bank-transfer", async (req, res) => {
+//   const response = await AirwallexPaymentController.testAirwallexDepositViaBankTransfer({ payload: { ...req.params, ...req.query, ...req.body }, headers: req.headers, user: req.user });
+//   res.return(response);
+// });
 
 
 

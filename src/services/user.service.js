@@ -6,7 +6,7 @@ import { hashStr, compareHashedStr, generateToken } from "../libraries/auth.js";
 import moment from "moment-timezone";
 import { enqueueTokenNotification } from "../queues/pushNotification.queue.js";
 
-const { Op, User, UserKyc, UserWallet, UserDevices, UserFcm, UserSettings } = db;
+const { Op, User, UserKyc, UserWallet, UserDevices, UserFcm, UserSettings, AirwallexKycAccount } = db;
 
 export default class UserService {
   static async getUserById(userId) {
@@ -264,5 +264,13 @@ export default class UserService {
       throw error;
     }
   }
-}
+  static async getUserAirwallexKycAccountId(userId) {
+      let account;
+      try{
+         account = await AirwallexKycAccount.findOne({ where: { userId } });
+      }  catch (error) {
+      }
+      return account ? account.airwallexAccountId : null;
+   }
+  }
 

@@ -436,11 +436,12 @@ export default class AirwallexPaymentController {
     const {
       headers: { i18n },
       user,
+      payload,
     } = request;
     const userId = user?.id;
     return new Promise((resolve) => {
       AirwallexPaymentService.getGlobalAccounts(
-        { userId, i18n },
+        { userId, i18n, payload },
         (err, response) => {
           if (err) {
             return resolve({
@@ -468,13 +469,14 @@ export default class AirwallexPaymentController {
   }
   static async getAccountBalance(request) {
     const {
+      payload,
       headers: { i18n },
       user,
     } = request;
     const userId = user?.id;
     return new Promise((resolve) => {
       AirwallexPaymentService.getAccountBalance(
-        { userId, i18n },
+        {payload, userId, i18n },
         (err, response) => {
           if (err) {
             return resolve({
@@ -2002,6 +2004,7 @@ export default class AirwallexPaymentController {
     return new Promise((resolve) => {
       UserFullRefundService.userBalanceFullRefund(
         userId,
+        payload,
         (err, response) => {
           if (err) {
             return resolve({

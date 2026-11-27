@@ -7,7 +7,7 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
 import SettingsService from "./settings.service.js";
-
+import UserService from "./user.service.js";
 
 const { User, AirwallexKycAccount, AirwallexCardholder, AirwallexUserDebitCards, AirwallexCardTransactions, AirwallexTransactionDispute } = db;
 
@@ -26,16 +26,16 @@ export default class AirWallexVirtualCardSerivice {
             if (!accessToken) {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
             }
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!getAirwallexKycAccount) {
-                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
             }
             const apiUrl = process.env.AIRWALLEX_API_URL;
             const response = await fetch(`${apiUrl}/api/v1/issuing/cardholders/${getCardholder.cardholderId}`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    "x-on-behalf-of": getAirwallexKycAccount.airwallexAccountId,
+                    "x-on-behalf-of": airwallexAccountId,
                 },
             });
             if (!response.ok) {
@@ -53,9 +53,7 @@ export default class AirWallexVirtualCardSerivice {
     static async airwallexCreateIndividualCardholder({ userId, payload }, callback) {
         console.log('airwallexCreateIndividualCardholder called with userId:', userId, 'and payload:', payload);
         try {
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            //console.log('getAirwallexKycAccount', getAirwallexKycAccount);
-            if (getAirwallexKycAccount.status === 'ACTIVE') {
+                const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
                 const checking = await AirwallexCardholder.findOne({ where: { userId } });
                 if (checking) {
                     const apiCardHolderDetails = await new Promise((resolve, reject) => {
@@ -165,28 +163,21 @@ export default class AirWallexVirtualCardSerivice {
                 } else {
                     return callback(new Error("CARDHOLDER_CREATION_FAILED"), null);
                 }
-
-            }
-            return callback(new Error("USER_KYC_NOT_ACTIVE"), null);
-
         } catch (error) {
             process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
             callback(error, null);
         }
     }
-    static async airwallexGetAllCardholders({ userId }, callback) {
+    static async airwallexGetAllCardholders({ userId, payload }, callback) {
         try {
             const accessToken = await this.getAirWalletxToken();
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!accessToken) {
-                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
-            }
+             
             const apiUrl = process.env.AIRWALLEX_API_URL;
             const response = await fetch(`${apiUrl}/api/v1/issuing/cardholders?page_num=0&page_size=100`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    "x-on-behalf-of": getAirwallexKycAccount.airwallexAccountId,
+                    "x-on-behalf-of": payload?.airwallexAccountId,
                 },
             });
 
@@ -196,7 +187,7 @@ export default class AirWallexVirtualCardSerivice {
                     'curl -X GET "' + cardholdersUrl + '" \\',
                     '  -H "Content-Type: application/json" \\',
                     '  -H "Authorization: Bearer ' + accessToken + '"',
-                    '  -H "x-on-behalf-of: ' + getAirwallexKycAccount.airwallexAccountId + '"',
+                    '  -H "x-on-behalf-of: ' + payload?.airwallexAccountId + '"',
                 ].join("\n");
                 const curlFilePath = path.resolve("airwallex-cardholders-list-curl.txt");
                 // fs.writeFileSync(
@@ -222,7 +213,7 @@ export default class AirWallexVirtualCardSerivice {
     static async airwallexDeleteCardholder({ userId, payload }, callback) {
         try {
             const accessToken = await this.getAirWalletxToken();
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            const airwallexAccountId = payload?.airwallexAccountId;
             if (!accessToken) {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
             }
@@ -232,7 +223,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    "x-on-behalf-of": getAirwallexKycAccount.airwallexAccountId,
+                    "x-on-behalf-of": airwallexAccountId,
                 },
             });
             if (!response.ok) {
@@ -261,9 +252,9 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("CARDHOLDER_NOT_READY"), null);
             }
             const accessToken = await this.getAirWalletxToken();
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!accessToken) {
-                return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
             }
             const randomUUID = uuidv4();
             const body = {
@@ -291,7 +282,7 @@ export default class AirWallexVirtualCardSerivice {
                 request_id: randomUUID,     // Unique per request — used for idempotency
             };
             console.log("========================================================");
-            console.log(getAirwallexKycAccount.airwallexAccountId);
+            console.log(airwallexAccountId);
             console.log("Creating virtual card with payload:", body);
             const apiUrl = process.env.AIRWALLEX_API_URL;
             const response = await fetch(`${apiUrl}/api/v1/issuing/cards/create`, {
@@ -299,7 +290,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    "x-on-behalf-of": getAirwallexKycAccount.airwallexAccountId,
+                    "x-on-behalf-of": airwallexAccountId,
                 },
                 body: JSON.stringify(body),
             });
@@ -310,7 +301,7 @@ export default class AirWallexVirtualCardSerivice {
                     `curl -X POST "${cardholdersUrl}" \\`,
                     `  -H "Content-Type: application/json" \\`,
                     `  -H "Authorization: Bearer ${accessToken}" \\`,
-                    `  -H "x-on-behalf-of: ${getAirwallexKycAccount.airwallexAccountId}" \\`,
+                    `  -H "x-on-behalf-of: ${airwallexAccountId}" \\`,
                     `  -d '${JSON.stringify(body)}'`
                 ].join('\n');
                 const curlFilePath = path.resolve("airwallex-cardholders-card-create.txt");
@@ -326,7 +317,9 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error(`Virtual card creation failed: ${errorResponse.message}`), null);
             }
             const cardData = await response.json();
-            this.saveAllCardInRecord({ userId }, (error, response) => { });
+            this.saveAllCardInRecord({ userId, 
+                payload: { airwallexAccountId }
+             }, (error, response) => { });
             console.log('Virtual card created:', cardData);
             return callback(null, cardData);
         } catch (error) {
@@ -335,7 +328,7 @@ export default class AirWallexVirtualCardSerivice {
         }
     }
 
-    static async saveAllCardInRecord({ userId }, callback) {
+    static async saveAllCardInRecord({ userId, payload }, callback) {
         console.log('saveAllCardInRecord called with userId:', userId);
         try {
             const getCardholder = await AirwallexCardholder.findOne({ where: { userId } });
@@ -343,7 +336,10 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("CARDHOLDER_NOT_FOUND"), null);
             }
             const accessToken = await this.getAirWalletxToken();
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
             if (!accessToken) {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
 
@@ -353,7 +349,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    "x-on-behalf-of": getAirwallexKycAccount.airwallexAccountId,
+                    "x-on-behalf-of": airwallexAccountId,
                 },
             });
             if (!response.ok) {
@@ -435,10 +431,11 @@ export default class AirWallexVirtualCardSerivice {
             }
 
             // Get connected account ID
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({
-                where: { userId }
-            });
-            if (!getAirwallexKycAccount) {
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
 
@@ -450,7 +447,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                    'x-on-behalf-of': airwallexAccountId,
                 },
                 body: JSON.stringify({
                     card_id: payload.cardId
@@ -521,8 +518,11 @@ export default class AirWallexVirtualCardSerivice {
             if (!accessToken) {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
             }
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!getAirwallexKycAccount) {
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
             const apiUrl = process.env.AIRWALLEX_API_URL;
@@ -531,7 +531,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                    'x-on-behalf-of': airwallexAccountId,
                 },
                 body: JSON.stringify({ card_status: newStatus })
             });
@@ -578,18 +578,20 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
             }
 
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!getAirwallexKycAccount) {
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
-
             const apiUrl = process.env.AIRWALLEX_API_URL;
             const response = await fetch(`${apiUrl}/api/v1/issuing/cards/${cardId}/limits`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                    'x-on-behalf-of': airwallexAccountId,
                 },
             });
 
@@ -619,8 +621,11 @@ export default class AirWallexVirtualCardSerivice {
         if (!accessToken) {
             return callback(new Error("AIRWALLEX_ACCESS_TOKEN_NOT_FOUND"), null);
         }
-        const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-        if (!getAirwallexKycAccount) {
+        let airwallexAccountId = payload?.airwallexAccountId;
+        if (!airwallexAccountId) {
+            airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+        }
+        if (!airwallexAccountId) {
             return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
         }
         const apiUrl = process.env.AIRWALLEX_API_URL;
@@ -629,7 +634,7 @@ export default class AirWallexVirtualCardSerivice {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
-                'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                'x-on-behalf-of': airwallexAccountId,
             },
             body: JSON.stringify({
                 authorization_controls: {
@@ -671,9 +676,13 @@ export default class AirWallexVirtualCardSerivice {
             if (!token) {
                 return callback(new Error('AIRWALLEX_ACCESS_TOKEN_NOT_FOUND'), null);
             }
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!getAirwallexKycAccount) {
-                return callback(new Error('AIRWALLEX_KYC_ACCOUNT_NOT_FOUND'), null);
+            
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
+                return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
 
 
@@ -693,7 +702,7 @@ export default class AirWallexVirtualCardSerivice {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`,
                         'x-api-version': '2026-08-21',
-                        'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                        'x-on-behalf-of': airwallexAccountId,
                     },
                 },
             );
@@ -711,8 +720,11 @@ export default class AirWallexVirtualCardSerivice {
     static async getCardTransactionList({ userId, payload }, callback) {
         try{
             const {page_num = 0, page_size = 10 } = payload;
-            const aurwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if(!aurwallexKycAccount){
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
             const accessToken = await this.getAirWalletxToken();
@@ -725,7 +737,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    'x-on-behalf-of': aurwallexKycAccount.airwallexAccountId,
+                    'x-on-behalf-of': airwallexAccountId,
                 },
             });
             if (!response.ok) {
@@ -746,8 +758,11 @@ export default class AirWallexVirtualCardSerivice {
             if (!transactionId) {
                 return callback(new Error("TRANSACTION_ID_REQUIRED"), null);
             }
-            const airwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!airwallexKycAccount) {
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
             const accessToken = await this.getAirWalletxToken();
@@ -760,7 +775,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    'x-on-behalf-of': airwallexKycAccount.airwallexAccountId,
+                    'x-on-behalf-of': airwallexAccountId,
                 },
             });
             if (!response.ok) {
@@ -859,7 +874,7 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("DISPUTE_REASON_NOT_PROVIDED"), null);
             }
 
-            const checkTransaction = await AirwallexCardTransactions.findOne({ where: { transactionId: transaction_id } });
+            const checkTransaction = await AirwallexCardTransactions.findOne({ where: { cardTransactionId: transaction_id } });
             if(!checkTransaction){
                 return callback(new Error("TRANSACTION_NOT_FOUND"), null);
             }
@@ -869,8 +884,12 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("TRANSACTION_NOT_BELONG_TO_USER"), null);
             }
 
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!getAirwallexKycAccount) {
+             
+            let airwallexAccountId = payload?.airwallexAccountId;
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
 
@@ -889,7 +908,7 @@ export default class AirWallexVirtualCardSerivice {
                         accessToken,
                         file,
                         notes,
-                        onBehalfOf: getAirwallexKycAccount.airwallexAccountId,
+                        onBehalfOf: airwallexAccountId,
                     });
                     evidenceFileIds.push(fileId);
                 }
@@ -904,7 +923,7 @@ export default class AirWallexVirtualCardSerivice {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                    'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                    'x-on-behalf-of': airwallexAccountId,
                 },
                 
                 body: JSON.stringify({
@@ -959,7 +978,7 @@ export default class AirWallexVirtualCardSerivice {
             }
 
             const checkTransaction = await AirwallexCardTransactions.findOne({
-                where: { transactionId: existingDispute.transactionId },
+                where: { cardTransactionId : existingDispute.transactionId },
             });
             if (!checkTransaction) {
                 return callback(new Error("TRANSACTION_NOT_FOUND"), null);
@@ -972,8 +991,12 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(new Error("TRANSACTION_NOT_BELONG_TO_USER"), null);
             }
 
-            const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
-            if (!getAirwallexKycAccount) {
+             let airwallexAccountId = payload?.airwallexAccountId;
+            
+            if (!airwallexAccountId) {
+                airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+            }
+            if (!airwallexAccountId) {
                 return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
             }
 
@@ -992,7 +1015,7 @@ export default class AirWallexVirtualCardSerivice {
                         accessToken,
                         file,
                         notes,
-                        onBehalfOf: getAirwallexKycAccount.airwallexAccountId,
+                        onBehalfOf: airwallexAccountId,
                     });
                     evidenceFileIds.push(fileId);
                 }
@@ -1014,7 +1037,7 @@ export default class AirWallexVirtualCardSerivice {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
-                        'x-on-behalf-of': getAirwallexKycAccount.airwallexAccountId,
+                        'x-on-behalf-of': airwallexAccountId,
                     },
                     body: JSON.stringify(updatePayload),
                 }

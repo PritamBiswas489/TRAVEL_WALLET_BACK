@@ -1,6 +1,7 @@
 import '../config/environment.js';
 import express from 'express';
 import { default as TransferRequestController } from '../controllers/transferRequest.controller.js';
+import { needActiveKycAccount } from '../middlewares/activeKycChecking.js';
 
 const router = express.Router();
 
@@ -62,7 +63,7 @@ const router = express.Router();
  *                   type: string
  */
 
-router.post('/send-request', async (req, res, next) => {
+router.post('/send-request', needActiveKycAccount, async (req, res, next) => {
     const response = await TransferRequestController.sendRequest({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 }) 
@@ -118,7 +119,7 @@ router.post('/send-request', async (req, res, next) => {
  *                 error:
  *                   type: string
  */
-router.post("/crypto/send-request", async (req, res, next) => {
+router.post("/crypto/send-request", needActiveKycAccount, async (req, res, next) => {
     const response = await TransferRequestController.sendCryptoRequest({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 });
@@ -172,8 +173,8 @@ router.post("/crypto/send-request", async (req, res, next) => {
  *                 error:
  *                   type: string
  */
-router.post("/accept-reject-transfer-request", async (req, res, next) => {
-    const response = await TransferRequestController.acceptRejectTransferRequest({ headers: req.headers, user: req.user, payload: req.body });
+router.post("/accept-reject-transfer-request", needActiveKycAccount, async (req, res, next) => {
+    const response = await TransferRequestController.acceptRejectTransferRequest({ headers: req.headers, user: req.user, payload: {...req.body,...req.query,...req.params} });
     res.return(response);
 })
 
@@ -230,7 +231,7 @@ router.post("/accept-reject-transfer-request", async (req, res, next) => {
  *                 error:
  *                   type: string
  */
-router.post("/crypto/accept-reject-transfer-request", async (req, res, next) => {
+router.post("/crypto/accept-reject-transfer-request", needActiveKycAccount, async (req, res, next) => {
     const response = await TransferRequestController.acceptRejectCryptoTransferRequest({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })

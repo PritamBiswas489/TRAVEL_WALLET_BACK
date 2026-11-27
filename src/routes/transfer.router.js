@@ -1,6 +1,7 @@
 import '../config/environment.js';
 import express from 'express';
 import { default as TransferController } from '../controllers/transfer.controller.js';
+import { needActiveKycAccount } from '../middlewares/activeKycChecking.js';
 
 const router = express.Router();
 
@@ -115,7 +116,7 @@ router.post('/check-receiver-status', async (req, res, next) => {
  *                 error:
  *                   type: string
  */
-router.post("/execute-transfer", async (req, res, next) => {
+router.post("/execute-transfer", needActiveKycAccount, async (req, res, next) => {
     const response = await TransferController.executeTransfer({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })
@@ -171,7 +172,7 @@ router.post("/execute-transfer", async (req, res, next) => {
  *                   type: string
  */
 
-router.post("/crypto/execute-transfer", async (req, res, next) => {
+router.post("/crypto/execute-transfer", needActiveKycAccount, async (req, res, next) => {
     const response = await TransferController.executeCryptoTransfer({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })
@@ -224,7 +225,7 @@ router.post("/crypto/execute-transfer", async (req, res, next) => {
  *                 error:
  *                   type: string
  */
-router.post("/accept-reject-transfer", async (req, res, next) => {
+router.post("/accept-reject-transfer", needActiveKycAccount, async (req, res, next) => {
     const response = await TransferController.acceptRejectTransfer({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })
@@ -278,7 +279,7 @@ router.post("/accept-reject-transfer", async (req, res, next) => {
  *                 error:
  *                   type: string
  */
-router.post("/crypto/accept-reject-transfer", async (req, res, next) => {
+router.post("/crypto/accept-reject-transfer", needActiveKycAccount, async (req, res, next) => {
     const response = await TransferController.acceptRejectCryptoTransfer({ headers: req.headers, user: req.user, payload: req.body });
     res.return(response);
 })

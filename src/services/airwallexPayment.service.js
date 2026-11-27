@@ -237,9 +237,7 @@ export default class AirwallexPaymentService {
             },
           );
         });
-        getData = await AirwallexKycAccount.findOne({
-          where: { userId },
-        });
+        await getData.reload(); // Refresh the data from the database after potential updates
       }
       // console.log("Fetched Airwallex KYC details from DB for userId:", userId, JSON.stringify(getData.toJSON(), null, 2));
       const JSONDATA = getData.toJSON();
@@ -391,7 +389,6 @@ export default class AirwallexPaymentService {
         where: { airwallexAccountId: mappedData.airwallexAccountId },
       });
       //update UseKyc status
-
       if (existing) {
         await existing.update(mappedData);
         // Update UserKyc status
@@ -401,8 +398,23 @@ export default class AirwallexPaymentService {
         );
         return existing;
       } else {
-        return await AirwallexKycAccount.create(mappedData);
+       const created = await AirwallexKycAccount.create(mappedData);
+       const check = await UserKyc.findOne({ where: { userId } });
+       if (!check) {
+         await UserKyc.create({
+           userId,
+           status: getUserKycStatus(mappedData.status),
+           applicantId: mappedData.airwallexAccountId,
+         });
+       }else{
+         await UserKyc.update(
+           { status: getUserKycStatus(mappedData.status) },
+           { where: { userId } },
+         );
+       }
+       return created;
       }
+     
     } catch (error) {
       process.env.SENTRY_ENABLED === "true" && Sentry.captureException(error);
       //console.error("Error saving Airwallex KYC account details:", error?.message);
@@ -696,13 +708,9 @@ export default class AirwallexPaymentService {
       return callback(new Error("INTERNAL_SERVER_ERROR"));
     }
   }
-  static async airwallexSubmitKycDocuments({ userId, i18n }, callback) {
+  static async airwallexSubmitKycDocuments({ userId, i18n, payload }, callback) {
     try {
-      const getData = await AirwallexKycAccount.findOne({ where: { userId } });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
-      }
-      const airwallexId = getData?.airwallexAccountId;
+      const airwallexId = payload?.airwallexAccountId;
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
@@ -986,7 +994,7 @@ export default class AirwallexPaymentService {
       //when the new status is active, perform additional actions if needed
       if(newStatus === "ACTIVE") {
         console.log(`##### airwallexKycWebhook: new status is ACTIVE for userId=${userId}`);
-        AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder({userId, payload:{}}, (err, result) => {
+        AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder({userId, payload:{airwallexAccountId: accountId}}, (err, result) => {
         });
       }
       //========== send push notification to user =================//
@@ -1346,26 +1354,21 @@ export default class AirwallexPaymentService {
     }
   }
 
-  static async getGlobalAccounts({ userId, i18n }, callback) {
+  static async getGlobalAccounts({ userId, i18n, payload }, callback) {
     try {
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!kycAccount || !kycAccount.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
-      }
+      const airwallexAccountId = payload?.airwallexAccountId;
 
       const response = await axios.get(
         `${process.env.AIRWALLEX_API_URL}/api/v1/global_accounts`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "x-on-behalf-of": kycAccount.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -1512,21 +1515,21 @@ export default class AirwallexPaymentService {
     }
   }
 
-  static async getAccountBalance({ userId, i18n }, callback) {
+  static async getAccountBalance({ userId, i18n, payload={} }, callback) {
     try {
       const accessToken = await this.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!kycAccount || !kycAccount.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let  airwallexAccountId = payload?.airwallexAccountId;
+      //console.log("=================================================== Initial airwallexAccountId from payload:", airwallexAccountId);
+      if(!airwallexAccountId){
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+        // console.log("=====================================================Fetched airwallexAccountId from UserService:", airwallexAccountId);
       }
-      if (kycAccount?.status !== "ACTIVE") {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_ACTIVE"));
+      if(!airwallexAccountId){
+          return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
 
       const response = await axios.get(
@@ -1534,7 +1537,7 @@ export default class AirwallexPaymentService {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "x-on-behalf-of": kycAccount.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -1875,23 +1878,7 @@ export default class AirwallexPaymentService {
                 Sentry.captureException(error);
             }
           }
-          //======== Start generate card holder =====//
-          AirWallexVirtualCardSerivice.airwallexCreateIndividualCardholder(
-            { userId: kycAccount.userId, payload: {} },
-            (err, result) => {
-              if (err) {
-                console.error(
-                  "Error creating Airwallex cardholder:",
-                  err.message,
-                );
-              } else {
-                console.log(
-                  "Airwallex cardholder created successfully:",
-                  result.data,
-                );
-              }
-            },
-          );
+         
           //======== End generate card holder =====//
         }
         console.log("Received deposit webhook with payload:", payload);
@@ -2863,7 +2850,7 @@ export default class AirwallexPaymentService {
           );
           // You can add more logic here to update the user's transaction history or perform other actions based on the webhook payload
           AirWallexVirtualCardSerivice.saveAllCardInRecord(
-            { userId: userid },
+            { userId: userid, payload: { airwallexAccountId: getKycAccount?.airwallexAccountId } },
             (err, result) => {
               if (err) {
                 console.error("❌ Error saving card records:", err.message);
@@ -3091,6 +3078,7 @@ export default class AirwallexPaymentService {
 
   static async createAftWalletTopup({ userId, payload }, callback) {
     try {
+      console.log("Creating AFT wallet topup for userId:", userId, "with payload:", payload);
       const { amount: mainAmount } = payload;
       const getAirwallexCustomerId = await this.getAirwallexCustomerId(userId);
       console.log(
@@ -3113,38 +3101,8 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_CUSTOMER_ID_NOT_FOUND"));
       }
       const airwallexCustomerId = getAirwallexCustomerId.airwallexCustomerId;
-      const getKycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      console.log("===== airwallex account id ===========");
-      // console.log(getKycAccount);
-      if (!getKycAccount?.airwallexAccountId) {
-        this.logAirwallexPaymentRefundError(
-          {
-            userId,
-            methodName: "createAftWalletTopup",
-            payloadData: payload,
-            errorMessage: "Airwallex account ID not found",
-            errorLogs: null,
-          },
-          () => {},
-        );
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
-      }
-      if (getKycAccount?.status !== "ACTIVE") {
-        this.logAirwallexPaymentRefundError(
-          {
-            userId,
-            methodName: "createAftWalletTopup",
-            payloadData: payload,
-            errorMessage: "Airwallex account not approved",
-            errorLogs: null,
-          },
-          () => {},
-        );
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_APPROVED"));
-      }
-      const airwallexAccountId = getKycAccount.airwallexAccountId;
+     
+      const airwallexAccountId = payload.airwallexAccountId;
       // console.log({ userId, airwallexCustomerId, airwallexAccountId, mainAmount });
       const requestId = uuidv4();
       const topupId = `AFT-TOPUP-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
 import redisClient from "../config/redis.config.js";
 import { getBeneficiaryByMainId } from "./beneficiaryService.js";
+import UserService from "./user.service.js";
 import {
   createBeneficiary,
   getBeneficiariesByUser,
@@ -225,14 +226,15 @@ export default class AirwallexDirectBankTransferService {
     console.log("Creating beneficiary with payload:", payload);
     console.log("User ID:", userId);
     try {
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
-      }
+      let airwallexAccountId = payload?.airwallexAccountId;
+      if (!airwallexAccountId) {
+                     airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+                 }
+                 if (!airwallexAccountId) {
+                     return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"), null);
+                 }
 
-      console.log("Airwallex Account ID:", getData.airwallexAccountId);
+      console.log("Airwallex Account ID:", airwallexAccountId);
 
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
       if (!accessToken) {
@@ -252,7 +254,7 @@ export default class AirwallexDirectBankTransferService {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -273,7 +275,7 @@ export default class AirwallexDirectBankTransferService {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -325,20 +327,21 @@ export default class AirwallexDirectBankTransferService {
   }
 
   // delete beneficiary on Airwallex, then remove it from local DB
-  static async deleteBeneficiary({ userId, id }, callback) {
+  static async deleteBeneficiary({ userId, payload }, callback) {
     try {
-      const beneficiary = await getBeneficiaryById(id, userId);
+    
+      const beneficiary = await getBeneficiaryById(payload?.id, userId);
       if (!beneficiary) {
         return callback(new Error("BENEFICIARY_NOT_FOUND"));
       }
 
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let airwallexAccountId = payload?.airwallexAccountId;
+      if (!airwallexAccountId) {
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
       }
-
+      if (!airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"));
+      }
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
@@ -353,7 +356,7 @@ export default class AirwallexDirectBankTransferService {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -384,11 +387,12 @@ export default class AirwallexDirectBankTransferService {
         return callback(new Error("BENEFICIARY_NOT_FOUND"));
       }
 
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let airwallexAccountId = payload?.airwallexAccountId;
+      if (!airwallexAccountId) {
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+      }
+      if (!airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"));
       }
 
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
@@ -406,7 +410,7 @@ export default class AirwallexDirectBankTransferService {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -442,11 +446,13 @@ export default class AirwallexDirectBankTransferService {
         return callback(new Error("MISSING_REQUIRED_PARAMETERS"));
       }
 
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let airwallexAccountId = payload?.airwallexAccountId;
+    
+      if (!airwallexAccountId) {
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+      }
+      if (!airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"));
       }
 
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
@@ -491,7 +497,7 @@ export default class AirwallexDirectBankTransferService {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -560,7 +566,7 @@ export default class AirwallexDirectBankTransferService {
       const existance = await getTransferByAirwallexId(airWallexTransferId);
       if (!existance) {
         return this.createTransferFromApi(
-          { userId, airWallexTransferId },
+          { userId, payload: { airwallexAccountId: payload?.account_id, airWallexTransferId } },
           done,
         );
       }
@@ -568,7 +574,7 @@ export default class AirwallexDirectBankTransferService {
         return done(new Error("TRANSFER_USER_MISMATCH"));
       }
       return this.updateTransferFromApi(
-        { userId, airWallexTransferId },
+        { userId, payload:{airwallexAccountId: payload?.account_id, airWallexTransferId} },
         done,
       );
     } catch (error) {
@@ -592,19 +598,21 @@ export default class AirwallexDirectBankTransferService {
 
   // fetch a transfer from Airwallex and sync the local record
   static async updateTransferFromApi(
-    { userId, airWallexTransferId },
+    { userId,  payload },
     callback,
   ) {
     console.log(
       "Updating transfer from API with airWallexTransferId:",
-      airWallexTransferId,
+      payload?.airWallexTransferId,
     );
     try {
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let airwallexAccountId = payload?.airwallexAccountId;
+      console.log("Airwallex Account ID from payload:", airwallexAccountId);
+      if (!airwallexAccountId) {
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
+      }
+      if (!airwallexAccountId) {
+        return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"));
       }
 
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
@@ -614,11 +622,11 @@ export default class AirwallexDirectBankTransferService {
 
       const apiUrl = process.env.AIRWALLEX_API_URL;
       const response = await axios.get(
-        `${apiUrl}/api/v1/transfers/${airWallexTransferId}`,
+        `${apiUrl}/api/v1/transfers/${payload?.airWallexTransferId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -645,20 +653,18 @@ export default class AirwallexDirectBankTransferService {
     }
   }
   // cancel a transfer on Airwallex and sync the local record status
-  static async cancelTransfer({ userId, airWallexTransferId }, callback) {
+  static async cancelTransfer({ userId, payload }, callback) {
     try {
-      const transferRecord = await getTransferByAirwallexId(airWallexTransferId);
+      const transferRecord = await getTransferByAirwallexId(payload?.airWallexTransferId);
       if (!transferRecord || transferRecord.userId !== userId) {
         return callback(new Error("TRANSFER_NOT_FOUND"));
       }
 
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let airwallexAccountId = payload?.airwallexAccountId;
+      console.log("Airwallex Account ID from payload:", airwallexAccountId);
+      if (!airwallexAccountId) {
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
       }
-
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
@@ -666,12 +672,12 @@ export default class AirwallexDirectBankTransferService {
 
       const apiUrl = process.env.AIRWALLEX_API_URL;
       const response = await axios.post(
-        `${apiUrl}/api/v1/transfers/${airWallexTransferId}/cancel`,
+        `${apiUrl}/api/v1/transfers/${payload?.airWallexTransferId}/cancel`,
         {},
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );
@@ -693,21 +699,19 @@ export default class AirwallexDirectBankTransferService {
   }
 
   static async createTransferFromApi(
-    { userId, airWallexTransferId },
+    { userId, payload },
     callback,
   ) {
     console.log(
       "Creating transfer from API with airWallexTransferId:",
-      airWallexTransferId,
+      payload?.airWallexTransferId,
     );
     try {
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
-      if (!getData || !getData.airwallexAccountId) {
-        return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
+      let airwallexAccountId = payload?.airwallexAccountId;
+      console.log("Airwallex Account ID from payload:", airwallexAccountId);
+      if (!airwallexAccountId) {
+        airwallexAccountId = await UserService.getUserAirwallexKycAccountId(userId);
       }
-
       const accessToken = await AirwallexPaymentService.getAirWalletxToken();
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
@@ -715,11 +719,11 @@ export default class AirwallexDirectBankTransferService {
 
       const apiUrl = process.env.AIRWALLEX_API_URL;
       const response = await axios.get(
-        `${apiUrl}/api/v1/transfers/${airWallexTransferId}`,
+        `${apiUrl}/api/v1/transfers/${payload?.airWallexTransferId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "x-on-behalf-of": getData.airwallexAccountId,
+            "x-on-behalf-of": airwallexAccountId,
           },
         },
       );

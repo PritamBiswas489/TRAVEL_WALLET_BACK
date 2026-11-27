@@ -2,6 +2,7 @@ import '../config/environment.js';
 import express from 'express';
 
 import AirwallexDirectBankTransferController from '../controllers/airwallexDirectBankTransfer.controller.js';
+import {  needActiveKycAccount } from '../middlewares/activeKycChecking.js';
 
 const router = express.Router();
 
@@ -55,8 +56,8 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.post('/beneficiary-form-schemas',async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.beneficiaryFormSchemasGenerate({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/beneficiary-form-schemas', needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.beneficiaryFormSchemasGenerate({ headers: req.headers, user: req.user, payload: { ...req.params, ...req.query, ...req.body } });
     res.return(response);
 });
 
@@ -133,7 +134,7 @@ router.post('/beneficiary-form-schemas',async (req, res, next) => {
  *       400:
  *         description: Bad request - missing or invalid parameters
  */
-router.get('/supported-financial-institutions',async (req, res, next) => {
+router.get('/supported-financial-institutions', needActiveKycAccount, async (req, res, next) => {
     const response = await AirwallexDirectBankTransferController.supportedFinancialInstitutions({ headers: req.headers, user: req.user, query: req.query });
     res.return(response);
 });
@@ -292,8 +293,8 @@ router.get('/supported-financial-institutions',async (req, res, next) => {
  *       401:
  *         description: Unauthorized
  */
-router.post('/create-beneficiary', async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.createBeneficiary({ payload: req.body, user: req.user, headers: req.headers, });
+router.post('/create-beneficiary', needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.createBeneficiary({payload: { ...req.params, ...req.query, ...req.body }, user: req.user, headers: req.headers, });
     res.return(response);
 });
 
@@ -468,8 +469,8 @@ router.post('/create-beneficiary', async (req, res, next) => {
  *       404:
  *         description: Beneficiary not found for the authenticated user
  */
-router.post('/update-beneficiary/:id', async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.updateBeneficiary({ payload: {...req.body, ...req.params}, user: req.user, headers: req.headers, });
+router.post('/update-beneficiary/:id', needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.updateBeneficiary({ payload: { ...req.params, ...req.query, ...req.body }, user: req.user, headers: req.headers, });
     res.return(response);
 });
 
@@ -539,7 +540,7 @@ router.post('/update-beneficiary/:id', async (req, res, next) => {
  *       401:
  *         description: Unauthorized
  */
-router.get('/beneficiaries', async (req, res, next) => {
+router.get('/beneficiaries', needActiveKycAccount, async (req, res, next) => {
     const response = await AirwallexDirectBankTransferController.getBeneficiaries({ query: req.query, user: req.user, headers: req.headers });
     res.return(response);
 });
@@ -591,7 +592,7 @@ router.get('/beneficiaries', async (req, res, next) => {
  *       404:
  *         description: Beneficiary not found for the authenticated user
  */
-router.get("/beneficiaries/:id", async (req, res, next) => {
+router.get("/beneficiaries/:id", needActiveKycAccount, async (req, res, next) => {
     const response = await AirwallexDirectBankTransferController.getBeneficiary({ id: req.params.id, user: req.user, headers: req.headers });
     res.return(response);
 });
@@ -641,8 +642,8 @@ router.get("/beneficiaries/:id", async (req, res, next) => {
  *       404:
  *         description: Beneficiary not found for the authenticated user
  */
-router.delete("/beneficiaries/:id", async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.deleteBeneficiary({ id: req.params.id, user: req.user, headers: req.headers });
+router.delete("/beneficiaries/:id", needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.deleteBeneficiary({ payload: { ...req.params, ...req.query, ...req.body }, user: req.user, headers: req.headers });
     res.return(response);
 });
 
@@ -719,8 +720,8 @@ router.delete("/beneficiaries/:id", async (req, res, next) => {
  *       404:
  *         description: Beneficiary not found for the authenticated user
  */
-router.post("/transfer/:id", async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.createTransfer({ id: req.params.id, user: req.user, headers: req.headers, payload: req.body });
+router.post("/transfer/:id", needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.createTransfer({ id: req.params.id, user: req.user, headers: req.headers, payload: {...req.body,...req.params,...req.query} });
     res.return(response);
 });
 
@@ -751,8 +752,8 @@ router.post("/transfer/:id", async (req, res, next) => {
  *       404:
  *         description: Transfer not found for the authenticated user
  */
-router.post("/update-transfer/:airWallexTransferId", async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.updateTransferFromApi({ airWallexTransferId: req.params.airWallexTransferId, user: req.user, headers: req.headers });
+router.post("/update-transfer/:airWallexTransferId", needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.updateTransferFromApi({  user: req.user, headers: req.headers, payload: {...req.body,...req.params,...req.query}    });
     res.return(response);
 });
 
@@ -783,8 +784,8 @@ router.post("/update-transfer/:airWallexTransferId", async (req, res, next) => {
  *       404:
  *         description: Transfer not found for the authenticated user
  */
-router.post("/cancel-transfer/:airWallexTransferId", async (req, res, next) => {
-    const response = await AirwallexDirectBankTransferController.cancelTransfer({ airWallexTransferId: req.params.airWallexTransferId, user: req.user, headers: req.headers });
+router.post("/cancel-transfer/:airWallexTransferId", needActiveKycAccount, async (req, res, next) => {
+    const response = await AirwallexDirectBankTransferController.cancelTransfer({ payload: {...req.body,...req.params,...req.query}, user: req.user, headers: req.headers });
     res.return(response);
 });
 
@@ -856,7 +857,7 @@ router.post("/cancel-transfer/:airWallexTransferId", async (req, res, next) => {
  *       401:
  *         description: Unauthorized
  */
-router.get("/transfers", async (req, res, next) => {
+router.get("/transfers", needActiveKycAccount, async (req, res, next) => {
     const response = await AirwallexDirectBankTransferController.getTransfers({ query: req.query, user: req.user, headers: req.headers });
     res.return(response);
 });

@@ -146,7 +146,7 @@ export default class UserAccRemoveService {
       if (kycAccount?.airwallexAccountId) {
           const accountBalance = await new Promise((resolve, reject) => {
             AirwallexPaymentService.getAccountBalance(
-              { userId, i18n: null },
+              { userId, i18n: null , ...(kycAccount?.airwallexAccountId ?  {payload: {airwallexAccountId: kycAccount?.airwallexAccountId}} : {}) },
               (error, response) => {
               if (error) return resolve({});
                 resolve(response?.data || {});

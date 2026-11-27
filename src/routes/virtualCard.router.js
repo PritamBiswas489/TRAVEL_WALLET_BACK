@@ -4,6 +4,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import VirtualCardController from '../controllers/virtualCard.controller.js';
+import {  needActiveKycAccount } from '../middlewares/activeKycChecking.js';
 const router = express.Router();
 const disputeEvidenceUpload = multer({
   storage: multer.memoryStorage(),
@@ -66,8 +67,8 @@ const virtualCardBackgroundUpload = multer({
  *       200:
  *         description: Airwallex individual cardholder created successfully
  */
-router.post('/airwallex-create-individual-cardholder', async (req, res, next) => {
-  const response = await VirtualCardController.airwallexCreateIndividualCardholder({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/airwallex-create-individual-cardholder', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.airwallexCreateIndividualCardholder({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params   } });
   res.return(response);
 });
 
@@ -87,8 +88,8 @@ router.post('/airwallex-create-individual-cardholder', async (req, res, next) =>
  *       200:
  *         description:  Successfully retrieved all Airwallex cardholders for the user
  */
-router.get('/airwallex-get-all-cardholders', async (req, res, next) => {
-  const response = await VirtualCardController.airwallexGetAllCardholders({ headers: req.headers, user: req.user, payload: req.body });
+router.get('/airwallex-get-all-cardholders', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.airwallexGetAllCardholders({ headers: req.headers, user: req.user, payload: { ...req.body,...req.query, ...req.params } });
   res.return(response);
 });
 
@@ -120,8 +121,8 @@ router.get('/airwallex-get-all-cardholders', async (req, res, next) => {
  *         description: Airwallex cardholder deleted successfully
  */
 
-router.post('/delete-cardholder', async (req, res, next) => {
-  const response = await VirtualCardController.airwallexDeleteCardholder({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/delete-cardholder', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.airwallexDeleteCardholder({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params   } });
   res.return(response);
 });
 
@@ -139,8 +140,8 @@ router.post('/delete-cardholder', async (req, res, next) => {
  *       200:
  *         description: create virtual card for the authenticated user successfully
  */
-router.post('/create-virtual-card', async (req, res, next) => {
-  const response = await VirtualCardController.airwallexCreateVirtualCard({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/create-virtual-card', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.airwallexCreateVirtualCard({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params   } });
   res.return(response);
 });
 
@@ -163,8 +164,8 @@ router.post('/create-virtual-card', async (req, res, next) => {
  */
 
 
-router.post('/save-all-card-in-record', async (req, res, next) => {
-  const response = await VirtualCardController.saveAllCardInRecord({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/save-all-card-in-record', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.saveAllCardInRecord({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params   } });
   res.return(response);
 });
 
@@ -183,8 +184,8 @@ router.post('/save-all-card-in-record', async (req, res, next) => {
  *       200:
  *         description: get all card in record for the authenticated user successfully
  */
-router.get('/get-all-card-in-record', async (req, res, next) => {
-  const response = await VirtualCardController.getAllCardInRecord({ headers: req.headers, user: req.user, payload: req.body });
+router.get('/get-all-card-in-record', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.getAllCardInRecord({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params   } });
   res.return(response);
 });
 
@@ -213,7 +214,7 @@ router.get('/get-all-card-in-record', async (req, res, next) => {
  *             schema:
  *               type: string
  */
-router.get('/get-sensitive-details/:cardId', async (req, res, next) => {
+router.get('/get-sensitive-details/:cardId', needActiveKycAccount, async (req, res, next) => {
   const response = await VirtualCardController.getSensitiveDetails({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.params, ...req.query }, cardId: req.params.cardId });
   res.return(response);
 });
@@ -250,8 +251,8 @@ router.get('/get-sensitive-details/:cardId', async (req, res, next) => {
  *       200:
  *         description: Virtual card status updated successfully
  */
-router.post('/update-card-status', async (req, res, next) => {
-  const response = await VirtualCardController.updateCardStatus({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/update-card-status', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.updateCardStatus({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params } });
   res.return(response);
 });
 
@@ -277,8 +278,8 @@ router.post('/update-card-status', async (req, res, next) => {
  *       200:
  *         description: Card limit retrieved successfully
  */
-router.get('/get-card-limit', async (req, res, next) => {
-  const response = await VirtualCardController.getCardLimit({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query } });
+router.get('/get-card-limit', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.getCardLimit({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params } });
   res.return(response);
 });
 
@@ -323,8 +324,8 @@ router.get('/get-card-limit', async (req, res, next) => {
  *       200:
  *         description: Virtual card limit updated successfully
  */
-router.post('/update-card-limit', async (req, res, next) => {
-  const response = await VirtualCardController.updateCardLimit({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/update-card-limit', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.updateCardLimit({ headers: req.headers, user: req.user, payload: { ...req.body, ...req.query, ...req.params } });
   res.return(response);
 });
 
@@ -376,8 +377,8 @@ router.post('/update-card-limit', async (req, res, next) => {
  *       200:
  *         description: Test transaction created successfully
  */
-router.post('/testing/create-transaction-for-the-provided-card', async (req, res, next) => {
-  const response = await VirtualCardController.testingCreateTransactionForTheProvidedCard({ headers: req.headers, user: req.user, payload: req.body });
+router.post('/testing/create-transaction-for-the-provided-card', needActiveKycAccount, async (req, res, next) => {
+  const response = await VirtualCardController.testingCreateTransactionForTheProvidedCard({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
 
@@ -410,7 +411,7 @@ router.post('/testing/create-transaction-for-the-provided-card', async (req, res
  *       200:
  *         description: Card transaction list fetched successfully
  */
-router.get('/card-transaction-list', async (req, res, next) => {
+router.get('/card-transaction-list', needActiveKycAccount, async (req, res, next) => {
   const response = await VirtualCardController.getCardTransactionList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
@@ -436,7 +437,7 @@ router.get('/card-transaction-list', async (req, res, next) => {
  *       200:
  *         description: Transaction details fetched successfully
  */
-router.get('/get-transaction-details/:transactionId', async (req, res, next) => {
+router.get('/get-transaction-details/:transactionId', needActiveKycAccount, async (req, res, next) => {
   const response = await VirtualCardController.getCardTransactionDetails({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
@@ -478,7 +479,7 @@ router.get('/get-transaction-details/:transactionId', async (req, res, next) => 
  *       200:
  *         description: User card transaction list fetched successfully
  */
-router.get('/user-get-card-transaction-list', async (req, res, next) => {
+router.get('/user-get-card-transaction-list', needActiveKycAccount, async (req, res, next) => {
   const response = await VirtualCardController.getUserCardTransactionList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
@@ -540,9 +541,9 @@ router.get('/user-get-card-transaction-list', async (req, res, next) => {
  *       200:
  *         description: Transaction dispute submitted successfully
  */
-router.post('/transaction-dispute', disputeEvidenceUpload.array('evidence_files', 10), async (req, res, next) => {
+router.post('/transaction-dispute', needActiveKycAccount, disputeEvidenceUpload.array('evidence_files', 10), async (req, res, next) => {
   const payload = {
-    ...req.body,
+    ...{...req.body,...req.query,...req.params},
     notes: req.body?.notes ?? '',
     reference: req.body?.reference ?? '',
     evidence_files: req.files?.length ? req.files : (req.body?.evidence_files ?? '')
@@ -607,9 +608,9 @@ router.post('/transaction-dispute', disputeEvidenceUpload.array('evidence_files'
  *       200:
  *         description: Transaction dispute updated successfully
  */
-router.post('/transaction-dispute-update', disputeEvidenceUpload.array('evidence_files', 10), async (req, res, next) => {
+router.post('/transaction-dispute-update', needActiveKycAccount, disputeEvidenceUpload.array('evidence_files', 10), async (req, res, next) => {
   const payload = {
-    ...req.body,
+    ...{...req.body,...req.query,...req.params},
     notes: req.body?.notes ?? '',
     reference: req.body?.reference ?? '',
     evidence_files: req.files?.length ? req.files : (req.body?.evidence_files ?? '')
@@ -659,7 +660,7 @@ router.post('/transaction-dispute-update', disputeEvidenceUpload.array('evidence
  */
 
 
-router.get('/get-transaction-dispute-list', async (req, res, next) => {
+router.get('/get-transaction-dispute-list', needActiveKycAccount, async (req, res, next) => {
   const response = await VirtualCardController.getTransactionDisputeList({ headers: req.headers, user: req.user, payload: {...req.body, ...req.params, ...req.query} });
   res.return(response);
 });
