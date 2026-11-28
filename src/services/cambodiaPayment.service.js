@@ -520,9 +520,8 @@ export default class CambodiaPaymentService {
        const kesspayKycRecord = await KesspayKyc.findOne({
         where: { userId: userId },
       });
-      const airwallexKycRecord = await AirwallexKycAccount.findOne({
-        where: { userId: userId },
-      });
+      const airwallexKycRecord = await UserService.getUserAirwallexKycDetails({ whereFields: { userId: userId} });
+      
       if(!airwallexKycRecord){
         return callback(new Error("AIRWALLEX_KYC_NOT_FOUND"), null);
       }

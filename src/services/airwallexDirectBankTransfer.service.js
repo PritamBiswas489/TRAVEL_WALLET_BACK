@@ -554,9 +554,8 @@ export default class AirwallexDirectBankTransferService {
         return done(null, null);
       }
 
-      const KycAccount = await AirwallexKycAccount.findOne({
-        where: { airwallexAccountId: payload.account_id },
-      });
+      const KycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: payload?.account_id } }); 
+      
       if (!KycAccount) {
         return done(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }

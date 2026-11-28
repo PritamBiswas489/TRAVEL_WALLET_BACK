@@ -8,6 +8,7 @@ import TransferRequestService from "./transferRequest.service.js";
 import moment from "moment";
 import il8n from "../config/i18.config.js";
 import { enqueueUserNotification } from "../queues/pushNotification.queue.js";
+import UserService from "./user.service.js";
  
 
 export default class NotificationService {
@@ -782,9 +783,7 @@ export default class NotificationService {
     console.log("Account id", accountId);
 
     try {
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { airwallexAccountId: accountId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: accountId } });
       if (!kycAccount) {
         console.error("KYC Account not found for id:", accountId);
         return;

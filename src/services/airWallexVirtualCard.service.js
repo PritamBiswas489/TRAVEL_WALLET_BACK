@@ -53,7 +53,7 @@ export default class AirWallexVirtualCardSerivice {
     static async airwallexCreateIndividualCardholder({ userId, payload }, callback) {
         console.log('airwallexCreateIndividualCardholder called with userId:', userId, 'and payload:', payload);
         try {
-                const getAirwallexKycAccount = await AirwallexKycAccount.findOne({ where: { userId } });
+                const getAirwallexKycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
                 const checking = await AirwallexCardholder.findOne({ where: { userId } });
                 if (checking) {
                     const apiCardHolderDetails = await new Promise((resolve, reject) => {
@@ -1113,10 +1113,8 @@ export default class AirWallexVirtualCardSerivice {
                 return callback(null, { data: payload });
             }
 
-            const kycAccount = await AirwallexKycAccount.findOne({
-                where: { airwallexAccountId: accountId },
-            });
-
+            const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: accountId } });
+             
             if (!kycAccount) {
                 console.warn("handleTransactionDisputeWebhook: no AirwallexKycAccount found for accountId:", accountId);
                 return callback(null, { data: payload });

@@ -1,13 +1,15 @@
 import "../config/environment.js";
 import db from "../databases/models/index.js";
+import UserService from "../services/user.service.js";
 const { AirwallexKycAccount } = db;
 
 const findUserKyc = async (req) => {
   const userId = req.user?.id;
   const activeKyc = userId
-    ? await AirwallexKycAccount.findOne({ where: { userId } })
+    ? await UserService.getUserAirwallexKycDetails({ whereFields: { userId } })
     : null;
 
+  // console.log("Active KYC:", activeKyc);
   if (activeKyc) {
     const { airwallexAccountId } = activeKyc;
     ["body", "params", "query"].forEach((key) => {

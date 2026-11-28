@@ -11,6 +11,7 @@ import WhitelistMobilesService from "./whitelistMobiles.service.js";
 import moment from "moment";
 import AirwallexPaymentService from "./airwallexPayment.service.js";
 import { v4 as uuidv4 } from "uuid";
+
  
 
 export default class TransferService {
@@ -48,9 +49,9 @@ export default class TransferService {
       const userDetails = await UserService.getUserDetails(user.id);
       const sendUserDetails = await UserService.getUserDetails(userId);
       const senderPhoneNumber = sendUserDetails?.phoneNumber;
-      const getKycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const getKycAccount =   await UserService.getUserAirwallexKycDetails({ whereFields: { userId: userId } });
+      
+      
       if (!getKycAccount || !getKycAccount?.airwallexAccountId || !getKycAccount?.status || getKycAccount?.status !== "ACTIVE") {
         return callback(new Error("RECEIVER_ACTIVE_KYC_NOT_FOUND"), null);
       }

@@ -170,9 +170,7 @@ export default class AirwallexPaymentService {
       if (!accressToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
-      const getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const getData = await  UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!getData || !getData.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -207,9 +205,7 @@ export default class AirwallexPaymentService {
 
   static async getAirWallexKycDetails({ userId, i18n }, callback) {
     try {
-      let getData = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      let getData = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!getData) {
         return callback(new Error("AIRWALLEX_KYC_DETAILS_NOT_FOUND"));
       }
@@ -385,9 +381,8 @@ export default class AirwallexPaymentService {
         mappedData.userInputData = accountData?.userInputData;
       }
 
-      const existing = await AirwallexKycAccount.findOne({
-        where: { airwallexAccountId: mappedData.airwallexAccountId },
-      });
+      const existing =   await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: mappedData.airwallexAccountId } });
+      
       //update UseKyc status
       if (existing) {
         await existing.update(mappedData);
@@ -476,7 +471,7 @@ export default class AirwallexPaymentService {
         await AirwallexKycAccount.destroy({ where: { userId } });
         await UserKyc.destroy({ where: { userId } });
       }
-      const getData = await AirwallexKycAccount.findOne({ where: { userId } });
+      const getData = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!getData) {
         const platformIdentifier = `AWCUST-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const email = validationResult.email;
@@ -736,9 +731,7 @@ export default class AirwallexPaymentService {
   static async createHostedFlow(userId, returnUrl, errorUrl) {
     try {
       const templateId = process.env.AIRWALLET_LIVENESS_TEMPLATE_ID || "";
-      const getAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const getAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       const accountId = getAccount?.airwallexAccountId;
       console.log(
         "Creating hosted flow for userId:",
@@ -812,9 +805,7 @@ export default class AirwallexPaymentService {
     let returnUrl = payload?.return_url || "";
     let errorUrl = payload?.error_url || "";
 
-    const getAccount = await AirwallexKycAccount.findOne({
-      where: { userId },
-    });
+    const getAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
     if (!getAccount || !getAccount.airwallexAccountId) {
       return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
     }
@@ -854,9 +845,7 @@ export default class AirwallexPaymentService {
       console.log("Received payload for hosted flow status check:", payload);
       const userId = payload?.userId;
 
-      const getAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const getAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!getAccount || !getAccount.ahfiId) {
         return callback(new Error("AIRWALLEX_HOSTED_FLOW_NOT_FOUND"));
       }
@@ -949,9 +938,7 @@ export default class AirwallexPaymentService {
         return callback(null, { data: payload });
       }
 
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { airwallexAccountId: accountId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: accountId } });
 
       if (!kycAccount) {
         console.warn(
@@ -1017,9 +1004,7 @@ export default class AirwallexPaymentService {
 
   static async savedVerifiedKycDocuments({ userId, i18n }, callback) {
     try {
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount) {
         return callback(new Error("AIRWALLEX_KYC_ACCOUNT_NOT_FOUND"));
       }
@@ -1294,9 +1279,7 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount || !kycAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -1432,9 +1415,7 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount || !kycAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -1578,16 +1559,12 @@ export default class AirwallexPaymentService {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
 
-      const fromAirWallexAccount = await AirwallexKycAccount.findOne({
-        where: { userId: fromWalletId },
-      });
+      const fromAirWallexAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId: fromWalletId } });
       if (!fromAirWallexAccount || !fromAirWallexAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
 
-      const toAirWallexAccount = await AirwallexKycAccount.findOne({
-        where: { userId: toWalletId },
-      });
+      const toAirWallexAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId: toWalletId } });
       if (!toAirWallexAccount || !toAirWallexAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -1703,9 +1680,7 @@ export default class AirwallexPaymentService {
       if (!accessToken) {
         return callback(new Error("AIRWALLEX_TOKEN_NOT_GENERATED"));
       }
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount || !kycAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -1856,9 +1831,7 @@ export default class AirwallexPaymentService {
           { where: { sourceId: payload.data.id } },
         );
         if (payload?.account_id) {
-          const kycAccount = await AirwallexKycAccount.findOne({
-            where: { airwallexAccountId: payload.account_id },
-          });
+          const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: payload.account_id } });
           if (kycAccount) {
             console.log(
               "Reloading transaction history for userId:",
@@ -1897,9 +1870,7 @@ export default class AirwallexPaymentService {
       if (payload?.accountId) {
         airwallextConnectedAccountId = payload.accountId;
       } else {
-        const airWallexAccont = await AirwallexKycAccount.findOne({
-          where: { userId: userId },
-        });
+        const airWallexAccont = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
         if (airWallexAccont) {
           airwallextConnectedAccountId = airWallexAccont.airwallexAccountId;
         }
@@ -2138,9 +2109,7 @@ export default class AirwallexPaymentService {
   static async updateUserTransactionHistoryTable({ userId }, callback) {
     console.log("Updating user transaction history for userId:", userId);
     try {
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount || !kycAccount.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -2580,9 +2549,7 @@ export default class AirwallexPaymentService {
         return callback(new Error("INSUFFICIENT_BALANCE"));
       }
 
-      const airWallexAccont = await AirwallexKycAccount.findOne({
-        where: { userId: userId },
-      });
+      const airWallexAccont = await UserService.getUserAirwallexKycDetails({ whereFields: { userId: userId } });
       if (!airWallexAccont) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -2678,9 +2645,7 @@ export default class AirwallexPaymentService {
       if (getTransaction.refundStatus !== "none") {
         return callback(new Error("QR_TRANSACTION_ALREADY_REFUNDED"));
       }
-      const airWallexAccont = await AirwallexKycAccount.findOne({
-        where: { userId: getTransaction.userId },
-      });
+      const airWallexAccont = await UserService.getUserAirwallexKycDetails({ whereFields: { userId: getTransaction.userId } });
       if (!airWallexAccont) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -2837,9 +2802,7 @@ export default class AirwallexPaymentService {
     try {
       // Add your logic to handle the debit card webhook payload here
       if (payload?.account_id) {
-        const getKycAccount = await AirwallexKycAccount.findOne({
-          where: { airwallexAccountId: payload.account_id },
-        });
+        const getKycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: payload.account_id } });
         if (getKycAccount) {
           const userid = getKycAccount.userId;
           console.log(
@@ -2889,9 +2852,7 @@ export default class AirwallexPaymentService {
 
       let userId = null;
       if (payload?.account_id) {
-        const kycAccount = await AirwallexKycAccount.findOne({
-          where: { airwallexAccountId: payload.account_id },
-        });
+        const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: payload.account_id } });
         userId = kycAccount?.userId || null;
       }
       if(!userId) {
@@ -3031,9 +2992,7 @@ export default class AirwallexPaymentService {
         payload,
       );
       const ahfiId = payload?.ahfi_id;
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }
@@ -3425,9 +3384,7 @@ export default class AirwallexPaymentService {
         );
         return callback(new Error("PAYMENT_INTENT_NOT_SUCCEEDED"));
       }
-      const getKycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const getKycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       const kycAccountId = getKycAccount?.airwallexAccountId;
       const paymentIntentId = getPaymentIntent?.airwallexIntentId;
 
@@ -5014,9 +4971,7 @@ export default class AirwallexPaymentService {
           return callback(new Error("ACCOUNT_ID_NOT_FOUND"));
         }
         
-        const kycAccount = await AirwallexKycAccount.findOne({
-          where: { airwallexAccountId: airWallexAccountId },
-        });
+        const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { airwallexAccountId: airWallexAccountId } });
         const userId = kycAccount?.userId || null;
 
         if (userId) {
@@ -5305,9 +5260,7 @@ export default class AirwallexPaymentService {
 
         const  userId = getCardTransaction.userId;
 
-        const getKyc = await AirwallexKycAccount.findOne({
-          where: { userId },
-        });
+        const getKyc = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
         if(!getKyc){
           getCardTransaction.chargePaymentLogs = [...getCardTransaction.chargePaymentLogs || [],{ERROR: "KYC_ACCOUNT_NOT_FOUND"}];
           await getCardTransaction.save();
@@ -5385,9 +5338,7 @@ export default class AirwallexPaymentService {
       }
       const apiUrl = process.env.AIRWALLEX_API_URL;
 
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount?.airwallexAccountId) {
         return callback(new Error("AIRWALLEX_ACCOUNT_NOT_FOUND"));
       }

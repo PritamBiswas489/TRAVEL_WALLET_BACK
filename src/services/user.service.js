@@ -267,10 +267,18 @@ export default class UserService {
   static async getUserAirwallexKycAccountId(userId) {
       let account;
       try{
-         account = await AirwallexKycAccount.findOne({ where: { userId } });
+         account = await AirwallexKycAccount.findOneCached({ where: { userId } });
       }  catch (error) {
       }
       return account ? account.airwallexAccountId : null;
+   }
+   static async getUserAirwallexKycDetails({whereFields}) {
+      let account;
+      try{
+         account = await AirwallexKycAccount.findOneCached({ where: whereFields });
+      }  catch (error) {
+      }
+      return account ? account : null;
    }
   }
 

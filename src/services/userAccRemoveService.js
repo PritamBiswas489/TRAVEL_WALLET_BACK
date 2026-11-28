@@ -23,9 +23,7 @@ export default class UserAccRemoveService {
       customerPhone = getUserDetails?.phoneNumber || null;
       customerEmail = getUserDetails?.email || null;
 
-      const airwallexAccount = await AirwallexKycAccount.findOne({
-        where: { userId: userid },
-      });
+      const airwallexAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId: userid } });
       if (airwallexAccount) {
         airwallexAccountId = airwallexAccount.airwallexAccountId;
       }
@@ -100,9 +98,7 @@ export default class UserAccRemoveService {
       if (payload?.forceDelete) {
         return deleteProfileResponse();
       }
-      const kycAccount = await AirwallexKycAccount.findOne({
-        where: { userId },
-      });
+      const kycAccount = await UserService.getUserAirwallexKycDetails({ whereFields: { userId } });
       if (!kycAccount?.airwallexAccountId) {
         return deleteProfileResponse();
       }

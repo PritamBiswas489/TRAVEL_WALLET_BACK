@@ -14,4 +14,4 @@ export const redisConfig = {
 
 const redisClient = new Redis(redisConfig);
 
-export default redisClient;
+export default redisClient; 
